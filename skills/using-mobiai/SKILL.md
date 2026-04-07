@@ -20,7 +20,8 @@ Invoke these skills when the context matches. Use `/skill <name>` or load them a
 |-------|-------------|
 | `fix-issue` | User asks to fix a bug from an issue tracker (Jira, GitHub Issues, Linear) |
 | `reproduce-bug` | User asks to reproduce a bug on a device, emulator, or simulator |
-| `analyze-crash` | User shares a crash log, stack trace, or Crashlytics report |
+| `analyze-crash` | User shares a crash from any source (stack trace, log, screenshot, description) |
+| `crashlytics` | User shares a Firebase Crashlytics link, crash ID, or mentions Crashlytics specifically |
 | `write-tests` | User asks to write tests for mobile code |
 | `review-code` | User asks for a code review of mobile code changes |
 | `create-pr` | User asks to create a pull request for mobile changes |

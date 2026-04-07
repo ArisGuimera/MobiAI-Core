@@ -35,7 +35,8 @@ claude plugin install ArisGuimera/MobiAI-Core
 |-------|-------------|
 | [fix-issue](skills/fix-issue/SKILL.md) | Pipeline completo: obtener issue, analizar, corregir, testear, PR |
 | [reproduce-bug](skills/reproduce-bug/SKILL.md) | Reproducir bugs en dispositivo/emulador/simulador |
-| [analyze-crash](skills/analyze-crash/SKILL.md) | Analizar crash logs, stack traces y Crashlytics |
+| [analyze-crash](skills/analyze-crash/SKILL.md) | Analizar un crash a partir de cualquier fuente y encontrar la causa raíz |
+| [crashlytics](skills/crashlytics/SKILL.md) | Investigar un crash de Firebase Crashlytics en profundidad |
 | [write-tests](skills/write-tests/SKILL.md) | Escribir tests con las convenciones de cada plataforma |
 | [review-code](skills/review-code/SKILL.md) | Code review mobile: lifecycle, memoria, thread safety |
 | [create-pr](skills/create-pr/SKILL.md) | Crear PRs con contexto mobile y plan de test |
