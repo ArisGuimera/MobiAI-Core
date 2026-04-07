@@ -63,6 +63,19 @@ Look at existing skills for examples — each has the structure that best fits w
 
 All skills MUST be written in **English**. Skills are technical instructions consumed by AI agents, not user-facing documentation. English ensures compatibility across all models and tools.
 
+## How Skills Are Loaded (Important)
+
+Skills are NOT all loaded at once. The loading model is:
+
+1. On session start, only `using-mobiai/SKILL.md` is loaded — a lightweight table with skill names and short descriptions.
+2. The agent reads the `description` field to decide if a skill is relevant to the current task.
+3. Only if it matches, the agent reads the full SKILL.md.
+
+This means:
+- The `description` in frontmatter is the most important field — it's the ONLY thing the agent sees when deciding whether to load the skill. If it's bad, the skill will never activate.
+- The body can be as long and detailed as needed — it's only consumed when relevant.
+- We can have many skills without token cost concerns.
+
 ## Writing Guidelines
 
 1. **Be specific and actionable.** Agents follow instructions literally. "Search for the crash signal in the codebase" is better than "investigate the issue."
@@ -88,7 +101,7 @@ All skills MUST be written in **English**. Skills are technical instructions con
 | Field | Required | Description |
 |-------|----------|-------------|
 | `name` | Yes | Unique identifier (kebab-case) |
-| `description` | Yes | One-line description for relevance matching |
+| `description` | Yes | **Critical**: one-line trigger condition that tells the AI WHEN to load this skill. Write "Use when..." not a list of keywords. |
 | `version` | Yes | Semver version |
 | `license` | Yes | License (MIT recommended) |
 | `author` | Yes | Author name or "MobiAI Community" |

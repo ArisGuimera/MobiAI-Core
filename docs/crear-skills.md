@@ -16,6 +16,19 @@ Quiero crear un nuevo skill para MobiAI que [describí lo que querés que haga]
 
 El agente va a usar el skill `writing-skills` automáticamente para guiarte en el proceso: te pregunta qué tiene que hacer, genera el archivo con el formato correcto, y lo agrega al catálogo.
 
+## ¿Cómo se cargan los skills?
+
+Es importante entender esto para escribir buenos skills:
+
+1. **Al iniciar la sesión**, la IA solo carga `using-mobiai/SKILL.md` — una tabla liviana con el nombre y la descripción corta de cada skill. No lee ningún SKILL.md completo.
+2. **Cuando la IA necesita un skill**, lee la descripción corta de la tabla y decide si es relevante para lo que está haciendo.
+3. **Solo si matchea**, la IA lee el SKILL.md completo de ese skill.
+
+Esto significa que:
+- **Podemos tener muchos skills** sin problema de tokens — la cantidad no importa porque solo se cargan bajo demanda.
+- **La `description` del frontmatter es clave** — es lo único que la IA lee para decidir si necesita ese skill. Si la description es mala, el skill nunca se va a activar.
+- **El cuerpo del SKILL.md puede ser largo y detallado** — solo se consume cuando es relevante.
+
 ## Si preferís hacerlo manual
 
 ### 1. Creá el directorio

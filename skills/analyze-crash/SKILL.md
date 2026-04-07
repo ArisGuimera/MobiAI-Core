@@ -1,6 +1,6 @@
 ---
 name: analyze-crash
-description: Analyze a crash from any source (stack trace, log, screenshot, user report), find the root cause in the codebase, and fix it or propose a fix
+description: Use when the user shares a crash from any source (stack trace, log, screenshot, error description) and wants to find the root cause and fix it
 version: 0.2.0
 license: MIT
 author: Matias Rosenstein

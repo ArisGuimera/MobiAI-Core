@@ -1,6 +1,6 @@
 ---
 name: crashlytics
-description: Investigate a Firebase Crashlytics crash in depth — fetch full stack trace, breadcrumbs, affected versions, user journey, and find the root cause
+description: Use when the user shares a Firebase Crashlytics crash link, crash ID, or asks to investigate a Crashlytics issue in depth
 version: 0.1.0
 license: MIT
 author: Matias Rosenstein

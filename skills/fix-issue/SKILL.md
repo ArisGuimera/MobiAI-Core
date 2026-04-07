@@ -1,6 +1,6 @@
 ---
 name: fix-issue
-description: Full pipeline to fix a bug from an issue tracker ticket — fetch, analyze, fix, test, and create a PR
+description: Use when the user provides a bug ticket or issue and wants the full fix pipeline — fetch, analyze, fix, test, and create a PR
 version: 0.1.0
 license: MIT
 author: Matias Rosenstein

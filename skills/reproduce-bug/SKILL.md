@@ -1,6 +1,6 @@
 ---
 name: reproduce-bug
-description: Reproduce a bug on a mobile device, emulator, or simulator using UI automation
+description: Use when the user wants to reproduce a bug on a mobile device, emulator, or simulator using UI automation
 version: 0.1.0
 license: MIT
 author: Matias Rosenstein
