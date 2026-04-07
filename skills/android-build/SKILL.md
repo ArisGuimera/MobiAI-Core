@@ -29,7 +29,7 @@ Expert knowledge for building Android projects with Gradle.
 
 # Specific flavor
 ./gradlew assemble<Flavor>Debug
-# Example: ./gradlew assembleArgGastronomicDebug
+# Example: ./gradlew assembleFreeDebug
 
 # Release APK
 ./gradlew assemble<Flavor>Release
@@ -117,8 +117,8 @@ git branch -r | grep release
 
 # Common patterns:
 # release/v3.2.x
-# release/VERSION_V2.121.x
 # release/3.2.0
+# release/1.0.0-rc1
 ```
 
 To build a specific version:
