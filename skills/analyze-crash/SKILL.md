@@ -4,7 +4,7 @@ description: Analyze crash logs, stack traces, and Crashlytics reports to identi
 version: 0.1.0
 license: MIT
 author: MobiAI Community
-compatibility: [claude-code, cursor, copilot]
+compatibility: [claude-code, cursor, copilot, codex]
 platforms: [android, ios, kmp, flutter, react-native]
 ---
 

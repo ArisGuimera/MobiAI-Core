@@ -4,7 +4,7 @@ description: ADB device interaction — emulator management, UI automation, scre
 version: 0.1.0
 license: MIT
 author: MobiAI Community
-compatibility: [claude-code, cursor, copilot]
+compatibility: [claude-code, cursor, copilot, codex]
 platforms: [android]
 ---
 

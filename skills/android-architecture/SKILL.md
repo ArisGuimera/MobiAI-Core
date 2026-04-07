@@ -4,7 +4,7 @@ description: Android architecture patterns — Clean Architecture, MVVM, MVI, Je
 version: 0.1.0
 license: MIT
 author: MobiAI Community
-compatibility: [claude-code, cursor, copilot]
+compatibility: [claude-code, cursor, copilot, codex]
 platforms: [android]
 ---
 

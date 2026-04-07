@@ -4,7 +4,7 @@ description: Full pipeline to fix a bug from an issue tracker ticket — fetch, 
 version: 0.1.0
 license: MIT
 author: MobiAI Community
-compatibility: [claude-code, cursor, copilot]
+compatibility: [claude-code, cursor, copilot, codex]
 platforms: [android, ios, kmp, flutter, react-native]
 ---
 

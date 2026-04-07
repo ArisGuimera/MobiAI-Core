@@ -88,7 +88,7 @@ Un marketplace donde la comunidad publica y descarga skills, agentes y configura
 
 Nos encantaria tu ayuda! MobiAI esta creado por desarrolladores mobile, para desarrolladores mobile.
 
-- **Anadir un nuevo skill**: Consulta [writing-skills](skills/writing-skills/SKILL.md)
+- **Anadir un nuevo skill**: Consulta la [guia para crear skills](docs/crear-skills.md)
 - **Mejorar skills existentes**: Abre un PR con mejores instrucciones o manejo de casos edge
 - **Reportar problemas**: Abre un issue si un skill da mal consejo o le falta algo
 

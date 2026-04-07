@@ -4,7 +4,7 @@ description: Gradle build system — flavors, variants, signing, APK/AAB, ProGua
 version: 0.1.0
 license: MIT
 author: MobiAI Community
-compatibility: [claude-code, cursor, copilot]
+compatibility: [claude-code, cursor, copilot, codex]
 platforms: [android]
 ---
 

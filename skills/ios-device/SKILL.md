@@ -4,7 +4,7 @@ description: iOS Simulator interaction — simctl, screenshots, accessibility sn
 version: 0.1.0
 license: MIT
 author: MobiAI Community
-compatibility: [claude-code, cursor, copilot]
+compatibility: [claude-code, cursor, copilot, codex]
 platforms: [ios]
 ---
 

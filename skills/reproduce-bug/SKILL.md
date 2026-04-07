@@ -4,7 +4,7 @@ description: Reproduce a bug on a mobile device, emulator, or simulator using UI
 version: 0.1.0
 license: MIT
 author: MobiAI Community
-compatibility: [claude-code, cursor, copilot]
+compatibility: [claude-code, cursor, copilot, codex]
 platforms: [android, ios]
 ---
 

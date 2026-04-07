@@ -4,7 +4,7 @@ description: React Native development — components, navigation, native modules
 version: 0.1.0
 license: MIT
 author: MobiAI Community
-compatibility: [claude-code, cursor, copilot]
+compatibility: [claude-code, cursor, copilot, codex]
 platforms: [react-native]
 ---
 

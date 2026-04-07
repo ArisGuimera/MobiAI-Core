@@ -5,7 +5,7 @@ Gracias por tu interes en contribuir! MobiAI es un proyecto comunitario — cada
 ## Formas de contribuir
 
 ### 1. Anadir un nuevo Skill
-Consulta [writing-skills](skills/writing-skills/SKILL.md) para la guia completa.
+Consulta la [guia para crear skills](docs/crear-skills.md).
 
 **Pasos rapidos:**
 1. Haz fork del repo

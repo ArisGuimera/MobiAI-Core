@@ -4,7 +4,7 @@ description: Bootstrap skill loaded on every session — teaches the agent about
 version: 0.1.0
 license: MIT
 author: MobiAI Community
-compatibility: [claude-code, cursor, copilot]
+compatibility: [claude-code, cursor, copilot, codex]
 ---
 
 # MobiAI — Mobile Development Ecosystem

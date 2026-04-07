@@ -4,7 +4,7 @@ description: iOS build system — xcodebuild, schemes, CocoaPods, Swift Package 
 version: 0.1.0
 license: MIT
 author: MobiAI Community
-compatibility: [claude-code, cursor, copilot]
+compatibility: [claude-code, cursor, copilot, codex]
 platforms: [ios]
 ---
 
