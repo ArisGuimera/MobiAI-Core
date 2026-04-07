@@ -1,0 +1,30 @@
+{
+  "name": "mobiai-core",
+  "description": "Ecosistema de IA para desarrollo mobile: skills, agentes y pipelines automatizados para Android, iOS, KMP, Flutter y React Native.",
+  "version": "0.1.0",
+  "author": {
+    "name": "MobiAI Community",
+    "url": "https://github.com/ArisGuimera/MobiAI-Core"
+  },
+  "homepage": "https://github.com/ArisGuimera/MobiAI-Core",
+  "repository": "https://github.com/ArisGuimera/MobiAI-Core",
+  "license": "MIT",
+  "keywords": [
+    "mobile",
+    "android",
+    "ios",
+    "kotlin",
+    "swift",
+    "flutter",
+    "react-native",
+    "kmp",
+    "adb",
+    "testing",
+    "bug-fixing",
+    "qa",
+    "skills",
+    "agents",
+    "automation",
+    "pipeline"
+  ]
+}

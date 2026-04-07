@@ -1,0 +1,101 @@
+---
+name: reproduce-bug
+description: Reproduce a bug on a mobile device, emulator, or simulator using UI automation
+version: 0.1.0
+license: MIT
+author: MobiAI Community
+compatibility: [claude-code, cursor, copilot]
+platforms: [android, ios]
+---
+
+# Reproduce Bug
+
+Interact with a running mobile app on a device/emulator/simulator to reproduce a reported bug.
+
+## When to Use
+
+- Before fixing a bug, to confirm it exists and capture evidence
+- To verify a fix by re-running the reproduction steps
+- When a user says "try to reproduce this on the emulator"
+
+## Two Modes
+
+### Reproduce Mode
+Explore the app to find and trigger the bug. You have freedom to navigate, try different paths, and investigate.
+
+### Verify Mode
+After a fix is applied, re-run the **exact same steps** from the original reproduction. Only check if the original bug still occurs — don't explore other features or treat unrelated behavior as bugs.
+
+## Workflow
+
+### Step 1: Detect Platform
+
+Check which platform the project targets and load the appropriate device skill:
+- Android → load `android-device` skill
+- iOS → load `ios-device` skill
+
+### Step 2: Plan Reproduction Steps
+
+Before interacting with the device:
+
+1. **Read the bug report** — extract explicit reproduction steps if provided
+2. **Explore source code** to understand the app's navigation:
+   - Find the relevant screen/feature in the source code
+   - Read layout files, string resources, or Compose/SwiftUI views
+   - Understand what setup or data the feature needs
+3. **Generate a step-by-step plan** with element-based targeting:
+   - Prefer targeting by text label, resource ID, or accessibility label
+   - Use coordinates only as a fallback for swipe gestures
+
+### Step 3: Execute on Device
+
+Follow these mandatory rules:
+
+1. **Dump UI before every action.** Always inspect the screen state before interacting.
+2. **One action at a time.** Every tap/swipe must be followed by a UI dump to see the result.
+3. **Never guess coordinates.** Always read them from the UI hierarchy dump.
+4. **Check logs after every action.** Transient dialogs and errors may not appear in UI dumps but will be in the device logs.
+5. **Handle unexpected screens.** Dismiss dialogs, handle permission requests, deal with loading states.
+
+### Step 4: Capture Evidence
+
+After each significant action, capture:
+- **UI state** — dump the UI hierarchy
+- **Device logs** — check for crashes, exceptions, error messages
+- **Screenshots** — if the bug is visual
+
+### Step 5: Report Results
+
+Return a clear report:
+- **Reproduced / Not reproduced**
+- **Step-by-step narrative** of what you did and what you saw
+- **Crash signal** (if a crash was observed) — exception class, error message
+
+## When You're Blocked
+
+- **Never retry the same action more than twice.** If something fails, try an alternative path.
+- **If still blocked after 2 attempts**, stop and report what happened.
+- **Do NOT investigate root causes.** That's the fix agent's job. Your job is to USE the app and report what you see.
+
+## App Crash on Startup
+
+If the app crashes before any screen loads:
+1. Capture the crash from device logs
+2. Report it immediately — do not try to investigate the code
+3. The fix agent will handle root cause analysis
+
+## Platform-Specific Details
+
+### Android
+Load the `android-device` skill for:
+- ADB commands (tap, swipe, type, keyevent)
+- UIAutomator UI dumps
+- Logcat crash detection
+- Screenshot capture
+
+### iOS
+Load the `ios-device` skill for:
+- simctl commands
+- Accessibility snapshot for UI hierarchy
+- Console log monitoring
+- Screenshot capture
