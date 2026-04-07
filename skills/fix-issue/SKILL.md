@@ -3,7 +3,7 @@ name: fix-issue
 description: Full pipeline to fix a bug from an issue tracker ticket — fetch, analyze, fix, test, and create a PR
 version: 0.1.0
 license: MIT
-author: MobiAI Community
+author: Matias Rosenstein
 compatibility: [claude-code, cursor, copilot, codex]
 platforms: [android, ios, kmp, flutter, react-native]
 ---

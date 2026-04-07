@@ -3,7 +3,7 @@ name: flutter
 description: Flutter/Dart development — widgets, state management, platform channels, testing
 version: 0.1.0
 license: MIT
-author: MobiAI Community
+author: Matias Rosenstein
 compatibility: [claude-code, cursor, copilot, codex]
 platforms: [flutter]
 ---

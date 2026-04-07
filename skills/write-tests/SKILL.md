@@ -3,7 +3,7 @@ name: write-tests
 description: Write unit and integration tests for mobile code following platform-specific conventions
 version: 0.1.0
 license: MIT
-author: MobiAI Community
+author: Matias Rosenstein
 compatibility: [claude-code, cursor, copilot, codex]
 platforms: [android, ios, kmp, flutter, react-native]
 ---

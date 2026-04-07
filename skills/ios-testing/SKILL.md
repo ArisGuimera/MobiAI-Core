@@ -3,7 +3,7 @@ name: ios-testing
 description: iOS testing — XCTest, Quick/Nimble, snapshot testing, UI testing with XCUITest
 version: 0.1.0
 license: MIT
-author: MobiAI Community
+author: Matias Rosenstein
 compatibility: [claude-code, cursor, copilot, codex]
 platforms: [ios]
 ---

@@ -3,7 +3,7 @@ name: using-mobiai
 description: Bootstrap skill loaded on every session — teaches the agent about MobiAI skills, agents, and capabilities
 version: 0.1.0
 license: MIT
-author: MobiAI Community
+author: Matias Rosenstein
 compatibility: [claude-code, cursor, copilot, codex]
 ---
 

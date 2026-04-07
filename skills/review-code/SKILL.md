@@ -3,7 +3,7 @@ name: review-code
 description: Mobile-specific code review checking for lifecycle issues, memory leaks, thread safety, and platform conventions
 version: 0.1.0
 license: MIT
-author: MobiAI Community
+author: Matias Rosenstein
 compatibility: [claude-code, cursor, copilot, codex]
 platforms: [android, ios, kmp, flutter, react-native]
 ---

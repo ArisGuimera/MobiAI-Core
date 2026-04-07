@@ -3,7 +3,7 @@ name: ios-architecture
 description: iOS architecture patterns — SwiftUI, UIKit, TCA, MVVM+Combine, Clean Architecture
 version: 0.1.0
 license: MIT
-author: MobiAI Community
+author: Matias Rosenstein
 compatibility: [claude-code, cursor, copilot, codex]
 platforms: [ios]
 ---

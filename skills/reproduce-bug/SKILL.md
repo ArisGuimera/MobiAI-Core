@@ -3,7 +3,7 @@ name: reproduce-bug
 description: Reproduce a bug on a mobile device, emulator, or simulator using UI automation
 version: 0.1.0
 license: MIT
-author: MobiAI Community
+author: Matias Rosenstein
 compatibility: [claude-code, cursor, copilot, codex]
 platforms: [android, ios]
 ---

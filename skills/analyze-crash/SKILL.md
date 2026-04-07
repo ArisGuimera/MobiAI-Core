@@ -3,7 +3,7 @@ name: analyze-crash
 description: Analyze crash logs, stack traces, and Crashlytics reports to identify root causes in mobile apps
 version: 0.1.0
 license: MIT
-author: MobiAI Community
+author: Matias Rosenstein
 compatibility: [claude-code, cursor, copilot, codex]
 platforms: [android, ios, kmp, flutter, react-native]
 ---

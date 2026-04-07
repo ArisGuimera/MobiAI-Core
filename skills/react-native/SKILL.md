@@ -3,7 +3,7 @@ name: react-native
 description: React Native development — components, navigation, native modules, testing with Jest
 version: 0.1.0
 license: MIT
-author: MobiAI Community
+author: Matias Rosenstein
 compatibility: [claude-code, cursor, copilot, codex]
 platforms: [react-native]
 ---

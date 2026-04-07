@@ -3,7 +3,7 @@ name: create-pr
 description: Create a pull request with proper mobile context, test plans, and changelog updates
 version: 0.1.0
 license: MIT
-author: MobiAI Community
+author: Matias Rosenstein
 compatibility: [claude-code, cursor, copilot, codex]
 platforms: [android, ios, kmp, flutter, react-native]
 ---

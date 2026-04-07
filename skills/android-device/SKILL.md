@@ -3,7 +3,7 @@ name: android-device
 description: ADB device interaction — emulator management, UI automation, screenshots, logcat, screen recording
 version: 0.1.0
 license: MIT
-author: MobiAI Community
+author: Matias Rosenstein
 compatibility: [claude-code, cursor, copilot, codex]
 platforms: [android]
 ---

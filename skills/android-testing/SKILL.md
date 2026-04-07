@@ -3,7 +3,7 @@ name: android-testing
 description: Android testing frameworks — JUnit, MockK, Espresso, Compose Testing, Robolectric
 version: 0.1.0
 license: MIT
-author: MobiAI Community
+author: Matias Rosenstein
 compatibility: [claude-code, cursor, copilot, codex]
 platforms: [android]
 ---

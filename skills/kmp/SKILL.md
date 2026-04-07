@@ -3,7 +3,7 @@ name: kmp
 description: Kotlin Multiplatform — shared code, expect/actual, platform-specific implementations
 version: 0.1.0
 license: MIT
-author: MobiAI Community
+author: Matias Rosenstein
 compatibility: [claude-code, cursor, copilot, codex]
 platforms: [kmp]
 ---

@@ -3,7 +3,7 @@ name: ios-build
 description: iOS build system — xcodebuild, schemes, CocoaPods, Swift Package Manager, code signing
 version: 0.1.0
 license: MIT
-author: MobiAI Community
+author: Matias Rosenstein
 compatibility: [claude-code, cursor, copilot, codex]
 platforms: [ios]
 ---

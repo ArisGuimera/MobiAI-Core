@@ -3,7 +3,7 @@ name: writing-skills
 description: Guide the user through creating a new MobiAI skill — generate SKILL.md with proper structure, frontmatter, and actionable instructions
 version: 0.1.0
 license: MIT
-author: MobiAI Community
+author: Matias Rosenstein
 compatibility: [claude-code, cursor, copilot, codex]
 ---
 
