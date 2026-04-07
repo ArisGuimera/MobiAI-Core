@@ -7,97 +7,97 @@ author: MobiAI Community
 compatibility: [claude-code, cursor, copilot]
 ---
 
-# Writing MobiAI Skills
+# Crear Skills para MobiAI
 
-This skill teaches you how to create new skills for the MobiAI ecosystem.
+Este skill te ensena como crear nuevos skills para el ecosistema MobiAI.
 
-## SKILL.md Format
+## Formato de SKILL.md
 
-Every skill is a directory under `skills/` containing at minimum a `SKILL.md` file:
+Cada skill es un directorio dentro de `skills/` que contiene como minimo un archivo `SKILL.md`:
 
 ```
 skills/
-  my-new-skill/
-    SKILL.md              # Required: skill definition
-    references/           # Optional: detailed docs loaded on-demand
-      deep-dive.md
-    scripts/              # Optional: helper scripts the agent can execute
+  mi-nuevo-skill/
+    SKILL.md              # Requerido: definicion del skill
+    references/           # Opcional: documentacion detallada cargada bajo demanda
+      detalle.md
+    scripts/              # Opcional: scripts de ayuda que el agente puede ejecutar
       helper.sh
-    assets/               # Optional: templates, examples
+    assets/               # Opcional: templates, ejemplos
       template.kt
 ```
 
-## SKILL.md Structure
+## Estructura del SKILL.md
 
 ```yaml
 ---
-name: my-new-skill
-description: One-line description used for relevance matching
+name: mi-nuevo-skill
+description: Descripcion de una linea usada para matching de relevancia
 version: 1.0.0
 license: MIT
-author: Your Name
+author: Tu Nombre
 compatibility: [claude-code, cursor, copilot]
-platforms: [android, ios, kmp, flutter, react-native]  # Optional: which platforms this applies to
+platforms: [android, ios, kmp, flutter, react-native]  # Opcional: a que plataformas aplica
 ---
 
-# Skill Title
+# Titulo del Skill
 
 ## When to Use
-Describe the trigger conditions — when should this skill be invoked?
+Describir las condiciones de activacion — cuando debe invocarse este skill?
 
 ## Steps
-Numbered instructions for the agent to follow.
+Instrucciones numeradas para que el agente siga.
 
-## Platform-Specific Sections (if applicable)
+## Platform-Specific Sections (si aplica)
 ### Android
-Android-specific instructions.
+Instrucciones especificas de Android.
 
 ### iOS
-iOS-specific instructions.
+Instrucciones especificas de iOS.
 
 ## References
-Point to files in references/ for deep dives.
+Apuntar a archivos en references/ para profundizar.
 
 ## Common Pitfalls
-What to watch out for.
+A que tener cuidado.
 ```
 
-## Writing Guidelines
+## Guia para escribir skills
 
-1. **Be specific and actionable.** Agents follow instructions literally. "Search for the crash signal in the codebase" is better than "investigate the issue."
+1. **Se especifico y accionable.** Los agentes siguen instrucciones de forma literal. "Busca el crash signal en el codebase" es mejor que "investiga el problema."
 
-2. **Include exact commands.** When the skill involves terminal commands, provide the full command with placeholders:
+2. **Incluir comandos exactos.** Cuando el skill involucra comandos de terminal, poner el comando completo con placeholders:
    ```bash
    adb -s <serial> shell uiautomator dump /sdcard/ui.xml
    ```
 
-3. **Provide decision trees.** Agents need clear rules for branching logic:
-   - If X → do A
-   - If Y → do B
-   - If neither → do C
+3. **Proveer arboles de decision.** Los agentes necesitan reglas claras para logica de ramificacion:
+   - Si X → hacer A
+   - Si Y → hacer B
+   - Si ninguno → hacer C
 
-4. **Keep the main SKILL.md concise.** Move detailed reference material to `references/` files that are loaded on-demand.
+4. **Mantener el SKILL.md principal conciso.** Mover material de referencia detallado a archivos en `references/` que se cargan bajo demanda.
 
-5. **Test with real scenarios.** Before submitting, verify the skill works end-to-end on a real project.
+5. **Probar con escenarios reales.** Antes de enviar, verificar que el skill funciona de punta a punta en un proyecto real.
 
-6. **Platform-agnostic where possible.** If the skill applies to multiple platforms, include platform-specific sections rather than creating separate skills.
+6. **Agnositco de plataforma cuando sea posible.** Si el skill aplica a multiples plataformas, incluir secciones especificas por plataforma en vez de crear skills separados.
 
-## Frontmatter Fields
+## Campos del frontmatter
 
-| Field | Required | Description |
-|-------|----------|-------------|
-| `name` | Yes | Unique identifier (kebab-case) |
-| `description` | Yes | One-line description for relevance matching |
-| `version` | Yes | Semver version |
-| `license` | Yes | License (MIT recommended) |
-| `author` | Yes | Author name or "MobiAI Community" |
-| `compatibility` | Yes | Which AI tools support this skill |
-| `platforms` | No | Which mobile platforms this applies to |
+| Campo | Requerido | Descripcion |
+|-------|-----------|-------------|
+| `name` | Si | Identificador unico (kebab-case) |
+| `description` | Si | Descripcion de una linea para matching de relevancia |
+| `version` | Si | Version semver |
+| `license` | Si | Licencia (MIT recomendado) |
+| `author` | Si | Nombre del autor o "MobiAI Community" |
+| `compatibility` | Si | Que herramientas de IA soportan este skill |
+| `platforms` | No | A que plataformas mobile aplica |
 
-## Submitting a New Skill
+## Enviar un nuevo Skill
 
-1. Fork the [MobiAI-Core repo](https://github.com/ArisGuimera/MobiAI-Core)
-2. Create your skill directory under `skills/`
-3. Write and test your `SKILL.md`
-4. Add your skill to the table in `skills/using-mobiai/SKILL.md`
-5. Open a pull request with a description of what your skill does and how you tested it
+1. Haz fork del [repo de MobiAI-Core](https://github.com/ArisGuimera/MobiAI-Core)
+2. Crea tu directorio de skill dentro de `skills/`
+3. Escribe y proba tu `SKILL.md`
+4. Anade tu skill a la tabla en `skills/using-mobiai/SKILL.md`
+5. Abre un pull request con una descripcion de que hace tu skill y como lo probaste
