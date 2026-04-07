@@ -8,7 +8,7 @@ MobiAI es un ecosistema open source que potencia tu desarrollo mobile con IA. No
 
 - **Skills** — Conocimiento experto empaquetado en instrucciones reutilizables. Corregir bugs, reproducir incidencias, escribir tests, analizar crashes, crear PRs... todo siguiendo las mejores practicas de cada plataforma.
 - **Agentes** — Agentes especializados que ejecutan tareas complejas de forma autonoma: un agente que analiza codigo, otro que interactua con el dispositivo, otro que escribe tests.
-- **Pipeline automatizado** — Un flujo completo de correccion de bugs: recibe un ticket de Jira por Slack, reproduce el bug en un emulador, encuentra la causa raiz, aplica el fix, ejecuta tests y crea el PR. Todo sin intervencion humana.
+- **Pipeline automatizado** — Un flujo completo de correccion de bugs: recibe un error o ticket desde cualquier plataforma de mensajeria, reproduce el bug en un emulador, encuentra la causa raiz, aplica el fix, ejecuta tests y crea el PR. Todo sin intervencion humana.
 
 Empezamos con [Claude Code](https://docs.anthropic.com/en/docs/claude-code) como plataforma principal, pero la vision es que funcione con cualquier herramienta de IA.
 
@@ -18,7 +18,7 @@ Empezamos con [Claude Code](https://docs.anthropic.com/en/docs/claude-code) como
 |------------|--------|
 | Skills (Claude Code plugin) | Disponible |
 | Agentes autonomos | En desarrollo |
-| Pipeline automatizado (Slack bot) | Planificado |
+| Pipeline automatizado (bot de mensajeria) | Planificado |
 | Marketplace de skills comunitarios | Planificado |
 
 ## Instalacion
@@ -79,7 +79,7 @@ Plugin de Claude Code con skills para todas las plataformas mobile. La comunidad
 Agentes especializados que van mas alla de las instrucciones: analizan codigo de forma autonoma, interactuan con dispositivos, y toman decisiones inteligentes basandose en el contexto.
 
 ### Fase 3 — Pipeline automatizado
-Un bot de Slack (u otra plataforma de mensajeria) que recibe tickets de Jira, orquesta los agentes, y produce PRs listos para review — el ciclo completo de correccion de bugs sin intervencion humana.
+Un bot que se conecta a tu plataforma de mensajeria favorita, recibe errores o tickets, orquesta los agentes, y produce PRs listos para review — el ciclo completo de correccion de bugs sin intervencion humana.
 
 ### Fase 4 — Marketplace
 Un marketplace donde la comunidad publica y descarga skills, agentes y configuraciones para diferentes tipos de proyectos mobile.
@@ -96,10 +96,7 @@ Consulta [CONTRIBUTING.md](CONTRIBUTING.md) para mas detalles.
 
 ## Comunidad
 
-Unite a la comunidad de desarrolladores mobile que comparten conocimiento y herramientas:
-
-- [GitHub Discussions](https://github.com/ArisGuimera/MobiAI-Core/discussions)
-- [Issues](https://github.com/ArisGuimera/MobiAI-Core/issues)
+Unite a la comunidad de desarrolladores mobile que comparten conocimiento y herramientas. Proximamente mas informacion.
 
 ## Licencia
 
