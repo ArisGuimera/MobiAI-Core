@@ -1,6 +1,6 @@
 ---
 name: create-pr
-description: Create a pull request with proper mobile context, test plans, and changelog updates
+description: Use when the user wants to commit changes and create a pull request — proper branch, commit message, PR description with mobile context
 version: 0.1.0
 license: MIT
 author: Matias Rosenstein

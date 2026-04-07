@@ -1,6 +1,6 @@
 ---
 name: android-device
-description: ADB device interaction — emulator management, UI automation, screenshots, logcat, screen recording
+description: Use when interacting with an Android device or emulator — run adb commands, automate UI, capture screenshots, read logcat, manage emulators
 version: 0.1.0
 license: MIT
 author: Matias Rosenstein

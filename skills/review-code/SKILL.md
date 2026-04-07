@@ -1,6 +1,6 @@
 ---
 name: review-code
-description: Mobile-specific code review checking for lifecycle issues, memory leaks, thread safety, and platform conventions
+description: Use when reviewing mobile code changes — check for lifecycle issues, memory leaks, thread safety, and platform-specific pitfalls
 version: 0.1.0
 license: MIT
 author: Matias Rosenstein

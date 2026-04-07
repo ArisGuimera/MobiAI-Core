@@ -1,6 +1,6 @@
 ---
 name: ios-build
-description: iOS build system — xcodebuild, schemes, CocoaPods, Swift Package Manager, code signing
+description: Use when building an iOS project, configuring schemes, troubleshooting build failures, or managing dependencies with CocoaPods or SPM
 version: 0.1.0
 license: MIT
 author: Matias Rosenstein

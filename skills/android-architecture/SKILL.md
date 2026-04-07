@@ -1,6 +1,6 @@
 ---
 name: android-architecture
-description: Android architecture patterns — Clean Architecture, MVVM, MVI, Jetpack Compose, XML views
+description: Use when creating features, refactoring, or navigating an Android codebase — understand project structure, find where to make changes, follow existing patterns
 version: 0.1.0
 license: MIT
 author: Matias Rosenstein

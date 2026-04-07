@@ -1,6 +1,6 @@
 ---
 name: ios-testing
-description: iOS testing — XCTest, Quick/Nimble, snapshot testing, UI testing with XCUITest
+description: Use when writing or running tests in an iOS project — unit tests, UI tests, snapshot tests, choosing the right framework
 version: 0.1.0
 license: MIT
 author: Matias Rosenstein

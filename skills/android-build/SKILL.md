@@ -1,6 +1,6 @@
 ---
 name: android-build
-description: Gradle build system — flavors, variants, signing, APK/AAB, ProGuard/R8, dependency management
+description: Use when building an Android project, configuring flavors or variants, troubleshooting build failures, or managing Gradle dependencies
 version: 0.1.0
 license: MIT
 author: Matias Rosenstein

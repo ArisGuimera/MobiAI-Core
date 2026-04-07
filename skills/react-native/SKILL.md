@@ -1,6 +1,6 @@
 ---
 name: react-native
-description: React Native development — components, navigation, native modules, testing with Jest
+description: Use when working on a React Native project — building, testing, debugging, understanding navigation and state management
 version: 0.1.0
 license: MIT
 author: Matias Rosenstein

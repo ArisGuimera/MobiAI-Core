@@ -29,38 +29,35 @@ skills/
 
 ## SKILL.md Structure
 
+A SKILL.md has two parts: **frontmatter** (metadata) and **body** (instructions).
+
+### Frontmatter (required)
+
 ```yaml
 ---
 name: my-new-skill
-description: One-line description used for relevance matching
+description: Use when [trigger condition] — [what the skill helps with]
 version: 1.0.0
 license: MIT
 author: Author Name
 compatibility: [claude-code, cursor, copilot, codex]
 platforms: [android, ios, kmp, flutter, react-native]  # Optional
 ---
-
-# Skill Title
-
-## When to Use
-Trigger conditions — when should this skill be invoked?
-
-## Steps
-Numbered instructions for the agent to follow.
-
-## Platform-Specific Sections (if applicable)
-### Android
-Android-specific instructions.
-
-### iOS
-iOS-specific instructions.
-
-## References
-Point to files in references/ for deep dives.
-
-## Common Pitfalls
-What to watch out for.
 ```
+
+The `description` field is critical — it tells the AI tool WHEN to activate this skill. Write it as a trigger condition, not a list of keywords. Example: `"Use when creating features, refactoring, or navigating an Android codebase"`.
+
+### Body (flexible)
+
+The markdown body contains the instructions for the agent. There is no rigid required structure — organize it in whatever way makes sense for the skill. You can use:
+
+- Step-by-step workflows
+- Reference tables with commands
+- Decision trees
+- Platform-specific sections
+- Any combination of the above
+
+Look at existing skills for examples — each has the structure that best fits what it does.
 
 ## Language
 

@@ -1,6 +1,6 @@
 ---
 name: write-tests
-description: Write unit and integration tests for mobile code following platform-specific conventions
+description: Use when the user asks to write tests for mobile code, or after applying a fix that needs regression tests
 version: 0.1.0
 license: MIT
 author: Matias Rosenstein

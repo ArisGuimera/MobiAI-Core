@@ -31,13 +31,19 @@ skills/mi-skill/
 
 Los skills se escriben en **inglés** (son instrucciones técnicas que le dan contexto a la IA, no documentación para el usuario).
 
-El archivo necesita:
-- **Frontmatter YAML** con nombre, descripción, versión, licencia, compatibilidad
-- **When to Use** — cuándo debe activarse
-- **Steps** — instrucciones paso a paso
-- **Secciones por plataforma** (si aplica)
+El archivo tiene dos partes:
 
-Mirá cualquier skill existente como ejemplo, por ejemplo [android-device](../skills/android-device/SKILL.md).
+**Frontmatter YAML** (obligatorio) — metadata del skill:
+- `name` — identificador único (kebab-case)
+- `description` — **lo más importante**: una línea en inglés que le dice a la IA *cuándo* debe usar este skill. No es una lista de keywords, es una instrucción de cuándo activarlo. Ejemplo: `"Use when creating features, refactoring, or navigating an Android codebase"`.
+- `version`, `license`, `author`, `compatibility`, `platforms`
+
+**Cuerpo en Markdown** (flexible) — las instrucciones para la IA. No hay una estructura rígida obligatoria. Organizalo como tenga sentido para tu skill: podés usar secciones como "Workflow", "Steps", secciones por plataforma, tablas de referencia, comandos exactos, árboles de decisión, etc. Lo importante es que sea claro y accionable.
+
+Mirá los skills existentes como ejemplo — cada uno tiene la estructura que mejor se adapta a lo que hace:
+- [analyze-crash](../skills/analyze-crash/SKILL.md) — flujo paso a paso con decisiones
+- [android-device](../skills/android-device/SKILL.md) — referencia de comandos y patrones
+- [fix-issue](../skills/fix-issue/SKILL.md) — pipeline completo con reglas de decisión
 
 ### 3. Agregalo al catálogo
 
