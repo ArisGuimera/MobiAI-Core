@@ -1,24 +1,24 @@
-# Como crear un nuevo skill
+# Cómo crear un nuevo skill
 
-Queres contribuir un skill a MobiAI? Genial! Aca te explicamos como.
+¿Querés contribuir un skill a MobiAI? ¡Genial! Acá te explicamos cómo.
 
-## Que es un skill?
+## ¿Qué es un skill?
 
-Un skill es un conjunto de instrucciones que le ensenan a la IA como hacer una tarea especifica de desarrollo mobile. Por ejemplo, el skill `android-device` le ensena a usar ADB, y `fix-issue` le ensena el flujo completo para corregir un bug.
+Un skill es contexto experto que adapta lo que la IA ya sabe al escenario adecuado. No le enseña a programar — le da las herramientas, los comandos y los flujos específicos de cada plataforma para que aplique su conocimiento de forma precisa. Por ejemplo, el skill `android-device` le da el contexto para usar ADB correctamente, y `fix-issue` le define el flujo completo para corregir un bug.
 
-## La forma mas facil: usa el skill `writing-skills`
+## La forma más fácil: usá el skill `writing-skills`
 
-No necesitas escribir el SKILL.md a mano. Podes pedirle a tu asistente de IA que lo haga por vos:
+No necesitás escribir el SKILL.md a mano. Podés pedirle a tu asistente de IA que lo haga por vos:
 
 ```
-Quiero crear un nuevo skill para MobiAI que [describe lo que queres que haga]
+Quiero crear un nuevo skill para MobiAI que [describí lo que querés que haga]
 ```
 
-El agente va a usar el skill `writing-skills` automaticamente para guiarte en el proceso: te pregunta que tiene que hacer, genera el archivo con el formato correcto, y lo agrega al catalogo.
+El agente va a usar el skill `writing-skills` automáticamente para guiarte en el proceso: te pregunta qué tiene que hacer, genera el archivo con el formato correcto, y lo agrega al catálogo.
 
-## Si preferis hacerlo manual
+## Si preferís hacerlo manual
 
-### 1. Crea el directorio
+### 1. Creá el directorio
 
 ```
 skills/mi-skill/
@@ -27,29 +27,29 @@ skills/mi-skill/
   scripts/              # Opcional: scripts de ayuda
 ```
 
-### 2. Escribe el SKILL.md
+### 2. Escribí el SKILL.md
 
-Los skills se escriben en **ingles** (son instrucciones tecnicas para la IA, no documentacion para el usuario).
+Los skills se escriben en **inglés** (son instrucciones técnicas que le dan contexto a la IA, no documentación para el usuario).
 
 El archivo necesita:
-- **Frontmatter YAML** con nombre, descripcion, version, licencia, compatibilidad
-- **When to Use** — cuando debe activarse
+- **Frontmatter YAML** con nombre, descripción, versión, licencia, compatibilidad
+- **When to Use** — cuándo debe activarse
 - **Steps** — instrucciones paso a paso
 - **Secciones por plataforma** (si aplica)
 
-Mira cualquier skill existente como ejemplo, por ejemplo [android-device](../android-device/SKILL.md).
+Mirá cualquier skill existente como ejemplo, por ejemplo [android-device](../skills/android-device/SKILL.md).
 
-### 3. Agregalo al catalogo
+### 3. Agregalo al catálogo
 
-Anade tu skill a la tabla en `skills/using-mobiai/SKILL.md`.
+Añadí tu skill a la tabla en `skills/using-mobiai/SKILL.md`.
 
 ### 4. Probalo
 
-Usa el skill en un proyecto real antes de enviarlo. Verifica que el agente puede seguir las instrucciones sin ambiguedad.
+Usá el skill en un proyecto real antes de enviarlo. Verificá que el agente puede seguir las instrucciones sin ambigüedad.
 
-### 5. Abre un PR
+### 5. Abrí un PR
 
-Abre un pull request con:
-- Que hace tu skill
-- Como lo probaste
-- Que plataformas soporta
+Abrí un pull request con:
+- Qué hace tu skill
+- Cómo lo probaste
+- Qué plataformas soporta
