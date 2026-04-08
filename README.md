@@ -36,6 +36,12 @@ También podés instalarlo directamente desde la CLI:
 claude plugin install mobiai-core@mobiai
 ```
 
+### Actualizar
+
+```bash
+/plugin update mobiai-core
+```
+
 ## Skills disponibles
 
 MobiAI incluye skills para todo el ciclo de desarrollo mobile:
