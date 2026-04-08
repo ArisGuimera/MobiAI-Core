@@ -1,0 +1,22 @@
+{
+  "name": "mobiai-core",
+  "version": "0.1.0",
+  "description": "Mobile development AI skills for Android, iOS, KMP, Flutter, and React Native",
+  "author": "MobiAI Community",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ArisGuimera/MobiAI-Core"
+  },
+  "keywords": [
+    "claude-code",
+    "plugin",
+    "mobile",
+    "android",
+    "ios",
+    "flutter",
+    "react-native",
+    "kmp",
+    "skills"
+  ]
+}

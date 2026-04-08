@@ -1,7 +1,7 @@
 ---
 name: analyze-crash
 description: Use when the user shares a crash from any source (stack trace, log, screenshot, error description) and wants to find the root cause and fix it
-version: 0.2.0
+version: 0.1.0
 license: MIT
 author: Matias Rosenstein
 compatibility: [claude-code, cursor, copilot, codex]

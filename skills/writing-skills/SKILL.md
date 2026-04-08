@@ -116,4 +116,5 @@ When the user wants to create a skill:
 2. **Generate the SKILL.md** — create the file with proper frontmatter and structure, following all guidelines above.
 3. **Create the directory** — `skills/<skill-name>/SKILL.md`
 4. **Add to the catalog** — update the table in `skills/using-mobiai/SKILL.md`
+   - Also verify that the skill's category is represented in the summary list in `README.md`
 5. **Suggest testing** — remind the user to test the skill on a real project before submitting.

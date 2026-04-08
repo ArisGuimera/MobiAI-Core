@@ -22,11 +22,15 @@ Deep investigation of a crash reported through Firebase Crashlytics. Goes beyond
 
 This skill requires access to Firebase Crashlytics data. Check what tools are available:
 
-1. **Firebase MCP tools** — if configured, use `crashlytics_get_issue`, `crashlytics_list_events`, `crashlytics_batch_get_events` to fetch data directly
+1. **Firebase MCP tools** — if the Firebase MCP server is configured, use these tools:
+   - `firebase_update_environment` — set the active Firebase project before querying
+   - `firebase_list_apps` — get the app IDs for the project
+   - `crashlytics_get_issue` — fetch issue metadata: event count, user count, error type. Parameters: `appId`, `issueId`
+   - `crashlytics_list_events` — fetch crash events with full stack traces. Parameters: `appId`, `issueId`, `pageSize`
 2. **Firebase CLI** — `firebase crashlytics:list` and related commands
 3. **User provides the data** — if no tools are available, ask the user to paste or export the crash details from the Crashlytics console
 
-If none of these are available, tell the user and fall back to the `analyze-crash` skill with whatever information they can provide manually.
+If none of these are available, fall back to the `analyze-crash` skill with whatever information the user can provide manually.
 
 ## Workflow
 

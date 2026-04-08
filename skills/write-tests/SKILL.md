@@ -33,12 +33,9 @@ Write tests that cover a bug fix or new feature, following the project's existin
 
 Before writing tests, find and read existing tests in the project:
 
-```bash
-# Find test files near the changed code
-find . -path "*/test*" -name "*Test*" | head -20
-
-# Or use Grep to find test files for a specific class
-```
+Search for existing test files near the changed code:
+- Use the Glob tool with patterns like `**/test/**/*Test*` or `**/*_test.*`
+- Or use Grep to search for test classes: `class.*Test` in test directories
 
 Read existing tests to understand:
 - Which test framework is used

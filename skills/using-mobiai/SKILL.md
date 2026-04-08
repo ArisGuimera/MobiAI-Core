@@ -11,9 +11,33 @@ compatibility: [claude-code, cursor, copilot, codex]
 
 You have access to MobiAI, an ecosystem of skills, agents, and automation tools for mobile development. MobiAI gives you expert-level knowledge for Android, iOS, KMP, Flutter, and React Native projects.
 
+## Quick Decision Guide
+
+Start here to find the right skill:
+
+- **User reports a bug / shares a ticket** → `fix-issue` (full pipeline)
+- **User shares a crash, stack trace, or error** → `analyze-crash`
+- **User mentions Firebase Crashlytics specifically** → `crashlytics`
+- **User wants to reproduce a bug on device** → `reproduce-bug`
+- **User asks to write or add tests** → `write-tests`
+- **User asks for code review** → `review-code`
+- **User wants to create a PR** → `create-pr`
+- **Need to interact with Android emulator/device** → `android-device`
+- **Need to build an Android project** → `android-build`
+- **Need to interact with iOS Simulator** → `ios-device`
+- **Need to build an iOS project** → `ios-build`
+- **Working on a KMP project** → `kmp`
+- **Working on a Flutter project** → `flutter`
+- **Working on a React Native project** → `react-native`
+- **Need to understand Android project structure** → `android-architecture`
+- **Need to understand iOS project structure** → `ios-architecture`
+- **Writing Android tests specifically** → `android-testing`
+- **Writing iOS tests specifically** → `ios-testing`
+- **Creating a new MobiAI skill** → `writing-skills`
+
 ## Available Skills
 
-Invoke these skills when the context matches. Use `/skill <name>` or load them automatically when the situation calls for it.
+These skills activate automatically based on context. When a task matches a skill's description, load and follow it.
 
 ### Core Workflow Skills
 | Skill | When to Use |

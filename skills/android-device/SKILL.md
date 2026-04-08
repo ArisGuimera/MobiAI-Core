@@ -63,11 +63,29 @@ adb shell wm size
 
 **Always dump the UI before every interaction.** This is the most important rule.
 
-### Dump + Read UI Hierarchy (One Command)
+### Dump UI Hierarchy
 
 ```bash
-adb shell uiautomator dump /sdcard/ui.xml && adb pull /sdcard/ui.xml ./ui-dump.xml && cat ./ui-dump.xml
+adb shell uiautomator dump /sdcard/ui.xml && adb pull /sdcard/ui.xml ./ui-dump.xml
 ```
+
+**Never `cat` the full XML** — it can be thousands of lines and will blow up your context. Instead, search for the element you need:
+
+```bash
+# List all visible text elements with their bounds
+grep -o 'text="[^"]*"[^/]*bounds="[^"]*"' ./ui-dump.xml
+
+# Search for a specific element by text
+grep -o '[^<]*text="Submit"[^/]*' ./ui-dump.xml
+
+# Search by resource-id
+grep -o '[^<]*resource-id="[^"]*btn_submit[^"]*"[^/]*' ./ui-dump.xml
+
+# Search by content-desc
+grep -o '[^<]*content-desc="[^"]*Close[^"]*"[^/]*' ./ui-dump.xml
+```
+
+Only `cat ./ui-dump.xml` as a last resort if grep doesn't find what you need.
 
 The XML contains every visible element with:
 - `text` — visible text on the element
@@ -91,7 +109,7 @@ The XML contains every visible element with:
 **Critical**: Every tap MUST be followed by a UI dump AND logcat check in a single command. Dialogs auto-dismiss in 2-3 seconds — if you dump UI separately, the dialog is gone.
 
 ```bash
-adb shell input tap <x> <y> && sleep 1 && adb shell uiautomator dump /sdcard/ui.xml && adb pull /sdcard/ui.xml ./ui-dump.xml && cat ./ui-dump.xml && echo "=== LOGCAT ===" && adb logcat -d -t 30
+adb shell input tap <x> <y> && sleep 1 && adb shell uiautomator dump /sdcard/ui.xml && adb pull /sdcard/ui.xml ./ui-dump.xml && grep -o 'text="[^"]*"[^/]*bounds="[^"]*"' ./ui-dump.xml && echo "=== LOGCAT ===" && adb logcat -d -t 30
 ```
 
 ### Other Interactions

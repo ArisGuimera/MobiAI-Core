@@ -30,39 +30,14 @@ claude plugin install ArisGuimera/MobiAI-Core
 
 ## Skills disponibles
 
-### Flujo de trabajo
-| Skill | Descripción |
-|-------|-------------|
-| [fix-issue](skills/fix-issue/SKILL.md) | Pipeline completo: obtener issue, analizar, corregir, testear, PR |
-| [reproduce-bug](skills/reproduce-bug/SKILL.md) | Reproducir bugs en dispositivo/emulador/simulador |
-| [analyze-crash](skills/analyze-crash/SKILL.md) | Analizar un crash a partir de cualquier fuente y encontrar la causa raíz |
-| [crashlytics](skills/crashlytics/SKILL.md) | Investigar un crash de Firebase Crashlytics en profundidad |
-| [write-tests](skills/write-tests/SKILL.md) | Escribir tests con las convenciones de cada plataforma |
-| [review-code](skills/review-code/SKILL.md) | Code review mobile: lifecycle, memoria, thread safety |
-| [create-pr](skills/create-pr/SKILL.md) | Crear PRs con contexto mobile y plan de test |
+MobiAI incluye skills para todo el ciclo de desarrollo mobile:
 
-### Android
-| Skill | Descripción |
-|-------|-------------|
-| [android-device](skills/android-device/SKILL.md) | ADB, emulador, automatización de UI, screenshots, logcat |
-| [android-build](skills/android-build/SKILL.md) | Gradle, flavors, firmado, ProGuard/R8 |
-| [android-testing](skills/android-testing/SKILL.md) | JUnit, MockK, Espresso, Compose Testing |
-| [android-architecture](skills/android-architecture/SKILL.md) | Clean Architecture, MVVM, MVI, Compose |
+- **Flujo de trabajo** — fix-issue, reproduce-bug, analyze-crash, crashlytics, write-tests, review-code, create-pr
+- **Android** — android-device, android-build, android-testing, android-architecture
+- **iOS** — ios-device, ios-build, ios-testing, ios-architecture
+- **Multiplataforma** — kmp, flutter, react-native
 
-### iOS
-| Skill | Descripción |
-|-------|-------------|
-| [ios-device](skills/ios-device/SKILL.md) | Simulador vía simctl, screenshots, logs |
-| [ios-build](skills/ios-build/SKILL.md) | xcodebuild, schemes, CocoaPods, SPM |
-| [ios-testing](skills/ios-testing/SKILL.md) | XCTest, Quick/Nimble, snapshot testing |
-| [ios-architecture](skills/ios-architecture/SKILL.md) | SwiftUI, UIKit, TCA, MVVM+Combine |
-
-### Multiplataforma
-| Skill | Descripción |
-|-------|-------------|
-| [kmp](skills/kmp/SKILL.md) | Kotlin Multiplatform |
-| [flutter](skills/flutter/SKILL.md) | Flutter/Dart |
-| [react-native](skills/react-native/SKILL.md) | React Native |
+Consultá el [catálogo completo de skills](skills/using-mobiai/SKILL.md) para ver cuándo usar cada uno.
 
 ## ¿Cómo funciona?
 

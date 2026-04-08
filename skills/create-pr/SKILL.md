@@ -67,6 +67,11 @@ gh pr create --title "fix: <short description>" --body "$(cat <<'EOF'
 - **Root cause**: <what was wrong>
 - **Fix**: <what was changed>
 
+## Platform
+- **Affected platform**: Android / iOS / both
+- **Min SDK / deployment target affected**: <e.g. API 24, iOS 15>
+- **New permissions or entitlements**: <list any, or "none">
+
 ## Changes
 - `path/to/file.kt` — <what changed in this file>
 
@@ -74,10 +79,22 @@ gh pr create --title "fix: <short description>" --body "$(cat <<'EOF'
 - [ ] Unit tests added for <what>
 - [ ] Existing tests pass
 - [ ] Compile check passes
+- [ ] Tested on device / emulator: <model, OS version>
+- [ ] Tested both orientations (portrait & landscape)
+- [ ] Checked dark mode appearance
+- [ ] Accessibility reviewed (TalkBack / VoiceOver, content descriptions)
 - [ ] <Manual test steps if applicable>
 
+## Regression Risk
+- [ ] Touches Activity/Fragment lifecycle or ViewController lifecycle
+- [ ] Touches threading / coroutines / Dispatchers / GCD
+- [ ] Touches navigation graph or deep links
+- [ ] Modifies ProGuard / R8 rules or iOS build settings
+- [ ] Changes dependency versions
+- **Risk notes**: <brief explanation of what could break>
+
 ## Screenshots / Evidence
-<If visual change, add before/after screenshots>
+<If visual change, add before/after screenshots or screen recordings>
 EOF
 )"
 ```
@@ -103,7 +120,7 @@ git log --oneline -20  # Check recent commit message style
 
 ## Commit Rules
 
-- **Never commit secrets** (.env, credentials, API keys). Warn the user if they ask to.
+- **Never commit secrets** (.env, `google-services.json`, `local.properties`, signing keystores, API keys). Warn the user if they ask to.
 - **Prefer specific files** over `git add -A` or `git add .`
 - **One logical change per commit** — don't mix unrelated changes
 - **Never force push** unless the user explicitly asks

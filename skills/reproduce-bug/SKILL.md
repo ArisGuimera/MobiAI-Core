@@ -5,7 +5,7 @@ version: 0.1.0
 license: MIT
 author: Matias Rosenstein
 compatibility: [claude-code, cursor, copilot, codex]
-platforms: [android, ios]
+platforms: [android, ios, flutter, react-native]
 ---
 
 # Reproduce Bug
@@ -33,6 +33,8 @@ After a fix is applied, re-run the **exact same steps** from the original reprod
 Check which platform the project targets and load the appropriate device skill:
 - Android → load `android-device` skill
 - iOS → load `ios-device` skill
+- Flutter → load `android-device` or `ios-device` depending on the target platform
+- React Native → load `android-device` or `ios-device` depending on the target platform
 
 ### Step 2: Plan Reproduction Steps
 
@@ -99,3 +101,9 @@ Load the `ios-device` skill for:
 - Accessibility snapshot for UI hierarchy
 - Console log monitoring
 - Screenshot capture
+
+### Flutter
+Flutter apps run on Android emulators and iOS simulators. Load the `android-device` or `ios-device` skill depending on your target platform. Additionally, check Flutter-specific logs with `flutter logs` to capture framework-level errors and widget rebuild information that may not appear in platform-native logs.
+
+### React Native
+React Native apps run on Android emulators and iOS simulators. Load the `android-device` or `ios-device` skill depending on your target platform. On Android, check JS-layer errors with `adb logcat | grep ReactNativeJS` to capture JavaScript exceptions and bridge errors that may not surface in the UI hierarchy.
