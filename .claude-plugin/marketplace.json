@@ -1,13 +1,22 @@
 {
   "name": "mobiai",
-  "version": "1.0.0",
-  "description": "Mobile development AI plugins — skills, agents, and automation for Android, iOS, KMP, Flutter, and React Native",
+  "owner": {
+    "name": "MobiAI Community",
+    "email": "arisguimera@gmail.com"
+  },
+  "metadata": {
+    "description": "Mobile development AI plugins — skills, agents, and automation for Android, iOS, KMP, Flutter, and React Native",
+    "version": "1.0.0"
+  },
   "plugins": [
     {
       "name": "mobiai-core",
-      "version": "0.1.0",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/ArisGuimera/MobiAI-Core.git"
+      },
       "description": "Core skills for mobile development: fix bugs, analyze crashes, write tests, create PRs, and more",
-      "repository": "https://github.com/ArisGuimera/MobiAI-Core"
+      "version": "0.1.0"
     }
   ]
 }
