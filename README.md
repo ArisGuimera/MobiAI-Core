@@ -24,8 +24,16 @@ Empezamos con [Claude Code](https://docs.anthropic.com/en/docs/claude-code) como
 ## Instalación
 
 ```bash
-# Mediante el sistema de plugins de Claude Code
-claude plugin install ArisGuimera/MobiAI-Core
+# 1. Agregá el marketplace de MobiAI
+/plugin marketplace add ArisGuimera/MobiAI-Core
+
+# 2. Instalá el plugin
+/plugin install mobiai-core@mobiai
+```
+
+También podés instalarlo directamente desde la CLI:
+```bash
+claude plugin install mobiai-core@mobiai
 ```
 
 ## Skills disponibles
