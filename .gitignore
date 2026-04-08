@@ -11,6 +11,9 @@ Thumbs.db
 # Node (if any scripts need it)
 node_modules/
 
+# Claude Code local config
+.claude/
+
 # Output
 output/
 *.log
