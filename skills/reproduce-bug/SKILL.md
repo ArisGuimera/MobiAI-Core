@@ -75,14 +75,14 @@ Return a clear report:
 
 - **Never retry the same action more than twice.** If something fails, try an alternative path.
 - **If still blocked after 2 attempts**, stop and report what happened.
-- **Do NOT investigate root causes.** That's the fix agent's job. Your job is to USE the app and report what you see.
+- **Focus on reproducing, not fixing.** If you spot an obvious root cause while reproducing, note it — but don't get sidetracked into a code investigation. Finish the reproduction first.
 
 ## App Crash on Startup
 
 If the app crashes before any screen loads:
 1. Capture the crash from device logs
-2. Report it immediately — do not try to investigate the code
-3. The fix agent will handle root cause analysis
+2. Report the crash signal and stack trace
+3. Then proceed to investigate the root cause in the code using the `analyze-crash` skill
 
 ## Platform-Specific Details
 

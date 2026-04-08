@@ -20,7 +20,7 @@ Deep investigation of a crash reported through Firebase Crashlytics. Goes beyond
 
 ## Prerequisites
 
-This skill requires access to Firebase Crashlytics data. The agent should check what tools are available:
+This skill requires access to Firebase Crashlytics data. Check what tools are available:
 
 1. **Firebase MCP tools** — if configured, use `crashlytics_get_issue`, `crashlytics_list_events`, `crashlytics_batch_get_events` to fetch data directly
 2. **Firebase CLI** — `firebase crashlytics:list` and related commands

@@ -39,7 +39,7 @@ Flow becomes: fetch issue → search codebase → fix → test → PR
 
 If the build fails:
 - Report the error to the user
-- **Skip directly to code analysis** — the fix agent can still read and fix code without a running app
+- **Skip directly to code analysis** — you can still read and fix code without a running app
 - Do NOT stop the entire workflow
 
 ## Handling User Feedback After PR
