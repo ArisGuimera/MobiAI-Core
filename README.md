@@ -10,18 +10,20 @@ MobiAI es un ecosistema open source que potencia tu desarrollo mobile con IA. No
 - **Agentes** — Agentes especializados que ejecutan tareas complejas de forma autónoma: un agente que analiza código, otro que interactúa con el dispositivo, otro que escribe tests.
 - **Pipeline automatizado** — Un flujo completo de corrección de bugs: recibe un error o ticket desde cualquier plataforma de mensajería, reproduce el bug en un emulador, encuentra la causa raíz, aplica el fix, ejecuta tests y crea el PR. Todo sin intervención humana.
 
-Empezamos con [Claude Code](https://docs.anthropic.com/en/docs/claude-code) como plataforma principal, pero la visión es que funcione con cualquier herramienta de IA.
+Compatible con **Claude Code**, **Cursor**, **Copilot CLI**, **Codex** y **Gemini CLI**.
 
 ## Estado actual
 
 | Componente | Estado |
 |------------|--------|
-| Skills (Claude Code plugin) | Disponible |
+| Skills (multi-plataforma) | Disponible |
 | Agentes autónomos | En desarrollo |
 | Pipeline automatizado (bot de mensajería) | Planificado |
 | Marketplace de skills comunitarios | Planificado |
 
 ## Instalación
+
+### Claude Code
 
 ```bash
 # 1. Agregá el marketplace de MobiAI
@@ -36,10 +38,50 @@ También podés instalarlo directamente desde la CLI:
 claude plugin install mobiai-core@mobiai
 ```
 
-### Actualizar
+### Cursor
+
+```bash
+# Desde Cursor, instalá el plugin del marketplace
+/plugin marketplace add ArisGuimera/MobiAI-Core
+/plugin install mobiai-core@mobiai
+```
+
+### Copilot CLI
+
+```bash
+# Desde Copilot CLI, instalá el plugin del marketplace
+/plugin marketplace add ArisGuimera/MobiAI-Core
+/plugin install mobiai-core@mobiai
+```
+
+### Gemini CLI
+
+```bash
+gemini extension install ArisGuimera/MobiAI-Core
+```
+
+### Codex
+
+Consultá [`.codex/INSTALL.md`](.codex/INSTALL.md) para instrucciones de instalación con symlinks.
+
+## Actualizar
+
+### Claude Code / Cursor / Copilot CLI
 
 ```bash
 /plugin update mobiai-core
+```
+
+### Gemini CLI
+
+```bash
+gemini extension update mobiai-core
+```
+
+### Codex
+
+```bash
+cd ~/.codex/mobiai-core && git pull
 ```
 
 ## Skills disponibles
@@ -55,15 +97,15 @@ Consultá el [catálogo completo de skills](skills/using-mobiai/SKILL.md) para v
 
 ## ¿Cómo funciona?
 
-1. **Instalá el plugin** — MobiAI registra sus skills en tu asistente de IA
+1. **Instalá el plugin** — MobiAI registra sus skills en tu asistente de IA (Claude Code, Cursor, Copilot CLI, Codex o Gemini CLI)
 2. **Empezá a programar** — Los skills se activan automáticamente según el contexto
 3. **Detección de plataforma** — MobiAI detecta tu proyecto (Android, iOS, Flutter...) y aplica el contexto adecuado
-4. **Tu proyecto, tus reglas** — Los skills respetan las convenciones de tu `CLAUDE.md`
+4. **Tu proyecto, tus reglas** — Los skills respetan las convenciones de tu proyecto (`CLAUDE.md`, `GEMINI.md`, `AGENTS.md`)
 
 ## Roadmap
 
 ### Fase 1 — Skills (actual)
-Plugin de Claude Code con skills para todas las plataformas mobile. La comunidad puede contribuir nuevos skills.
+Plugin multi-plataforma con skills para todas las plataformas mobile. Compatible con Claude Code, Cursor, Copilot CLI, Codex y Gemini CLI. La comunidad puede contribuir nuevos skills.
 
 ### Fase 2 — Agentes
 Agentes especializados que van más allá de las instrucciones: analizan código de forma autónoma, interactúan con dispositivos, y toman decisiones inteligentes basándose en el contexto.

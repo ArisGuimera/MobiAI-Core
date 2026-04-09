@@ -1,30 +1,55 @@
 #!/usr/bin/env bash
 # MobiAI-Core — SessionStart hook
 # Loads the bootstrap skill into the agent's context on every session start.
+# Supports Claude Code, Cursor, Copilot CLI, and SDK-standard platforms.
 
 set -euo pipefail
 
-PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
+# Determine plugin root directory (Cursor, Claude Code, or fallback)
+PLUGIN_ROOT="${CURSOR_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}}"
 SKILL_FILE="$PLUGIN_ROOT/skills/using-mobiai/SKILL.md"
 
 if [ ! -f "$SKILL_FILE" ]; then
-  echo '{"message": "MobiAI-Core: bootstrap skill not found at '"$SKILL_FILE"'"}'
+  printf '{"message": "MobiAI-Core: bootstrap skill not found at %s"}\n' "$SKILL_FILE"
   exit 0
 fi
 
 # Read the skill content
 SKILL_CONTENT=$(cat "$SKILL_FILE")
 
-# Escape for JSON (cross-platform: try python3, python, node, then sed/awk fallback)
-escape_json() {
-  printf '%s' "$1" | python3 -c 'import sys,json; print(json.dumps(sys.stdin.read()))' 2>/dev/null && return
-  printf '%s' "$1" | python  -c 'import sys,json; print(json.dumps(sys.stdin.read()))' 2>/dev/null && return
-  printf '%s' "$1" | node -e "process.stdin.resume();let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>console.log(JSON.stringify(d)))" 2>/dev/null && return
-  # Last resort: sed/awk (limited support for special characters)
-  printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g; s/\t/\\t/g' | awk '{printf "%s\\n", $0}' | sed 's/\\n$//'
+# Escape string for JSON embedding using bash parameter substitution.
+# Each ${s//old/new} is a single C-level pass — orders of magnitude
+# faster than the python3/node/sed chain this replaces.
+escape_for_json() {
+    local s="$1"
+    s="${s//\\/\\\\}"
+    s="${s//\"/\\\"}"
+    s="${s//$'\n'/\\n}"
+    s="${s//$'\r'/\\r}"
+    s="${s//$'\t'/\\t}"
+    printf '%s' "$s"
 }
-SKILL_JSON=$(escape_json "$SKILL_CONTENT")
 
-cat <<EOF
-{"message": "<MOBIAI_CONTEXT>\n${SKILL_JSON}\n</MOBIAI_CONTEXT>"}
-EOF
+SKILL_ESCAPED=$(escape_for_json "$SKILL_CONTENT")
+SESSION_CONTEXT="<MOBIAI_CONTEXT>\n${SKILL_ESCAPED}\n</MOBIAI_CONTEXT>"
+
+# Output context injection as JSON.
+# Cursor hooks expect additional_context (snake_case).
+# Claude Code hooks expect hookSpecificOutput.additionalContext (nested).
+# Copilot CLI (v1.0.11+) and others expect additionalContext (top-level, SDK standard).
+# Claude Code reads BOTH additional_context and hookSpecificOutput without
+# deduplication, so we must emit only the field the current platform consumes.
+#
+# Uses printf instead of heredoc to work around bash 5.3+ heredoc hang.
+if [ -n "${CURSOR_PLUGIN_ROOT:-}" ]; then
+  # Cursor sets CURSOR_PLUGIN_ROOT (may also set CLAUDE_PLUGIN_ROOT)
+  printf '{\n  "additional_context": "%s"\n}\n' "$SESSION_CONTEXT"
+elif [ -n "${CLAUDE_PLUGIN_ROOT:-}" ] && [ -z "${COPILOT_CLI:-}" ]; then
+  # Claude Code sets CLAUDE_PLUGIN_ROOT without COPILOT_CLI
+  printf '{\n  "hookSpecificOutput": {\n    "hookEventName": "SessionStart",\n    "additionalContext": "%s"\n  }\n}\n' "$SESSION_CONTEXT"
+else
+  # Copilot CLI (sets COPILOT_CLI=1) or unknown platform — SDK standard format
+  printf '{\n  "additionalContext": "%s"\n}\n' "$SESSION_CONTEXT"
+fi
+
+exit 0

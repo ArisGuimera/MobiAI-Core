@@ -104,7 +104,7 @@ This means:
 | `description` | Yes | **Critical**: one-line trigger condition that tells the AI WHEN to load this skill. Write "Use when..." not a list of keywords. |
 | `version` | Yes | Semver version |
 | `license` | Yes | License (MIT recommended) |
-| `author` | Yes | Author name or "MobiAI Community" |
+| `author` | Yes | Author name (e.g. "Matias Rosenstein") |
 | `compatibility` | Yes | Which AI tools support this skill |
 | `platforms` | No | Which mobile platforms this applies to |
 

@@ -4,7 +4,7 @@ description: Bootstrap skill loaded on every session — teaches the agent about
 version: 0.1.0
 license: MIT
 author: Matias Rosenstein
-compatibility: [claude-code, cursor, copilot, codex]
+compatibility: [claude-code, cursor, copilot, codex, gemini]
 ---
 
 # MobiAI — Mobile Development Ecosystem
@@ -73,6 +73,26 @@ These skills activate automatically based on context. When a task matches a skil
 | Skill | When to Use |
 |-------|-------------|
 | `writing-skills` | User wants to create a new MobiAI skill |
+
+## How to Access Skills
+
+**In Claude Code:** Use the `Skill` tool. When you invoke a skill, its content is loaded and presented to you — follow it directly.
+
+**In Copilot CLI:** Use the `skill` tool. Skills are auto-discovered from installed plugins.
+
+**In Gemini CLI:** Skills activate via the `activate_skill` tool. Gemini loads skill metadata at session start and activates the full content on demand.
+
+**In Codex:** Skills are discovered natively from the symlinked skills directory. See `.codex/INSTALL.md` for setup.
+
+**In other environments:** Check your platform's documentation for how skills are loaded.
+
+## Platform Adaptation
+
+Skills use Claude Code tool names (Read, Edit, Write, Bash, Grep, Glob, etc.) as the canonical reference. If you are on a different platform, consult the tool mapping references:
+
+- **Copilot CLI**: `references/copilot-tools.md`
+- **Codex**: `references/codex-tools.md`
+- **Gemini CLI**: `references/gemini-tools.md` (loaded automatically via GEMINI.md)
 
 ## How to Use Skills
 

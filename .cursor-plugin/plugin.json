@@ -1,0 +1,18 @@
+{
+  "name": "mobiai-core",
+  "displayName": "MobiAI Core",
+  "description": "AI ecosystem for mobile development — skills, specialized agents, and automated pipelines for Android, iOS, KMP, Flutter, and React Native",
+  "version": "0.1.0",
+  "author": {
+    "name": "Matias Rosenstein",
+    "url": "https://github.com/ArisGuimera/MobiAI-Core"
+  },
+  "homepage": "https://github.com/ArisGuimera/MobiAI-Core",
+  "repository": "https://github.com/ArisGuimera/MobiAI-Core",
+  "license": "MIT",
+  "keywords": ["mobile", "android", "ios", "flutter", "react-native", "kmp"],
+  "skills": "./skills/",
+  "agents": "./agents/",
+  "commands": "./commands/",
+  "hooks": "./hooks/hooks-cursor.json"
+}
