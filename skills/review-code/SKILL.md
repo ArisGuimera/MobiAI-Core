@@ -20,13 +20,33 @@ Perform a mobile-specific code review, checking for common issues that static an
 
 ## Workflow
 
-### Step 1: Understand the Change
+### Step 1: Identify the Correct Base Branch
 
-1. Read the diff or changed files
+**CRITICAL**: Before reviewing any code, determine the target branch this change will be merged into. Do NOT assume `main` or `master`.
+
+1. Check if there's an open PR: `gh pr view --json baseRefName` — use the PR's base branch
+2. If no PR exists, ask the user: "What branch are you merging into?"
+3. If the user specified a branch, use that
+4. Only default to `main`/`master` as a last resort
+
+Generate the diff against the correct base:
+```bash
+# CORRECT: diff against the actual target branch
+git diff <target-branch>...HEAD
+
+# WRONG: always diffing against main
+git diff main...HEAD
+```
+
+This prevents false positives — showing hundreds of "changes" that are actually from the base branch, not from this PR.
+
+### Step 2: Understand the Change
+
+1. Read the diff against the correct base branch (from Step 1)
 2. Understand the intent — what problem does this solve?
 3. Check the related issue/ticket for context
 
-### Step 2: Review Checklist
+### Step 3: Review Checklist
 
 #### Universal Checks
 - [ ] **Minimal change**: Does the diff only contain what's necessary?
@@ -63,7 +83,7 @@ Perform a mobile-specific code review, checking for common issues that static an
 - [ ] **Navigation**: Proper cleanup in `useEffect` return?
 - [ ] **Platform-specific code**: `Platform.OS` checks where needed?
 
-### Step 3: Provide Feedback
+### Step 4: Provide Feedback
 
 Structure your review as:
 

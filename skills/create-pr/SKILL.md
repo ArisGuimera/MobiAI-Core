@@ -52,7 +52,23 @@ If the project has a changelog file (CHANGELOG.md, HISTORY.md, or a section in R
 3. Follow the project's existing style (Keep a Changelog, custom format, etc.)
 4. Don't duplicate entries — check if the issue key already exists
 
-### Step 3: Push and Create PR
+### Step 3: Determine the Base Branch
+
+**CRITICAL**: Do NOT assume the PR targets `main` or `master`.
+
+1. **Ask the user** if they haven't specified: "What branch should this be merged into?"
+2. If the current branch was created from another branch, use that as the base:
+   ```bash
+   # Check what branch this was branched from
+   git log --oneline --first-parent main..HEAD | tail -1  # if few commits → likely from main
+   git log --oneline --first-parent develop..HEAD | tail -1  # check develop too
+   ```
+3. Check the repo's default branch: `gh repo view --json defaultBranchRef`
+4. If the project uses gitflow or similar (develop, release/*), respect that workflow
+
+Use `--base <branch>` when creating the PR to target the correct branch.
+
+### Step 4: Push and Create PR
 
 ```bash
 git push -u origin fix/<issue-key>
@@ -61,7 +77,7 @@ git push -u origin fix/<issue-key>
 Then create the PR with proper structure:
 
 ```bash
-gh pr create --title "fix: <short description>" --body "$(cat <<'EOF'
+gh pr create --base <target-branch> --title "fix: <short description>" --body "$(cat <<'EOF'
 ## Summary
 - **Issue**: <issue-key>
 - **Root cause**: <what was wrong>
@@ -99,7 +115,7 @@ EOF
 )"
 ```
 
-### Step 4: Verify
+### Step 5: Verify
 
 After creating the PR:
 1. Check that CI passes (if configured)
