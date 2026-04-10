@@ -57,7 +57,6 @@ git diff "$BASE_BRANCH"...HEAD
 - [ ] **Thread safety**: Is shared mutable state properly synchronized?
 - [ ] **Null safety**: Are nullable values handled correctly?
 - [ ] **Edge cases**: Empty collections, null inputs, boundary values?
-- [ ] **Test coverage**: Are there tests for the changed code? If not, flag it explicitly. Check for unit tests, integration tests, or UI tests related to the modified files. Missing tests for new logic or bug fixes is a blocking issue — always call it out.
 
 #### Android-Specific
 - [ ] **Lifecycle awareness**: Are observers/listeners registered and unregistered properly?
@@ -86,7 +85,23 @@ git diff "$BASE_BRANCH"...HEAD
 - [ ] **Navigation**: Proper cleanup in `useEffect` return?
 - [ ] **Platform-specific code**: `Platform.OS` checks where needed?
 
-### Step 4: Provide Feedback
+### Step 4: Verify Test Coverage
+
+Check if the changed code has tests. This is a separate step — do not skip it.
+
+1. Look at the diff: identify new logic, bug fixes, or behavior changes
+2. Search for existing tests related to the modified files:
+   - Android: look for test classes in `src/test/` or `src/androidTest/` that test the same classes
+   - iOS: look for test files in the test target that cover the same types
+   - Flutter: look for `_test.dart` files matching the changed files
+   - React Native: look for `.test.js` / `.test.tsx` files
+3. If there are NO tests for the changed code, report it as a **blocking issue** in your review:
+   - "No unit tests found for [changed class/function]. This [bug fix / new logic / behavior change] should have test coverage."
+4. If tests exist but don't cover the new changes, flag it as a suggestion
+
+Always include a "Test coverage" section in your review output, even if tests are present. State what you found.
+
+### Step 5: Provide Feedback
 
 Structure your review as:
 
