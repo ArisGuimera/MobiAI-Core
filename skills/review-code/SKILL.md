@@ -1,7 +1,7 @@
 ---
 name: review-code
 description: Use when reviewing mobile code changes — check for lifecycle issues, memory leaks, thread safety, and platform-specific pitfalls
-version: 0.1.0
+version: 0.2.0
 license: MIT
 author: Matias Rosenstein
 compatibility: [claude-code, cursor, copilot, codex]
@@ -22,23 +22,25 @@ Perform a mobile-specific code review, checking for common issues that static an
 
 ### Step 1: Identify the Correct Base Branch
 
-**CRITICAL**: Before reviewing any code, determine the target branch this change will be merged into. Do NOT assume `main` or `master`.
+<STOP>
+You MUST complete this step before reading ANY code or generating ANY diff.
+Do NOT skip this. Do NOT assume `main` or `master`. Get the real target branch first.
+</STOP>
 
-1. Check if there's an open PR: `gh pr view --json baseRefName` — use the PR's base branch
-2. If no PR exists, ask the user: "What branch are you merging into?"
-3. If the user specified a branch, use that
-4. Only default to `main`/`master` as a last resort
+Determine the target branch this change will be merged into:
 
-Generate the diff against the correct base:
+1. **If reviewing a PR**: `gh pr view --json baseRefName --jq '.baseRefName'` — this is the authoritative answer
+2. **If the user mentioned a branch**: use that branch
+3. **If no PR and no branch mentioned**: ask the user "What branch is this being merged into?"
+4. **Only as absolute last resort**: default to the repo's default branch via `gh repo view --json defaultBranchRef --jq '.defaultBranchRef.name'`
+
+Then generate the diff against that branch:
 ```bash
-# CORRECT: diff against the actual target branch
-git diff <target-branch>...HEAD
-
-# WRONG: always diffing against main
-git diff main...HEAD
+BASE_BRANCH="<the branch from above>"
+git diff "$BASE_BRANCH"...HEAD
 ```
 
-This prevents false positives — showing hundreds of "changes" that are actually from the base branch, not from this PR.
+**Why this matters**: If you diff against the wrong branch, you'll report hundreds of false changes that belong to the base branch, not to this PR. The user will see a noisy, useless review.
 
 ### Step 2: Understand the Change
 
@@ -55,6 +57,7 @@ This prevents false positives — showing hundreds of "changes" that are actuall
 - [ ] **Thread safety**: Is shared mutable state properly synchronized?
 - [ ] **Null safety**: Are nullable values handled correctly?
 - [ ] **Edge cases**: Empty collections, null inputs, boundary values?
+- [ ] **Test coverage**: Are there tests for the changed code? If not, flag it explicitly. Check for unit tests, integration tests, or UI tests related to the modified files. Missing tests for new logic or bug fixes is a blocking issue — always call it out.
 
 #### Android-Specific
 - [ ] **Lifecycle awareness**: Are observers/listeners registered and unregistered properly?
