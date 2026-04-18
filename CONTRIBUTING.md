@@ -5,14 +5,14 @@
 ## Formas de contribuir
 
 ### 1. Añadir un nuevo Skill
-Consultá la [guía para crear skills](docs/crear-skills.md).
+Consulta la [guía para crear skills](docs/crear-skills.md).
 
 **Pasos rápidos:**
-1. Hacé fork del repo
-2. Creá `skills/nombre-de-tu-skill/SKILL.md`
-3. Añadí tu skill a la tabla en `skills/using-mobiai/SKILL.md`
-4. Probalo en un proyecto real
-5. Abrí un PR
+1. Haz fork del repo
+2. Crea `skills/nombre-de-tu-skill/SKILL.md`
+3. Añade tu skill a la tabla en `skills/using-mobiai/SKILL.md`
+4. Pruébalo en un proyecto real
+5. Abre un PR
 
 ### 2. Mejorar Skills o Agentes existentes
 ¿Encontraste algo que podría ser mejor? Mejoras comunes:
@@ -22,7 +22,7 @@ Consultá la [guía para crear skills](docs/crear-skills.md).
 - Árboles de decisión más claros
 
 ### 3. Reportar problemas
-Si un skill o agente da consejo incorrecto o le falta algo, abrí un issue con:
+Si un skill o agente da consejo incorrecto o le falta algo, abre un issue con:
 - Qué skill o agente
 - Qué salió mal
 - Cuál debería ser el comportamiento correcto
@@ -37,19 +37,19 @@ Antes de enviar una contribución:
 - [ ] **Comandos exactos** — Los comandos shell incluyen todos los flags y placeholders
 - [ ] **Árboles de decisión** — Lógica de ramificación clara para diferentes escenarios
 - [ ] **Secciones por plataforma** — Si es multi-plataforma, cada plataforma tiene su sección
-- [ ] **Conciso** — Mové explicaciones detalladas a archivos en `references/`
+- [ ] **Conciso** — Mueve explicaciones detalladas a archivos en `references/`
 - [ ] **Sin secretos** — Sin API keys, tokens ni credenciales
 
 ## Proceso de Pull Request
 
-1. Hacé fork y creá una rama: `feat/mi-nuevo-skill` o `fix/android-device-typo`
-2. Hacé tus cambios
-3. Probá de principio a fin
-4. Abrí un PR con:
+1. Haz fork y crea una rama: `feat/mi-nuevo-skill` o `fix/android-device-typo`
+2. Haz tus cambios
+3. Prueba de principio a fin
+4. Abre un PR con:
    - Qué hace tu contribución
    - Cómo lo probaste
    - Qué plataformas soporta
 
 ## Código de conducta
 
-Sé respetuoso, sé útil, sé constructivo. Todos estamos acá para aprender y construir mejores herramientas juntos.
+Sé respetuoso, sé útil, sé constructivo. Todos estamos aquí para aprender y construir mejores herramientas juntos.

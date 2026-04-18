@@ -26,14 +26,14 @@ Compatible con **Claude Code**, **Cursor**, **Copilot CLI**, **Codex** y **Gemin
 ### Claude Code
 
 ```bash
-# 1. Agregá el marketplace de MobiAI
+# 1. Agrega el marketplace de MobiAI
 /plugin marketplace add ArisGuimera/MobiAI-Core
 
-# 2. Instalá el plugin
+# 2. Instala el plugin
 /plugin install mobiai-core@mobiai
 ```
 
-También podés instalarlo directamente desde la CLI:
+También puedes instalarlo directamente desde la CLI:
 ```bash
 claude plugin install mobiai-core@mobiai
 ```
@@ -41,7 +41,7 @@ claude plugin install mobiai-core@mobiai
 ### Cursor
 
 ```bash
-# Desde Cursor, instalá el plugin del marketplace
+# Desde Cursor, instala el plugin del marketplace
 /plugin marketplace add ArisGuimera/MobiAI-Core
 /plugin install mobiai-core@mobiai
 ```
@@ -49,7 +49,7 @@ claude plugin install mobiai-core@mobiai
 ### Copilot CLI
 
 ```bash
-# Desde Copilot CLI, instalá el plugin del marketplace
+# Desde Copilot CLI, instala el plugin del marketplace
 /plugin marketplace add ArisGuimera/MobiAI-Core
 /plugin install mobiai-core@mobiai
 ```
@@ -62,7 +62,7 @@ gemini extension install ArisGuimera/MobiAI-Core
 
 ### Codex
 
-Consultá [`.codex/INSTALL.md`](.codex/INSTALL.md) para instrucciones de instalación con symlinks.
+Consulta [`.codex/INSTALL.md`](.codex/INSTALL.md) para instrucciones de instalación con symlinks.
 
 ## Actualizar
 
@@ -92,13 +92,14 @@ MobiAI incluye skills para todo el ciclo de desarrollo mobile:
 - **Android** — android-device, android-build, android-testing, android-architecture
 - **iOS** — ios-device, ios-build, ios-testing, ios-architecture
 - **Multiplataforma** — kmp, flutter, react-native
+- **Proceso** — mobile-brainstorming, mobile-debugging, mobile-tdd, mobile-planning, mobile-verification, mobile-executing-plans, mobile-parallel-agents, mobile-subagent-development, mobile-worktrees, mobile-finishing-branch
 
-Consultá el [catálogo completo de skills](skills/using-mobiai/SKILL.md) para ver cuándo usar cada uno.
+Consulta el [catálogo completo de skills](skills/using-mobiai/SKILL.md) para ver cuándo usar cada uno.
 
 ## ¿Cómo funciona?
 
-1. **Instalá el plugin** — MobiAI registra sus skills en tu asistente de IA (Claude Code, Cursor, Copilot CLI, Codex o Gemini CLI)
-2. **Empezá a programar** — Los skills se activan automáticamente según el contexto
+1. **Instala el plugin** — MobiAI registra sus skills en tu asistente de IA (Claude Code, Cursor, Copilot CLI, Codex o Gemini CLI)
+2. **Empieza a programar** — Los skills se activan automáticamente según el contexto
 3. **Detección de plataforma** — MobiAI detecta tu proyecto (Android, iOS, Flutter...) y aplica el contexto adecuado
 4. **Tu proyecto, tus reglas** — Los skills respetan las convenciones de tu proyecto (`CLAUDE.md`, `GEMINI.md`, `AGENTS.md`)
 
@@ -120,15 +121,15 @@ Un marketplace donde la comunidad publica y descarga skills, agentes y configura
 
 ¡Nos encantaría tu ayuda! MobiAI está creado por desarrolladores mobile, para desarrolladores mobile.
 
-- **Añadir un nuevo skill**: Consultá la [guía para crear skills](docs/crear-skills.md)
-- **Mejorar skills existentes**: Abrí un PR con mejores instrucciones o manejo de casos edge
-- **Reportar problemas**: Abrí un issue si un skill da mal consejo o le falta algo
+- **Añadir un nuevo skill**: Consulta la [guía para crear skills](docs/crear-skills.md)
+- **Mejorar skills existentes**: Abre un PR con mejores instrucciones o manejo de casos edge
+- **Reportar problemas**: Abre un issue si un skill da mal consejo o le falta algo
 
-Consultá [CONTRIBUTING.md](CONTRIBUTING.md) para más detalles.
+Consulta [CONTRIBUTING.md](CONTRIBUTING.md) para más detalles.
 
 ## Comunidad
 
-Unite a la comunidad de desarrolladores mobile que comparten conocimiento y herramientas. Próximamente más información.
+Únete a la comunidad de desarrolladores mobile que comparten conocimiento y herramientas. Próximamente más información.
 
 ## Licencia
 
