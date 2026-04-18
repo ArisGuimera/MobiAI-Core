@@ -1,9 +1,7 @@
 ---
 name: review-code
 description: Use when reviewing mobile code changes — check for lifecycle issues, memory leaks, thread safety, and platform-specific pitfalls
-version: 0.2.0
 license: MIT
-author: Matias Rosenstein
 compatibility: [claude-code, cursor, copilot, codex]
 platforms: [android, ios, kmp, flutter, react-native]
 ---

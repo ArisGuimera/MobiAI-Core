@@ -1,9 +1,7 @@
 ---
 name: ios-architecture
 description: Use when creating features, refactoring, or navigating an iOS codebase — understand project structure, find where to make changes, follow existing patterns
-version: 0.1.0
 license: MIT
-author: Matias Rosenstein
 compatibility: [claude-code, cursor, copilot, codex]
 platforms: [ios]
 ---

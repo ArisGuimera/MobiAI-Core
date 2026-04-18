@@ -1,9 +1,7 @@
 ---
 name: ios-testing
 description: Use when writing or running tests in an iOS project — unit tests, UI tests, snapshot tests, choosing the right framework
-version: 0.1.0
 license: MIT
-author: Matias Rosenstein
 compatibility: [claude-code, cursor, copilot, codex]
 platforms: [ios]
 ---

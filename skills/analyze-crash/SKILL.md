@@ -1,9 +1,7 @@
 ---
 name: analyze-crash
 description: Use when the user shares a crash from any source (stack trace, log, screenshot, error description) and wants to find the root cause and fix it
-version: 0.1.0
 license: MIT
-author: Matias Rosenstein
 compatibility: [claude-code, cursor, copilot, codex]
 platforms: [android, ios, kmp, flutter, react-native]
 ---
@@ -57,6 +55,8 @@ Identify the category to guide your investigation:
 | **Type casting** | ClassCastException, Swift `as!` failure | Wrong type assumptions, generics, serialization |
 
 ### Step 3: Find the Root Cause in the Codebase
+
+For root cause investigation, follow the `mobile-debugging` skill methodology: no guessing, trace data backward, form hypotheses based on evidence.
 
 Starting from the crash location:
 

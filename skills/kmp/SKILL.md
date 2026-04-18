@@ -1,9 +1,7 @@
 ---
 name: kmp
 description: Use when working on a Kotlin Multiplatform project — shared code, expect/actual declarations, platform-specific implementations, building and testing
-version: 0.1.0
 license: MIT
-author: Matias Rosenstein
 compatibility: [claude-code, cursor, copilot, codex]
 platforms: [kmp]
 ---

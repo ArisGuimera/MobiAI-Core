@@ -1,9 +1,7 @@
 ---
 name: writing-skills
 description: Guide the user through creating a new MobiAI skill — generate SKILL.md with proper structure, frontmatter, and actionable instructions
-version: 0.1.0
 license: MIT
-author: Matias Rosenstein
 compatibility: [claude-code, cursor, copilot, codex]
 ---
 
@@ -37,10 +35,8 @@ A SKILL.md has two parts: **frontmatter** (metadata) and **body** (instructions)
 ---
 name: my-new-skill
 description: Use when [trigger condition] — [what the skill helps with]
-version: 1.0.0
 license: MIT
-author: Author Name
-compatibility: [claude-code, cursor, copilot, codex]
+compatibility: [claude-code, cursor, copilot, codex, gemini]
 platforms: [android, ios, kmp, flutter, react-native]  # Optional
 ---
 ```
@@ -102,9 +98,7 @@ This means:
 |-------|----------|-------------|
 | `name` | Yes | Unique identifier (kebab-case) |
 | `description` | Yes | **Critical**: one-line trigger condition that tells the AI WHEN to load this skill. Write "Use when..." not a list of keywords. |
-| `version` | Yes | Semver version |
 | `license` | Yes | License (MIT recommended) |
-| `author` | Yes | Author name (e.g. "Matias Rosenstein") |
 | `compatibility` | Yes | Which AI tools support this skill |
 | `platforms` | No | Which mobile platforms this applies to |
 

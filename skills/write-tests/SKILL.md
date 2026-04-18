@@ -1,9 +1,7 @@
 ---
 name: write-tests
 description: Use when the user asks to write tests for mobile code, or after applying a fix that needs regression tests
-version: 0.1.0
 license: MIT
-author: Matias Rosenstein
 compatibility: [claude-code, cursor, copilot, codex]
 platforms: [android, ios, kmp, flutter, react-native]
 ---
@@ -17,6 +15,8 @@ Write tests that cover a bug fix or new feature, following the project's existin
 - After applying a fix, to prevent regression
 - User asks to add tests for specific code
 - As part of the `fix-issue` pipeline
+
+**Note**: If you're implementing a new feature or fix from scratch, consider using `mobile-tdd` instead — it enforces writing tests FIRST (Red-Green-Refactor). This skill is for adding tests to existing code.
 
 ## Workflow
 

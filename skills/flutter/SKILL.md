@@ -1,9 +1,7 @@
 ---
 name: flutter
 description: Use when working on a Flutter or Dart project — building, testing, debugging, understanding state management and project structure
-version: 0.1.0
 license: MIT
-author: Matias Rosenstein
 compatibility: [claude-code, cursor, copilot, codex]
 platforms: [flutter]
 ---

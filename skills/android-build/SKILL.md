@@ -1,9 +1,7 @@
 ---
 name: android-build
 description: Use when building an Android project, configuring flavors or variants, troubleshooting build failures, or managing Gradle dependencies
-version: 0.1.0
 license: MIT
-author: Matias Rosenstein
 compatibility: [claude-code, cursor, copilot, codex]
 platforms: [android]
 ---

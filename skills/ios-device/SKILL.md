@@ -1,9 +1,7 @@
 ---
 name: ios-device
 description: Use when interacting with an iOS Simulator — run simctl commands, capture screenshots, read device logs, manage simulators
-version: 0.1.0
 license: MIT
-author: Matias Rosenstein
 compatibility: [claude-code, cursor, copilot, codex]
 platforms: [ios]
 ---

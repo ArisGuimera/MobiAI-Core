@@ -1,9 +1,7 @@
 ---
 name: using-mobiai
 description: Bootstrap skill loaded on every session — teaches the agent about MobiAI skills, agents, and capabilities
-version: 0.1.0
 license: MIT
-author: Matias Rosenstein
 compatibility: [claude-code, cursor, copilot, codex, gemini]
 ---
 
@@ -33,6 +31,15 @@ Start here to find the right skill:
 - **Need to understand iOS project structure** → `ios-architecture`
 - **Writing Android tests specifically** → `android-testing`
 - **Writing iOS tests specifically** → `ios-testing`
+- **User wants to design a new feature before coding** → `mobile-brainstorming`
+- **Bug or unexpected behavior, need to find root cause** → `mobile-debugging`
+- **Implementing a feature or fix with tests first** → `mobile-tdd`
+- **Planning a multi-step feature** → `mobile-planning`
+- **About to claim work is done** → `mobile-verification`
+- **Have a plan to execute step by step** → `mobile-executing-plans`
+- **Multiple independent tasks to parallelize** → `mobile-parallel-agents`
+- **Starting feature work in isolation** → `mobile-worktrees`
+- **Implementation done, need to integrate** → `mobile-finishing-branch`
 - **Creating a new MobiAI skill** → `writing-skills`
 
 ## Available Skills
@@ -68,6 +75,20 @@ These skills activate automatically based on context. When a task matches a skil
 | `kmp` | Working with Kotlin Multiplatform projects |
 | `flutter` | Working with Flutter/Dart projects |
 | `react-native` | Working with React Native projects |
+
+### Process Skills
+| Skill | When to Use |
+|-------|-------------|
+| `mobile-brainstorming` | Before creating any feature — explore design, platform constraints, tradeoffs |
+| `mobile-debugging` | Any bug, crash, or unexpected behavior — systematic root cause investigation |
+| `mobile-tdd` | Implementing any feature or fix — write tests first, then code |
+| `mobile-planning` | Planning a multi-step feature — detailed plans with exact paths and commands |
+| `mobile-verification` | Before claiming work is done — run builds and tests, verify output |
+| `mobile-executing-plans` | Executing an approved plan task by task with build checkpoints |
+| `mobile-parallel-agents` | 2+ independent tasks that can run simultaneously |
+| `mobile-subagent-development` | Executing plans with subagents — one per task, with spec and quality review |
+| `mobile-worktrees` | Starting feature work in isolation — git worktrees with platform setup |
+| `mobile-finishing-branch` | Implementation complete — decide how to integrate (merge, PR, keep, discard) |
 
 ### Meta Skills
 | Skill | When to Use |

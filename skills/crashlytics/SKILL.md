@@ -1,9 +1,7 @@
 ---
 name: crashlytics
 description: Use when the user shares a Firebase Crashlytics crash link, crash ID, or asks to investigate a Crashlytics issue in depth
-version: 0.1.0
 license: MIT
-author: Matias Rosenstein
 compatibility: [claude-code, cursor, copilot, codex]
 platforms: [android, ios, flutter, react-native]
 ---

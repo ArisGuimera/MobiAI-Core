@@ -1,9 +1,7 @@
 ---
 name: react-native
 description: Use when working on a React Native project — building, testing, debugging, understanding navigation and state management
-version: 0.1.0
 license: MIT
-author: Matias Rosenstein
 compatibility: [claude-code, cursor, copilot, codex]
 platforms: [react-native]
 ---

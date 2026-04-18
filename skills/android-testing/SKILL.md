@@ -1,9 +1,7 @@
 ---
 name: android-testing
 description: Use when writing or running tests in an Android project — unit tests, UI tests, choosing the right framework and patterns
-version: 0.1.0
 license: MIT
-author: Matias Rosenstein
 compatibility: [claude-code, cursor, copilot, codex]
 platforms: [android]
 ---

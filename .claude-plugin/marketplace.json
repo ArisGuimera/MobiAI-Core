@@ -16,7 +16,7 @@
         "url": "https://github.com/ArisGuimera/MobiAI-Core.git"
       },
       "description": "Core skills for mobile development: fix bugs, analyze crashes, write tests, create PRs, and more",
-      "version": "0.3.0"
+      "version": "0.4.0"
     }
   ]
 }

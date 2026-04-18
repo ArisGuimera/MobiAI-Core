@@ -1,9 +1,7 @@
 ---
 name: create-pr
 description: Use when the user wants to commit changes and create a pull request — proper branch, commit message, PR description with mobile context
-version: 0.1.0
 license: MIT
-author: Matias Rosenstein
 compatibility: [claude-code, cursor, copilot, codex]
 platforms: [android, ios, kmp, flutter, react-native]
 ---
