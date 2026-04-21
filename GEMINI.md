@@ -1,2 +1,2 @@
-@./skills/using-mobiai/SKILL.md
-@./skills/using-mobiai/references/gemini-tools.md
+@./plugins/core/skills/using-mobiai/SKILL.md
+@./plugins/core/skills/using-mobiai/references/gemini-tools.md
