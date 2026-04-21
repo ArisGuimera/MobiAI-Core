@@ -7,7 +7,13 @@ set -euo pipefail
 
 # Determine plugin root directory (Cursor, Claude Code, or fallback)
 PLUGIN_ROOT="${CURSOR_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}}"
-SKILL_FILE="$PLUGIN_ROOT/skills/using-mobiai/SKILL.md"
+# Cursor loads the full repo → skill lives at plugins/core/skills/
+# Claude Code caches each plugin separately → skill lives at skills/ (within core's cache dir)
+if [ -n "${CURSOR_PLUGIN_ROOT:-}" ]; then
+  SKILL_FILE="$PLUGIN_ROOT/plugins/core/skills/using-mobiai/SKILL.md"
+else
+  SKILL_FILE="$PLUGIN_ROOT/skills/using-mobiai/SKILL.md"
+fi
 
 if [ ! -f "$SKILL_FILE" ]; then
   printf '{"message": "MobiAI-Core: bootstrap skill not found at %s"}\n' "$SKILL_FILE"
