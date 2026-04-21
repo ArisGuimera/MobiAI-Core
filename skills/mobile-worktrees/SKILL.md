@@ -1,6 +1,6 @@
 ---
 name: mobile-worktrees
-description: Use when starting mobile feature work that needs isolation from current workspace or before executing implementation plans - creates isolated git worktrees with smart directory selection and safety verification
+description: "You MUST use this before starting mobile work that needs isolation from the current workspace — new feature branches, parallel efforts, or any plan execution that should not contaminate the active tree. Do not create worktrees ad hoc; this skill enforces safe directory selection and verification."
 license: MIT
 compatibility: [claude-code, cursor, copilot, codex, gemini]
 platforms: [android, ios, kmp, flutter, react-native]

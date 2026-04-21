@@ -1,6 +1,6 @@
 ---
 name: mobile-parallel-agents
-description: Use when facing 2+ independent mobile tasks that can be worked on without shared state or sequential dependencies
+description: "ALWAYS invoke this before dispatching agents for two or more independent mobile problems (unrelated failures, separate subsystems, disjoint investigations). Do not spawn parallel agents ad hoc — this skill defines how to isolate their context and scope."
 license: MIT
 compatibility: [claude-code, cursor, copilot, codex, gemini]
 platforms: [android, ios, kmp, flutter, react-native]

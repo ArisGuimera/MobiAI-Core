@@ -42,6 +42,31 @@ Start here to find the right skill:
 - **Implementation done, need to integrate** → `mobile-finishing-branch`
 - **Creating a new MobiAI skill** → `writing-skills`
 
+## Pre-flight: Before You Act
+
+These rules are NOT optional. They apply to every task, every time.
+
+- **Before spawning any subagent** (Explore, general-purpose, Plan), **before reading code for investigation**, and **before writing Grep/Glob queries** related to a new task: STOP. Consult the Quick Decision Guide above and load the matching skill FIRST. Exploration, mapping, and investigation are part of the skill's workflow — they are NOT pre-skill activities.
+- **On any task context switch within a session** — new bug, new feature, new ticket, merged branch moving to the next branch, or any pivot to unrelated work — re-consult the Quick Decision Guide. The previous task's skill does NOT carry over. Each task gets its own gate check.
+- If the current request doesn't clearly map to any row in the guide, ask the user to clarify before touching code. Do not improvise a workflow.
+
+### Anti-Pattern: "Momentum"
+
+The single most common failure mode for this ecosystem is **operating from momentum** after the first task of a session:
+
+> "I already fixed one bug this session, so when the user reported the next one I jumped straight to spawning an Explore agent and reading code — I didn't re-check the Decision Guide or load `mobile-debugging`."
+
+This is wrong. Skills are NOT just for the "fix" step — they govern investigation, reproduction, exploration, and verification too. Reading code without a skill loaded means you are improvising a process that the skill already defines rigorously.
+
+Signs you are in Momentum mode (stop and re-consult the guide):
+
+- You're about to spawn a subagent to "map the code" or "find where X lives" for a new bug/feature, without naming which skill's workflow demands that exploration.
+- You just finished a task and are reacting to the next message without a gate check.
+- You're writing a Grep/Glob query for investigation and haven't loaded `mobile-debugging` (for bugs) or the relevant architecture skill (for features).
+- You feel you "already know" the codebase from the previous task, so the skill would be redundant.
+
+If any of these apply: stop, open the Decision Guide, load the matching skill, and let the skill drive the investigation.
+
 ## Available Skills
 
 These skills activate automatically based on context. When a task matches a skill's description, load and follow it.
@@ -117,7 +142,7 @@ Skills use Claude Code tool names (Read, Edit, Write, Bash, Grep, Glob, etc.) as
 
 ## How to Use Skills
 
-1. **Auto-detection**: When you recognize a mobile development task, load the relevant skill(s) before responding.
+1. **Auto-detection (first gate, per task)**: This is the mandatory first step for every task. Before any other action — before spawning subagents, before reading code, before writing Grep/Glob queries — match the task against the Quick Decision Guide and load the relevant skill. This gate fires **per-task, not per-session**: a new bug, new feature, new ticket, or context switch re-triggers it. The previous task's skill does not carry over. See "Pre-flight: Before You Act" above.
 2. **Platform detection**: Check the project structure to determine the platform:
    - `build.gradle` / `build.gradle.kts` → Android
    - `*.xcodeproj` / `*.xcworkspace` → iOS

@@ -1,12 +1,16 @@
 ---
 name: mobile-verification
-description: Use when about to claim mobile work is complete, fixed, or passing, before committing or creating PRs - requires running verification commands and confirming output before making any success claims; evidence before assertions always
+description: "You MUST use this before declaring any mobile work done, fixed, green, or ready — and before committing, pushing, or opening a PR. No completion claim may be made without fresh verification evidence from this session."
 license: MIT
 compatibility: [claude-code, cursor, copilot, codex, gemini]
 platforms: [android, ios, kmp, flutter, react-native]
 ---
 
 # Mobile Verification Before Completion
+
+<HARD-GATE>
+Do NOT state, imply, or signal that work is complete, fixed, passing, ready, or merged-ready until you have just run the verification commands in this message and observed their output. Stale memory of earlier runs does not count.
+</HARD-GATE>
 
 ## Overview
 

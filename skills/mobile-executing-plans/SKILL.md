@@ -1,6 +1,6 @@
 ---
 name: mobile-executing-plans
-description: Use when you have a written mobile implementation plan to execute in a separate session with review checkpoints
+description: "ALWAYS invoke this when a written mobile implementation plan exists and you are about to carry it out in a fresh session. Load and critique the plan before executing any task from it."
 license: MIT
 compatibility: [claude-code, cursor, copilot, codex, gemini]
 platforms: [android, ios, kmp, flutter, react-native]

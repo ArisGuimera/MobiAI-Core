@@ -1,12 +1,16 @@
 ---
 name: mobile-tdd
-description: Use when implementing any mobile feature or bugfix, before writing implementation code
+description: "You MUST use this before writing any implementation code for a mobile feature, bug fix, refactor, or behavior change. Tests come before implementation — no exceptions."
 license: MIT
 compatibility: [claude-code, cursor, copilot, codex, gemini]
 platforms: [android, ios, kmp, flutter, react-native]
 ---
 
 # Mobile Test-Driven Development (TDD)
+
+<HARD-GATE>
+Do NOT write any production code for a mobile feature, fix, refactor, or behavior change until a failing test exists and you have observed it fail. This applies regardless of perceived simplicity or urgency.
+</HARD-GATE>
 
 ## Overview
 

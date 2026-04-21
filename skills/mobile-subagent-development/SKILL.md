@@ -1,6 +1,6 @@
 ---
 name: mobile-subagent-development
-description: Use when executing mobile implementation plans with independent tasks in the current session
+description: "ALWAYS invoke this when executing a mobile implementation plan in the current session with subagent support available. Drives fresh-subagent-per-task execution with mandatory two-stage review; do not hand-execute plan tasks in-session when this workflow applies."
 license: MIT
 compatibility: [claude-code, cursor, copilot, codex, gemini]
 platforms: [android, ios, kmp, flutter, react-native]

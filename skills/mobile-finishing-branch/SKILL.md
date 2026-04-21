@@ -1,6 +1,6 @@
 ---
 name: mobile-finishing-branch
-description: Use when mobile implementation is complete, all tests pass, and you need to decide how to integrate the work - guides completion of development work by presenting structured options for merge, PR, or cleanup
+description: "You MUST use this once mobile implementation is finished and you are about to integrate the work — merging, pushing, opening a PR, or cleaning up the branch. Do not improvise the wrap-up; this skill gates verification, presents integration options, and handles cleanup."
 license: MIT
 compatibility: [claude-code, cursor, copilot, codex, gemini]
 platforms: [android, ios, kmp, flutter, react-native]

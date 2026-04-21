@@ -1,6 +1,6 @@
 ---
 name: mobile-planning
-description: Use when you have a spec or requirements for a multi-step mobile task, before touching code
+description: "You MUST use this whenever a mobile task spans multiple steps, files, or subsystems — before touching code. Produce a written plan the user approves; do not improvise multi-step work from memory."
 license: MIT
 compatibility: [claude-code, cursor, copilot, codex, gemini]
 platforms: [android, ios, kmp, flutter, react-native]
