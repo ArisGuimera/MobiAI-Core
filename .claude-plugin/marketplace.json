@@ -6,8 +6,7 @@
   },
   "metadata": {
     "description": "Mobile development AI plugins — skills, agents, and automation for Android, iOS, KMP, Flutter, and React Native",
-    "version": "2.0.0",
-    "pluginRoot": "./plugins"
+    "version": "2.0.0"
   },
   "plugins": [
     {
