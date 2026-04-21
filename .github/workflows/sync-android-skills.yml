@@ -50,25 +50,28 @@ jobs:
 
       - name: Compare against current marketplace.json
         id: compare
+        env:
+          NEW: ${{ steps.detect.outputs.new_skills_json }}
         run: |
           set -euo pipefail
           current=$(jq -c '.plugins[] | select(.name=="android-official-skills") | .skills' .claude-plugin/marketplace.json)
-          new='${{ steps.detect.outputs.new_skills_json }}'
-          if [ "$current" = "$new" ]; then
+          if [ "$current" = "$NEW" ]; then
             echo "no_changes=true" >> "$GITHUB_OUTPUT"
             echo "Arrays identical — no action needed."
           else
             echo "no_changes=false" >> "$GITHUB_OUTPUT"
             echo "Change detected:"
             echo "  current: $current"
-            echo "  new:     $new"
+            echo "  new:     $NEW"
           fi
 
       - name: Update marketplace.json
         if: steps.compare.outputs.no_changes == 'false'
+        env:
+          NEW: ${{ steps.detect.outputs.new_skills_json }}
         run: |
           set -euo pipefail
-          jq --argjson new '${{ steps.detect.outputs.new_skills_json }}' '
+          jq --argjson new "$NEW" '
             .plugins = (.plugins | map(
               if .name == "android-official-skills" then .skills = $new else . end
             ))
