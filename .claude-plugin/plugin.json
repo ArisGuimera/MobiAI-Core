@@ -1,7 +1,7 @@
 {
   "name": "mobiai-core",
   "description": "Ecosistema de IA para desarrollo mobile: skills, agentes y pipelines automatizados para Android, iOS, KMP, Flutter y React Native.",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "author": {
     "name": "Matias Rosenstein",
     "url": "https://github.com/ArisGuimera/MobiAI-Core"
