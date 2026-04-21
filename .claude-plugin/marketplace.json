@@ -59,8 +59,8 @@
     {
       "name": "android-official-skills",
       "source": {
-        "source": "github",
-        "repo": "android/skills"
+        "source": "url",
+        "url": "https://github.com/android/skills.git"
       },
       "strict": false,
       "skills": [

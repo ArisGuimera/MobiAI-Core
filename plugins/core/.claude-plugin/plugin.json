@@ -9,6 +9,5 @@
   "homepage": "https://github.com/ArisGuimera/MobiAI-Core",
   "repository": "https://github.com/ArisGuimera/MobiAI-Core",
   "license": "MIT",
-  "keywords": ["mobile", "workflow", "internal", "bootstrap"],
-  "hooks": "./hooks/hooks.json"
+  "keywords": ["mobile", "workflow", "internal", "bootstrap"]
 }
