@@ -6,17 +6,81 @@
   },
   "metadata": {
     "description": "Mobile development AI plugins — skills, agents, and automation for Android, iOS, KMP, Flutter, and React Native",
-    "version": "1.0.0"
+    "version": "2.0.0",
+    "pluginRoot": "./plugins"
   },
   "plugins": [
     {
-      "name": "mobiai-core",
+      "name": "mobile",
+      "source": "./plugins/mobile",
+      "description": "Instala todo el stack mobile de MobiAI (core + Android + iOS + KMP + Flutter + React Native)",
+      "category": "meta"
+    },
+    {
+      "name": "core",
+      "source": "./plugins/core",
+      "description": "⚠️ Interno — instalá un plugin de plataforma en su lugar. Contiene workflow skills cross-platform y el bootstrap.",
+      "category": "internal"
+    },
+    {
+      "name": "android",
+      "source": "./plugins/android",
+      "description": "Skills para desarrollo Android (device, build, testing, architecture) + integración con skills oficiales de Google",
+      "category": "platform",
+      "tags": ["android", "kotlin", "adb"]
+    },
+    {
+      "name": "ios",
+      "source": "./plugins/ios",
+      "description": "Skills para desarrollo iOS (simulator, build, testing, architecture)",
+      "category": "platform",
+      "tags": ["ios", "swift", "xcode"]
+    },
+    {
+      "name": "kmp",
+      "source": "./plugins/kmp",
+      "description": "Skills para Kotlin Multiplatform (incluye Android + iOS como deps)",
+      "category": "platform",
+      "tags": ["kmp", "kotlin-multiplatform"]
+    },
+    {
+      "name": "flutter",
+      "source": "./plugins/flutter",
+      "description": "Skills para Flutter / Dart",
+      "category": "platform",
+      "tags": ["flutter", "dart"]
+    },
+    {
+      "name": "react-native",
+      "source": "./plugins/react-native",
+      "description": "Skills para React Native",
+      "category": "platform",
+      "tags": ["react-native", "javascript"]
+    },
+    {
+      "name": "android-official-skills",
       "source": {
-        "source": "url",
-        "url": "https://github.com/ArisGuimera/MobiAI-Core.git"
+        "source": "github",
+        "repo": "android/skills"
       },
-      "description": "Core skills for mobile development: fix bugs, analyze crashes, write tests, create PRs, and more",
-      "version": "0.7.0"
+      "strict": false,
+      "skills": [
+        "./build/agp/",
+        "./jetpack-compose/migration/",
+        "./navigation/",
+        "./performance/",
+        "./play/",
+        "./system/"
+      ],
+      "description": "Skills oficiales de Android mantenidos por Google (Apache 2.0). Auto-updates vía marketplace.",
+      "version": "1.0.0",
+      "license": "Apache-2.0",
+      "author": {
+        "name": "Android Open Source Project"
+      },
+      "homepage": "https://github.com/android/skills",
+      "category": "platform-official",
+      "tags": ["android", "google", "official", "upstream"]
     }
   ]
 }
