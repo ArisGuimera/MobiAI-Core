@@ -9,10 +9,17 @@ Consulta la [guía para crear skills](docs/crear-skills.md).
 
 **Pasos rápidos:**
 1. Haz fork del repo
-2. Crea `skills/nombre-de-tu-skill/SKILL.md`
-3. Añade tu skill a la tabla en `skills/using-mobiai/SKILL.md`
-4. Pruébalo en un proyecto real
-5. Abre un PR
+2. Decidí a qué plugin va tu skill:
+   - Workflow cross-platform → `plugins/core/skills/`
+   - Android-specific → `plugins/android/skills/`
+   - iOS-specific → `plugins/ios/skills/`
+   - KMP/Flutter/RN → `plugins/kmp/skills/` | `plugins/flutter/skills/` | `plugins/react-native/skills/`
+3. Crea `plugins/<plugin>/skills/nombre-de-tu-skill/SKILL.md`
+4. Añade tu skill a la tabla en `plugins/core/skills/using-mobiai/SKILL.md`
+5. Pruébalo en un proyecto real
+6. Abre un PR
+
+**Regla crítica:** los nombres de skill deben ser únicos en TODO el catálogo. Si tu skill es platform-specific, prefijá con la plataforma (`android-build`, `ios-build`).
 
 ### 2. Mejorar Skills o Agentes existentes
 ¿Encontraste algo que podría ser mejor? Mejoras comunes:
