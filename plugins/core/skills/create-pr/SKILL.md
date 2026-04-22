@@ -122,8 +122,15 @@ Produce the PR with this exact title format and body template, regardless of pro
 ```markdown
 ## Summary
 - **Issue**: <issue-key>
-- **Root cause**: <what was wrong>
-- **Fix**: <what was changed>
+- **Root cause**: <the actual cause in plain language — not the symptom>
+- **Breaking commit**: <SHA and subject of the commit that introduced the bug, e.g. `a1b2c3d "feat: refactor user loader"`. If the bug has always existed and is not a regression, write "always-existed, not a regression".>
+- **Fix**: <what was changed at a high level>
+
+## Why each change
+<For every distinct change in the diff, explain the reasoning that links the root cause to this specific modification. Do NOT restate what the diff already shows — explain *why* it had to change. One bullet per logical change. Example: "`loadUser()` now checks `response.body == null` before dereferencing because the root cause is that the backend returns null bodies when the auth token is stale, which the caller did not anticipate.">
+
+- <reasoning 1>
+- <reasoning 2>
 
 ## Platform
 - **Affected platform**: Android / iOS / both
@@ -131,7 +138,8 @@ Produce the PR with this exact title format and body template, regardless of pro
 - **New permissions or entitlements**: <list any, or "none">
 
 ## Changes
-- `path/to/file.kt` — <what changed in this file>
+<File-by-file factual summary. Keep this factual — what, not why. The "why" is already above.>
+- `path/to/file.kt` — <e.g. "added null check on `response.body` before `.size()` call on line 42">
 
 ## Test Plan
 - [ ] Unit tests added for <what>
