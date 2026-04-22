@@ -1,0 +1,17 @@
+{
+  "name": "android",
+  "description": "MobiAI para Android — skills de device, build, testing, architecture + skills oficiales de Google vía android-official-skills",
+  "version": "2.0.0",
+  "author": {
+    "name": "Matias Rosenstein",
+    "url": "https://github.com/ArisGuimera/MobiAI-Core"
+  },
+  "homepage": "https://github.com/ArisGuimera/MobiAI-Core",
+  "repository": "https://github.com/ArisGuimera/MobiAI-Core",
+  "license": "MIT",
+  "keywords": ["android", "kotlin", "adb", "gradle", "mobile"],
+  "dependencies": [
+    "core",
+    "android-official-skills"
+  ]
+}

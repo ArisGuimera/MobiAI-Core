@@ -1,0 +1,14 @@
+{
+  "name": "react-native",
+  "description": "MobiAI para React Native — build, test, navigation, state management",
+  "version": "2.0.0",
+  "author": {
+    "name": "Matias Rosenstein",
+    "url": "https://github.com/ArisGuimera/MobiAI-Core"
+  },
+  "homepage": "https://github.com/ArisGuimera/MobiAI-Core",
+  "repository": "https://github.com/ArisGuimera/MobiAI-Core",
+  "license": "MIT",
+  "keywords": ["react-native", "javascript", "typescript", "mobile"],
+  "dependencies": ["core"]
+}

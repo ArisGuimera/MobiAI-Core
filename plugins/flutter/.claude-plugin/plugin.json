@@ -1,0 +1,14 @@
+{
+  "name": "flutter",
+  "description": "MobiAI para Flutter/Dart — build, test, state management, navigation",
+  "version": "2.0.0",
+  "author": {
+    "name": "Matias Rosenstein",
+    "url": "https://github.com/ArisGuimera/MobiAI-Core"
+  },
+  "homepage": "https://github.com/ArisGuimera/MobiAI-Core",
+  "repository": "https://github.com/ArisGuimera/MobiAI-Core",
+  "license": "MIT",
+  "keywords": ["flutter", "dart", "mobile"],
+  "dependencies": ["core"]
+}

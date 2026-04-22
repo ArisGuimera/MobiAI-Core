@@ -1,0 +1,100 @@
+name: Sync android/skills categories
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'  # cada lunes a las 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout MobiAI-Core
+        uses: actions/checkout@v4
+
+      - name: Checkout android/skills
+        uses: actions/checkout@v4
+        with:
+          repository: android/skills
+          path: _upstream
+
+      - name: Detect current directories containing SKILL.md children
+        id: detect
+        run: |
+          set -euo pipefail
+          cd _upstream
+          # Para cada SKILL.md, tomar el directorio padre (la "categoría directa")
+          # Ej: build/agp/agp-9-upgrade/SKILL.md -> build/agp/
+          dirs=$(find . -name SKILL.md -type f \
+            | sed 's|/[^/]*/SKILL.md$|/|' \
+            | sed 's|^\./||' \
+            | sort -u)
+          echo "Detected directories containing SKILL.md children:"
+          echo "$dirs"
+          # Emit as JSON array for later step
+          json="["
+          first=1
+          while IFS= read -r line; do
+            [ -z "$line" ] && continue
+            prefix=""
+            [ $first -eq 0 ] && prefix=","
+            json="$json$prefix\"./$line\""
+            first=0
+          done <<< "$dirs"
+          json="$json]"
+          echo "new_skills_json=$json" >> "$GITHUB_OUTPUT"
+
+      - name: Compare against current marketplace.json
+        id: compare
+        env:
+          NEW: ${{ steps.detect.outputs.new_skills_json }}
+        run: |
+          set -euo pipefail
+          current=$(jq -c '.plugins[] | select(.name=="android-official-skills") | .skills' .claude-plugin/marketplace.json)
+          if [ "$current" = "$NEW" ]; then
+            echo "no_changes=true" >> "$GITHUB_OUTPUT"
+            echo "Arrays identical — no action needed."
+          else
+            echo "no_changes=false" >> "$GITHUB_OUTPUT"
+            echo "Change detected:"
+            echo "  current: $current"
+            echo "  new:     $NEW"
+          fi
+
+      - name: Update marketplace.json
+        if: steps.compare.outputs.no_changes == 'false'
+        env:
+          NEW: ${{ steps.detect.outputs.new_skills_json }}
+        run: |
+          set -euo pipefail
+          jq --argjson new "$NEW" '
+            .plugins = (.plugins | map(
+              if .name == "android-official-skills" then .skills = $new else . end
+            ))
+          ' .claude-plugin/marketplace.json > .claude-plugin/marketplace.json.tmp
+          mv .claude-plugin/marketplace.json.tmp .claude-plugin/marketplace.json
+          echo "Updated .claude-plugin/marketplace.json:"
+          jq '.plugins[] | select(.name=="android-official-skills") | .skills' .claude-plugin/marketplace.json
+
+      - name: Clean up _upstream checkout before opening PR
+        if: steps.compare.outputs.no_changes == 'false'
+        run: rm -rf _upstream
+
+      - name: Open PR
+        if: steps.compare.outputs.no_changes == 'false'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: chore/sync-android-skills
+          delete-branch: true
+          commit-message: "chore: sincronizar categorias de android/skills"
+          title: "chore: sincronizar categorias de android/skills"
+          body: |
+            Cambios detectados en la estructura de [android/skills](https://github.com/android/skills).
+
+            El array `skills` del plugin `android-official-skills` en `.claude-plugin/marketplace.json` fue actualizado para reflejar los directorios actuales que contienen `SKILL.md` descendientes.
+
+            Auto-generado por `.github/workflows/sync-android-skills.yml`.

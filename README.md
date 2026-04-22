@@ -23,36 +23,28 @@ Compatible con **Claude Code**, **Cursor**, **Copilot CLI**, **Codex** y **Gemin
 
 ## Instalación
 
+MobiAI se organiza en plugins granulares. Instalá sólo las plataformas que uses, o instalá el meta-plugin `mobile` para todo el stack.
+
 ### Claude Code
 
 ```bash
-# 1. Agrega el marketplace de MobiAI
+# 1. Agregá el marketplace
 /plugin marketplace add ArisGuimera/MobiAI-Core
 
-# 2. Instala el plugin
-/plugin install mobiai-core@mobiai
+# 2a. Instalá todo (recomendado)
+/plugin install mobile@mobiai
+
+# 2b. O instalá sólo la plataforma que necesites
+/plugin install android@mobiai      # Android + deps (core + skills oficiales de Google)
+/plugin install ios@mobiai           # iOS + deps
+/plugin install kmp@mobiai           # KMP (trae Android e iOS)
+/plugin install flutter@mobiai       # Flutter
+/plugin install react-native@mobiai  # React Native
 ```
 
-También puedes instalarlo directamente desde la CLI:
-```bash
-claude plugin install mobiai-core@mobiai
-```
+### Cursor / Copilot CLI
 
-### Cursor
-
-```bash
-# Desde Cursor, instala el plugin del marketplace
-/plugin marketplace add ArisGuimera/MobiAI-Core
-/plugin install mobiai-core@mobiai
-```
-
-### Copilot CLI
-
-```bash
-# Desde Copilot CLI, instala el plugin del marketplace
-/plugin marketplace add ArisGuimera/MobiAI-Core
-/plugin install mobiai-core@mobiai
-```
+Misma secuencia de comandos (`/plugin marketplace add` + `/plugin install`).
 
 ### Gemini CLI
 
@@ -60,17 +52,21 @@ claude plugin install mobiai-core@mobiai
 gemini extension install ArisGuimera/MobiAI-Core
 ```
 
+Gemini instala la extension completa (todos los plugins vienen juntos).
+
 ### Codex
 
-Consulta [`.codex/INSTALL.md`](.codex/INSTALL.md) para instrucciones de instalación con symlinks.
+Consultá [`.codex/INSTALL.md`](.codex/INSTALL.md) para instrucciones con symlinks.
 
 ## Actualizar
 
 ### Claude Code / Cursor / Copilot CLI
 
 ```bash
-/plugin update mobiai-core
+/plugin update mobile@mobiai   # o el plugin específico que instalaste
 ```
+
+Los skills oficiales de Google (`android-official-skills`) se actualizan automáticamente vía el marketplace.
 
 ### Gemini CLI
 
@@ -84,17 +80,28 @@ gemini extension update mobiai-core
 cd ~/.codex/mobiai-core && git pull
 ```
 
+## Plugins disponibles
+
+| Plugin | Incluye | Comando |
+|---|---|---|
+| `mobile` | Todo (meta) | `/plugin install mobile@mobiai` |
+| `android` | Skills Android + skills oficiales de Google | `/plugin install android@mobiai` |
+| `ios` | Skills iOS | `/plugin install ios@mobiai` |
+| `kmp` | KMP (incluye Android + iOS como deps) | `/plugin install kmp@mobiai` |
+| `flutter` | Flutter / Dart | `/plugin install flutter@mobiai` |
+| `react-native` | React Native | `/plugin install react-native@mobiai` |
+
 ## Skills disponibles
 
 MobiAI incluye skills para todo el ciclo de desarrollo mobile:
 
-- **Flujo de trabajo** — fix-issue, reproduce-bug, analyze-crash, crashlytics, write-tests, review-code, create-pr
-- **Android** — android-device, android-build, android-testing, android-architecture
-- **iOS** — ios-device, ios-build, ios-testing, ios-architecture
-- **Multiplataforma** — kmp, flutter, react-native
-- **Proceso** — mobile-brainstorming, mobile-debugging, mobile-tdd, mobile-planning, mobile-verification, mobile-executing-plans, mobile-parallel-agents, mobile-subagent-development, mobile-worktrees, mobile-finishing-branch
+- **Flujo de trabajo** (en `core`, auto-instalado con cualquier plataforma) — fix-issue, reproduce-bug, analyze-crash, crashlytics, write-tests, review-code, create-pr
+- **Proceso** (en `core`) — mobile-brainstorming, mobile-debugging, mobile-tdd, mobile-planning, mobile-verification, mobile-executing-plans, mobile-parallel-agents, mobile-subagent-development, mobile-worktrees, mobile-finishing-branch, writing-skills
+- **Android** (en `android`) — android-device, android-build, android-testing, android-architecture + skills oficiales de Google vía `android-official-skills`
+- **iOS** (en `ios`) — ios-device, ios-build, ios-testing, ios-architecture
+- **Multiplataforma** — kmp, flutter, react-native (cada uno en su plugin)
 
-Consulta el [catálogo completo de skills](skills/using-mobiai/SKILL.md) para ver cuándo usar cada uno.
+Consulta el [catálogo completo de skills](plugins/core/skills/using-mobiai/SKILL.md) para ver cuándo usar cada uno.
 
 ## ¿Cómo funciona?
 
