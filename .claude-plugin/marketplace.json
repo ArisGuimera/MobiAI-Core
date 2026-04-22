@@ -55,31 +55,6 @@
       "description": "Skills para React Native",
       "category": "platform",
       "tags": ["react-native", "javascript"]
-    },
-    {
-      "name": "android-official-skills",
-      "source": {
-        "source": "url",
-        "url": "https://github.com/android/skills.git"
-      },
-      "strict": false,
-      "skills": [
-        "./build/agp/",
-        "./jetpack-compose/migration/",
-        "./navigation/",
-        "./performance/",
-        "./play/",
-        "./system/"
-      ],
-      "description": "Skills oficiales de Android mantenidos por Google (Apache 2.0). Auto-updates vía marketplace.",
-      "version": "2.0.0",
-      "license": "Apache-2.0",
-      "author": {
-        "name": "Android Open Source Project"
-      },
-      "homepage": "https://github.com/android/skills",
-      "category": "platform-official",
-      "tags": ["android", "google", "official", "upstream"]
     }
   ]
 }

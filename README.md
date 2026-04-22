@@ -87,19 +87,19 @@ cd ~/.codex/mobiai-core && git pull
 | `mobile` | Todo (meta) | `/plugin install mobile@mobiai` |
 | `android` | Skills Android + skills oficiales de Google | `/plugin install android@mobiai` |
 | `ios` | Skills iOS | `/plugin install ios@mobiai` |
-| `kmp` | KMP (incluye Android + iOS como deps) | `/plugin install kmp@mobiai` |
-| `flutter` | Flutter / Dart | `/plugin install flutter@mobiai` |
-| `react-native` | React Native | `/plugin install react-native@mobiai` |
+| `mobiai-kmp` | KMP (incluye Android + iOS como deps) | `/plugin install kmp@mobiai` |
+| `mobiai-flutter` | Flutter / Dart | `/plugin install flutter@mobiai` |
+| `mobiai-react-native` | React Native | `/plugin install react-native@mobiai` |
 
 ## Skills disponibles
 
 MobiAI incluye skills para todo el ciclo de desarrollo mobile:
 
-- **Flujo de trabajo** (en `core`, auto-instalado con cualquier plataforma) — fix-issue, reproduce-bug, analyze-crash, crashlytics, write-tests, review-code, create-pr
-- **Proceso** (en `core`) — mobile-brainstorming, mobile-debugging, mobile-tdd, mobile-planning, mobile-verification, mobile-executing-plans, mobile-parallel-agents, mobile-subagent-development, mobile-worktrees, mobile-finishing-branch, writing-skills
-- **Android** (en `android`) — android-device, android-build, android-testing, android-architecture + skills oficiales de Google vía `android-official-skills`
-- **iOS** (en `ios`) — ios-device, ios-build, ios-testing, ios-architecture
-- **Multiplataforma** — kmp, flutter, react-native (cada uno en su plugin)
+- **Flujo de trabajo** (en `core`, auto-instalado con cualquier plataforma) — mobiai-fix-issue, mobiai-reproduce-bug, mobiai-analyze-crash, mobiai-crashlytics, mobiai-write-tests, mobiai-review-code, mobiai-create-pr
+- **Proceso** (en `core`) — mobiai-mobile-brainstorming, mobiai-mobile-debugging, mobiai-mobile-tdd, mobiai-mobile-planning, mobiai-mobile-verification, mobiai-mobile-executing-plans, mobiai-mobile-parallel-agents, mobiai-mobile-subagent-development, mobiai-mobile-worktrees, mobiai-mobile-finishing-branch, mobiai-writing-skills
+- **Android** (en `android`) — `mobiai-android-device`, `mobiai-android-build`, `mobiai-android-testing`, `mobiai-android-architecture`, más los [skills oficiales de Android mantenidos por Google](https://github.com/android/skills) (Apache 2.0, vendoreados en `plugins/android/skills/google/` con auto-sync semanal). Ver [NOTICE.md](NOTICE.md).
+- **iOS** (en `ios`) — mobiai-ios-device, mobiai-ios-build, mobiai-ios-testing, mobiai-ios-architecture
+- **Multiplataforma** — mobiai-kmp, mobiai-flutter, mobiai-react-native (cada uno en su plugin)
 
 Consulta el [catálogo completo de skills](plugins/core/skills/using-mobiai/SKILL.md) para ver cuándo usar cada uno.
 
