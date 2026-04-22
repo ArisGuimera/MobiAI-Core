@@ -4,9 +4,9 @@
 
 ## ¿Qué es un skill?
 
-Un skill es contexto experto que adapta lo que la IA ya sabe al escenario adecuado. No le enseña a programar — le da las herramientas, los comandos y los flujos específicos de cada plataforma para que aplique su conocimiento de forma precisa. Por ejemplo, el skill `android-device` le da el contexto para usar ADB correctamente, y `fix-issue` le define el flujo completo para corregir un bug.
+Un skill es contexto experto que adapta lo que la IA ya sabe al escenario adecuado. No le enseña a programar — le da las herramientas, los comandos y los flujos específicos de cada plataforma para que aplique su conocimiento de forma precisa. Por ejemplo, el skill `mobiai-android-device` le da el contexto para usar ADB correctamente, y `mobiai-fix-issue` le define el flujo completo para corregir un bug.
 
-## La forma más fácil: usa el skill `writing-skills`
+## La forma más fácil: usa el skill `mobiai-writing-skills`
 
 No necesitas escribir el SKILL.md a mano. Puedes pedirle a tu asistente de IA que lo haga por ti:
 
@@ -14,7 +14,7 @@ No necesitas escribir el SKILL.md a mano. Puedes pedirle a tu asistente de IA qu
 Quiero crear un nuevo skill para MobiAI que [describe lo que quieres que haga]
 ```
 
-El agente va a usar el skill `writing-skills` automáticamente para guiarte en el proceso: te pregunta qué tiene que hacer, genera el archivo con el formato correcto, y lo agrega al catálogo.
+El agente va a usar el skill `mobiai-writing-skills` automáticamente para guiarte en el proceso: te pregunta qué tiene que hacer, genera el archivo con el formato correcto, y lo agrega al catálogo.
 
 ## ¿Cómo se cargan los skills?
 
@@ -65,9 +65,9 @@ El archivo tiene dos partes:
 **Cuerpo en Markdown** (flexible) — las instrucciones para la IA. No hay una estructura rígida obligatoria. Organízalo como tenga sentido para tu skill: puedes usar secciones como "Workflow", "Steps", secciones por plataforma, tablas de referencia, comandos exactos, árboles de decisión, etc. Lo importante es que sea claro y accionable.
 
 Mira los skills existentes como ejemplo — cada uno tiene la estructura que mejor se adapta a lo que hace:
-- [analyze-crash](../plugins/core/skills/analyze-crash/SKILL.md) — flujo paso a paso con decisiones
-- [android-device](../plugins/android/skills/android-device/SKILL.md) — referencia de comandos y patrones
-- [fix-issue](../plugins/core/skills/fix-issue/SKILL.md) — pipeline completo con reglas de decisión
+- [mobiai-analyze-crash](../plugins/core/skills/mobiai-analyze-crash/SKILL.md) — flujo paso a paso con decisiones
+- [mobiai-android-device](../plugins/android/skills/mobiai-android-device/SKILL.md) — referencia de comandos y patrones
+- [mobiai-fix-issue](../plugins/core/skills/mobiai-fix-issue/SKILL.md) — pipeline completo con reglas de decisión
 
 ### 3. Agrégalo al catálogo
 

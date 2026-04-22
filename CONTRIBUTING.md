@@ -19,7 +19,7 @@ Consulta la [guía para crear skills](docs/crear-skills.md).
 5. Pruébalo en un proyecto real
 6. Abre un PR
 
-**Regla crítica:** los nombres de skill deben ser únicos en TODO el catálogo. Si tu skill es platform-specific, prefijá con la plataforma (`android-build`, `ios-build`).
+**Regla crítica:** los nombres de skill deben ser únicos en TODO el catálogo. Si tu skill es platform-specific, prefijá con la plataforma (`mobiai-android-build`, `mobiai-ios-build`).
 
 ### 2. Mejorar Skills o Agentes existentes
 ¿Encontraste algo que podría ser mejor? Mejoras comunes:
