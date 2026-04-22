@@ -56,14 +56,15 @@ or
 
 You MUST create a task for each of these items and complete them in order. Do not skip phases. Do not merge phases.
 
-1. **Classify scope** — fast path or gated path (Pre-flight above)
-2. **Understand the bug** — fetch the ticket, read it fully, detect platform, gather context
-3. **Reproduce the bug** — only if the user explicitly asked for device reproduction or the bug is non-deterministic and code alone can't explain it; otherwise document existing evidence (stack trace, logs, description)
-4. **Investigate root cause** — invoke skill `mobile-debugging` and follow its phased flow to completion
-5. **Propose the fix** — gated path: require explicit user approval before Phase 6; fast path: note the proposal for the PR description and proceed
-6. **Implement the fix** — invoke skill `mobile-tdd` (test first, then minimal implementation)
-7. **Verify the fix** — invoke skill `mobile-verification` (compile, tests, platform checks)
-8. **Open the PR** — invoke skill `create-pr` (final user-approval gate before push — always)
+Pre-flight: **Classify scope** — fast path or gated path (Pre-flight above)
+
+1. **Understand the bug** — fetch the ticket, read it fully, detect platform, gather context
+2. **Reproduce the bug** — only if the user explicitly asked for device reproduction or the bug is non-deterministic and code alone can't explain it; otherwise document existing evidence (stack trace, logs, description)
+3. **Investigate root cause** — invoke skill `mobile-debugging` and follow its phased flow to completion
+4. **Propose the fix** — gated path: require explicit user approval before Phase 5; fast path: note the proposal for the PR description and proceed
+5. **Implement the fix** — invoke skill `mobile-tdd` (test first, then minimal implementation)
+6. **Verify the fix** — invoke skill `mobile-verification` (compile, tests, platform checks)
+7. **Open the PR** — invoke skill `create-pr` (final user-approval gate before push — always)
 
 ## When to Use
 
@@ -193,7 +194,7 @@ Do not push until the user has seen all seven and approved.
 
 ## Decision Rules
 
-- **Never skip a phase.** Every ticket runs through 1 → 7 in order. Scope classification only changes gate behavior, not which phases run.
+- **Never skip a phase.** Every ticket runs through the full checklist in order. Scope classification only changes gate behavior, not which execution phases run.
 - **Upgrade from fast to gated mid-flow if needed.** If Phase 3 reveals that the root cause is more complex than expected, or Phase 5 shows the fix needs more files than estimated, explicitly switch to gated path and notify the user.
 - **Never stop after a single failure.** If a phase surfaces a problem, loop back and re-run from the right point.
 - **Max 2 fix attempts after proposal.** If the fix fails verification twice, return to Phase 3, do not keep patching.

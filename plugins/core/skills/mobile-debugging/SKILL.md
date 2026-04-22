@@ -34,7 +34,7 @@ NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST
 
 This skill inherits the scope from its caller (typically `fix-issue`). If invoked standalone, classify at the start:
 
-**Fast path** — work autonomously through all phases; return the confirmed root cause to the caller at Phase 6:
+**Fast path** — work autonomously through all phases; return the verified root cause to the caller at Phase 6:
 - Clear symptom with obvious evidence (stack trace points at a specific line, log message is explicit)
 - Single root cause category (not contradictory evidence)
 - No architectural question, no cross-module mystery
@@ -52,7 +52,7 @@ In doubt → gated path.
 You MUST create a task for each of these items and complete them in order. Do not skip phases. Do not merge phases.
 
 1. **Gather evidence** — logs, stack traces, reproduction steps, affected platforms, recent changes
-2. **State known vs. assumed** — present to the user, labeling each fact as observed or inferred (gated path: wait for confirmation; fast path: proceed)
+2. **State known vs. assumed** — label each fact as observed or inferred (gated path: present to the user and wait for confirmation; fast path: record the split internally and proceed)
 3. **Form a hypothesis** — a single, specific, testable theory about the root cause
 4. **Verify the hypothesis** — against code and evidence, not against intuition
 5. **Present the root cause** (gated path: wait for user confirmation before Phase 6; fast path: state the root cause and proceed to Phase 6)
