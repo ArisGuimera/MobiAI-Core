@@ -1,7 +1,7 @@
 {
   "name": "kmp",
   "description": "MobiAI para Kotlin Multiplatform — shared code, expect/actual, deps de Android+iOS",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "author": {
     "name": "Matias Rosenstein",
     "url": "https://github.com/ArisGuimera/MobiAI-Core"

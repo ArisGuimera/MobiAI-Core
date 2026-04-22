@@ -72,7 +72,7 @@
         "./system/"
       ],
       "description": "Skills oficiales de Android mantenidos por Google (Apache 2.0). Auto-updates vía marketplace.",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "license": "Apache-2.0",
       "author": {
         "name": "Android Open Source Project"
