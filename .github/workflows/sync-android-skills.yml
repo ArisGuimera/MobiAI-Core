@@ -1,4 +1,4 @@
-name: Sync android/skills categories
+name: Sync android/skills (vendoring)
 
 on:
   schedule:
@@ -9,6 +9,10 @@ permissions:
   contents: write
   pull-requests: write
 
+concurrency:
+  group: sync-android-skills
+  cancel-in-progress: false
+
 jobs:
   sync:
     runs-on: ubuntu-latest
@@ -16,85 +20,99 @@ jobs:
       - name: Checkout MobiAI-Core
         uses: actions/checkout@v4
 
-      - name: Checkout android/skills
+      - name: Checkout android/skills (shallow)
         uses: actions/checkout@v4
         with:
           repository: android/skills
           path: _upstream
 
-      - name: Detect current directories containing SKILL.md children
-        id: detect
+      - name: Verify upstream LICENSE is unchanged Apache 2.0
         run: |
           set -euo pipefail
-          cd _upstream
-          # Para cada SKILL.md, tomar el directorio padre (la "categoría directa")
-          # Ej: build/agp/agp-9-upgrade/SKILL.md -> build/agp/
-          dirs=$(find . -name SKILL.md -type f \
-            | sed 's|/[^/]*/SKILL.md$|/|' \
-            | sed 's|^\./||' \
-            | sort -u)
-          echo "Detected directories containing SKILL.md children:"
-          echo "$dirs"
-          # Emit as JSON array for later step
-          json="["
-          first=1
-          while IFS= read -r line; do
-            [ -z "$line" ] && continue
-            prefix=""
-            [ $first -eq 0 ] && prefix=","
-            json="$json$prefix\"./$line\""
-            first=0
-          done <<< "$dirs"
-          json="$json]"
-          echo "new_skills_json=$json" >> "$GITHUB_OUTPUT"
-
-      - name: Compare against current marketplace.json
-        id: compare
-        env:
-          NEW: ${{ steps.detect.outputs.new_skills_json }}
-        run: |
-          set -euo pipefail
-          current=$(jq -c '.plugins[] | select(.name=="android-official-skills") | .skills' .claude-plugin/marketplace.json)
-          if [ "$current" = "$NEW" ]; then
-            echo "no_changes=true" >> "$GITHUB_OUTPUT"
-            echo "Arrays identical — no action needed."
-          else
-            echo "no_changes=false" >> "$GITHUB_OUTPUT"
-            echo "Change detected:"
-            echo "  current: $current"
-            echo "  new:     $NEW"
+          if ! grep -q "Apache License" _upstream/LICENSE.txt; then
+            echo "::error::Upstream LICENSE.txt no longer contains 'Apache License'. Manual review required."
+            exit 1
+          fi
+          if ! grep -q "Version 2.0" _upstream/LICENSE.txt; then
+            echo "::error::Upstream LICENSE.txt no longer references Version 2.0. Manual review required."
+            exit 1
+          fi
+          if ! diff -q _upstream/LICENSE.txt plugins/android/skills/google/LICENSE > /dev/null; then
+            echo "::notice::Upstream LICENSE differs from vendored copy. Will update in the sync PR."
           fi
 
-      - name: Update marketplace.json
-        if: steps.compare.outputs.no_changes == 'false'
-        env:
-          NEW: ${{ steps.detect.outputs.new_skills_json }}
+      - name: Refresh vendored LICENSE, README, and NOTICE
         run: |
           set -euo pipefail
-          jq --argjson new "$NEW" '
-            .plugins = (.plugins | map(
-              if .name == "android-official-skills" then .skills = $new else . end
-            ))
-          ' .claude-plugin/marketplace.json > .claude-plugin/marketplace.json.tmp
-          mv .claude-plugin/marketplace.json.tmp .claude-plugin/marketplace.json
-          echo "Updated .claude-plugin/marketplace.json:"
-          jq '.plugins[] | select(.name=="android-official-skills") | .skills' .claude-plugin/marketplace.json
+          cp _upstream/LICENSE.txt plugins/android/skills/google/LICENSE
+          cp _upstream/README.md plugins/android/skills/google/README.md
+          if [ -f _upstream/NOTICE ]; then
+            cp _upstream/NOTICE plugins/android/skills/google/NOTICE
+          else
+            rm -f plugins/android/skills/google/NOTICE
+          fi
 
-      - name: Clean up _upstream checkout before opening PR
-        if: steps.compare.outputs.no_changes == 'false'
+      - name: Sync SKILL.md directories
+        env:
+          VENDOR_ROOT: plugins/android/skills/google
+        run: |
+          set -euo pipefail
+
+          mapfile -t upstream_paths < <(find _upstream -name SKILL.md -type f | sort)
+          declare -A upstream_names
+
+          for path in "${upstream_paths[@]}"; do
+            skill_dir=$(dirname "$path")
+            name=$(basename "$skill_dir")
+            upstream_names[$name]=1
+
+            target_dir="$VENDOR_ROOT/$name"
+            rm -rf "$target_dir"
+            mkdir -p "$target_dir"
+            cp -r "$skill_dir"/* "$target_dir/"
+            echo "Synced: $name"
+          done
+
+          for vendored_dir in "$VENDOR_ROOT"/*/; do
+            [ -d "$vendored_dir" ] || continue
+            name=$(basename "$vendored_dir")
+            if [ -z "${upstream_names[$name]:-}" ]; then
+              echo "Removing (no longer upstream): $name"
+              rm -rf "$vendored_dir"
+            fi
+          done
+
+      - name: Clean up _upstream clone
         run: rm -rf _upstream
 
+      - name: Detect changes
+        id: changes
+        run: |
+          set -euo pipefail
+          if git diff --quiet --exit-code; then
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+            echo "No changes detected."
+          else
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            echo "Changes detected:"
+            git diff --stat
+          fi
+
       - name: Open PR
-        if: steps.compare.outputs.no_changes == 'false'
+        if: steps.changes.outputs.has_changes == 'true'
         uses: peter-evans/create-pull-request@v6
         with:
           branch: chore/sync-android-skills
           delete-branch: true
-          commit-message: "chore: sincronizar categorias de android/skills"
-          title: "chore: sincronizar categorias de android/skills"
+          commit-message: "chore: sincronizar android/skills vendoreados"
+          title: "chore: sincronizar android/skills vendoreados"
           body: |
-            Cambios detectados en la estructura de [android/skills](https://github.com/android/skills).
+            Sincronizacion automatica del contenido vendoreado desde
+            [android/skills](https://github.com/android/skills) upstream.
 
-            El array `skills` del plugin `android-official-skills` en `.claude-plugin/marketplace.json` fue actualizado para reflejar los directorios actuales que contienen `SKILL.md` descendientes.
+            El diff de este PR muestra los archivos que cambiaron: SKILL.md
+            actualizados, skills agregadas, skills removidas, o cambios en
+            LICENSE/README.
 
             Auto-generado por `.github/workflows/sync-android-skills.yml`.
+            Apache 2.0 attribution preserved (ver `NOTICE.md`).
