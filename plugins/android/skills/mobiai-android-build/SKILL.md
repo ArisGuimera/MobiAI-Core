@@ -1,12 +1,18 @@
 ---
 name: mobiai-android-build
-description: Use when building an Android project, configuring flavors or variants, troubleshooting build failures, or managing Gradle dependencies
+description: Use when building an Android project, configuring flavors or variants, troubleshooting build failures, or managing Gradle dependencies. Activate via the `Skill` tool; do not paraphrase this skill's workflow from memory.
 license: MIT
 compatibility: [claude-code, cursor, copilot, codex]
 platforms: [android]
 ---
 
 # Android Build System
+
+## Activation
+
+You are reading this because `Skill(mobiai-android-build)` was invoked — correct. Every HARD-GATE, phase checkpoint, and approval gate in this document is binding **because** the `Skill` tool was called. None of them bind if a future step, subagent, or different session reproduces this workflow from memory without another `Skill(mobiai-android-build)` call.
+
+If you need any of this skill's steps in another context, invoke `Skill(mobiai-android-build)` again. Paraphrasing from memory is not activation.
 
 Expert knowledge for building Android projects with Gradle.
 

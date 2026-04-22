@@ -1,12 +1,18 @@
 ---
 name: mobiai-android-device
-description: Use when interacting with an Android device or emulator — run adb commands, automate UI, capture screenshots, read logcat, manage emulators
+description: Use when interacting with an Android device or emulator — run adb commands, automate UI, capture screenshots, read logcat, manage emulators. Activate via the `Skill` tool; do not paraphrase this skill's workflow from memory.
 license: MIT
 compatibility: [claude-code, cursor, copilot, codex]
 platforms: [android]
 ---
 
 # Android Device Interaction
+
+## Activation
+
+You are reading this because `Skill(mobiai-android-device)` was invoked — correct. Every HARD-GATE, phase checkpoint, and approval gate in this document is binding **because** the `Skill` tool was called. None of them bind if a future step, subagent, or different session reproduces this workflow from memory without another `Skill(mobiai-android-device)` call.
+
+If you need any of this skill's steps in another context, invoke `Skill(mobiai-android-device)` again. Paraphrasing from memory is not activation.
 
 Expert-level knowledge for interacting with Android devices and emulators via ADB.
 

@@ -1,12 +1,18 @@
 ---
 name: mobiai-mobile-verification
-description: "You MUST use this before declaring any mobile work done, fixed, green, or ready — and before committing, pushing, or opening a PR. No completion claim may be made without fresh verification evidence from this session."
+description: "You MUST use this before declaring any mobile work done, fixed, green, or ready — and before committing, pushing, or opening a PR. No completion claim may be made without fresh verification evidence from this session. Activate via the `Skill` tool; do not paraphrase this skill's workflow from memory."
 license: MIT
 compatibility: [claude-code, cursor, copilot, codex, gemini]
 platforms: [android, ios, kmp, flutter, react-native]
 ---
 
 # Mobile Verification Before Completion
+
+## Activation
+
+You are reading this because `Skill(mobiai-mobile-verification)` was invoked — correct. Every HARD-GATE, phase checkpoint, and approval gate in this document is binding **because** the `Skill` tool was called. None of them bind if a future step, subagent, or different session reproduces this workflow from memory without another `Skill(mobiai-mobile-verification)` call.
+
+If you need any of this skill's steps in another context, invoke `Skill(mobiai-mobile-verification)` again. Paraphrasing from memory is not activation.
 
 <HARD-GATE>
 Do NOT state, imply, or signal that work is complete, fixed, passing, ready, or merged-ready until you have just run the verification commands in this message and observed their output. Stale memory of earlier runs does not count.

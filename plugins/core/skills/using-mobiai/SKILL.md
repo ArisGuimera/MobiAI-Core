@@ -42,34 +42,54 @@ Start here to find the right skill:
 - **Implementation done, need to integrate** → `mobiai-mobile-finishing-branch`
 - **Creating a new MobiAI skill** → `mobiai-writing-skills`
 
+## MANDATORY: Invoke, Don't Paraphrase
+
+Skills must be **invoked via the `Skill` tool** (or your platform's equivalent). It is NOT enough to read the description in this bootstrap, remember the skill's steps, and reproduce them from memory — that is the single most common failure of this ecosystem.
+
+Concretely, this means:
+
+- When a task matches an entry in the Quick Decision Guide above, your **first tool call** must be `Skill(<skill-name>)`. It must happen **before** any `Bash`, `Read`, `Grep`, `Glob`, `Edit`, `Write`, `Agent`, or MCP call related to that task.
+- "Consulting" the guide or "mentally loading" a skill is not activation. If the `Skill` tool was not called, the skill is not active and its hard-gates, approval gates, and phase workflows are NOT in effect — even if you copy its steps.
+- The phrasing "load the matching skill", "follow the skill", "let the skill drive X" always means: **call the `Skill` tool with that skill's name**. There is no other form of activation.
+
+If you catch yourself about to run a tool for a task without having first invoked the matching skill: stop, call `Skill(<name>)`, and restart from inside the skill.
+
 ## Pre-flight: Before You Act
 
 These rules are NOT optional. They apply to every task, every time.
 
-- **Before spawning any subagent** (Explore, general-purpose, Plan), **before reading code for investigation**, and **before writing Grep/Glob queries** related to a new task: STOP. Consult the Quick Decision Guide above and load the matching skill FIRST. Exploration, mapping, and investigation are part of the skill's workflow — they are NOT pre-skill activities.
-- **On any task context switch within a session** — new bug, new feature, new ticket, merged branch moving to the next branch, or any pivot to unrelated work — re-consult the Quick Decision Guide. The previous task's skill does NOT carry over. Each task gets its own gate check.
+- **Before spawning any subagent** (Explore, general-purpose, Plan), **before reading code for investigation**, and **before writing Grep/Glob queries** related to a new task: STOP. Consult the Quick Decision Guide above and invoke the matching skill via the `Skill` tool FIRST. Exploration, mapping, and investigation are part of the skill's workflow — they are NOT pre-skill activities.
+- **On any task context switch within a session** — new bug, new feature, new ticket, merged branch moving to the next branch, or any pivot to unrelated work — re-consult the Quick Decision Guide and invoke the new task's skill. The previous task's skill does NOT carry over. Each task gets its own `Skill` tool invocation.
 - If the current request doesn't clearly map to any row in the guide, ask the user to clarify before touching code. Do not improvise a workflow.
 
 ### Anti-Pattern: "Momentum"
 
 The single most common failure mode for this ecosystem is **operating from momentum** after the first task of a session:
 
-> "I already fixed one bug this session, so when the user reported the next one I jumped straight to spawning an Explore agent and reading code — I didn't re-check the Decision Guide or load `mobiai-mobile-debugging`."
+> "I already fixed one bug this session, so when the user reported the next one I jumped straight to spawning an Explore agent and reading code — I didn't re-check the Decision Guide or invoke `mobiai-mobile-debugging`."
 
-This is wrong. Skills are NOT just for the "fix" step — they govern investigation, reproduction, exploration, and verification too. Reading code without a skill loaded means you are improvising a process that the skill already defines rigorously.
+This is wrong. Skills are NOT just for the "fix" step — they govern investigation, reproduction, exploration, and verification too. Reading code without having invoked the `Skill` tool means you are improvising a process that the skill already defines rigorously.
 
 Signs you are in Momentum mode (stop and re-consult the guide):
 
 - You're about to spawn a subagent to "map the code" or "find where X lives" for a new bug/feature, without naming which skill's workflow demands that exploration.
 - You just finished a task and are reacting to the next message without a gate check.
-- You're writing a Grep/Glob query for investigation and haven't loaded `mobiai-mobile-debugging` (for bugs) or the relevant architecture skill (for features).
+- You're writing a Grep/Glob query for investigation and the `Skill` tool has not yet been invoked for `mobiai-mobile-debugging` (for bugs) or the relevant architecture skill (for features).
 - You feel you "already know" the codebase from the previous task, so the skill would be redundant.
 
-If any of these apply: stop, open the Decision Guide, load the matching skill, and let the skill drive the investigation.
+If any of these apply: stop, open the Decision Guide, invoke the matching skill via the `Skill` tool, and let the skill's loaded content drive the investigation.
+
+### Anti-Pattern: "From Memory"
+
+A second, subtler failure: you read the skill's row in this bootstrap, you remember what the skill does from a previous session, and you reproduce the workflow in-session without ever calling the `Skill` tool.
+
+This is also wrong. The description you see here is only a pointer. The skill's HARD-GATEs, phase boundaries, approval checkpoints, and platform-specific branching only come into force once the `Skill` tool has loaded the full SKILL.md body. Reproducing the steps from memory means none of those gates apply.
+
+If you find yourself thinking "I don't need to invoke it, I remember what it does": that is the exact moment to invoke it.
 
 ## Available Skills
 
-These skills activate automatically based on context. When a task matches a skill's description, load and follow it.
+Each entry below names a skill you activate by calling `Skill(<name>)` when the task matches its "When to Use" column. Do not paraphrase these skills from this table — invoke them.
 
 ### Core Workflow Skills
 | Skill | When to Use |
@@ -122,15 +142,17 @@ These skills activate automatically based on context. When a task matches a skil
 
 ## How to Access Skills
 
-**In Claude Code:** Use the `Skill` tool. When you invoke a skill, its content is loaded and presented to you — follow it directly.
+A skill is only active once you have invoked it via your platform's skill tool and received the loaded SKILL.md body back. Matching a description is NOT activation — invocation is.
 
-**In Copilot CLI:** Use the `skill` tool. Skills are auto-discovered from installed plugins.
+**In Claude Code:** Call the `Skill` tool with the skill name (e.g. `Skill(mobiai-fix-issue)`). The SKILL.md body is returned as the tool result — follow it directly. If the `Skill` tool has not been called, the skill is not active.
 
-**In Gemini CLI:** Skills activate via the `activate_skill` tool. Gemini loads skill metadata at session start and activates the full content on demand.
+**In Copilot CLI:** Call the `skill` tool. Skills are auto-discovered from installed plugins.
+
+**In Gemini CLI:** Call `activate_skill` with the skill name. Gemini loads skill metadata at session start and activates the full content on demand.
 
 **In Codex:** Skills are discovered natively from the symlinked skills directory. See `.codex/INSTALL.md` for setup.
 
-**In other environments:** Check your platform's documentation for how skills are loaded.
+**In other environments:** Check your platform's documentation for how skills are invoked.
 
 ## Platform Adaptation
 
@@ -142,7 +164,7 @@ Skills use Claude Code tool names (Read, Edit, Write, Bash, Grep, Glob, etc.) as
 
 ## How to Use Skills
 
-1. **Auto-detection (first gate, per task)**: This is the mandatory first step for every task. Before any other action — before spawning subagents, before reading code, before writing Grep/Glob queries — match the task against the Quick Decision Guide and load the relevant skill. This gate fires **per-task, not per-session**: a new bug, new feature, new ticket, or context switch re-triggers it. The previous task's skill does not carry over. See "Pre-flight: Before You Act" above.
+1. **Auto-detection (first gate, per task)**: This is the mandatory first step for every task. Before any other action — before spawning subagents, before reading code, before writing Grep/Glob queries — match the task against the Quick Decision Guide and **invoke the relevant skill via the `Skill` tool**. "Loading from memory" or "consulting" does not count; only a successful `Skill` tool call activates the skill. This gate fires **per-task, not per-session**: a new bug, new feature, new ticket, or context switch re-triggers it. The previous task's skill does not carry over. See "Pre-flight: Before You Act" above.
 2. **Platform detection**: Check the project structure to determine the platform:
    - `build.gradle` / `build.gradle.kts` → Android
    - `*.xcodeproj` / `*.xcworkspace` → iOS

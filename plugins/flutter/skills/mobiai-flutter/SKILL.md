@@ -1,12 +1,18 @@
 ---
 name: mobiai-flutter
-description: Use when working on a Flutter or Dart project — building, testing, debugging, understanding state management and project structure
+description: Use when working on a Flutter or Dart project — building, testing, debugging, understanding state management and project structure. Activate via the `Skill` tool; do not paraphrase this skill's workflow from memory.
 license: MIT
 compatibility: [claude-code, cursor, copilot, codex]
 platforms: [flutter]
 ---
 
 # Flutter / Dart
+
+## Activation
+
+You are reading this because `Skill(mobiai-flutter)` was invoked — correct. Every HARD-GATE, phase checkpoint, and approval gate in this document is binding **because** the `Skill` tool was called. None of them bind if a future step, subagent, or different session reproduces this workflow from memory without another `Skill(mobiai-flutter)` call.
+
+If you need any of this skill's steps in another context, invoke `Skill(mobiai-flutter)` again. Paraphrasing from memory is not activation.
 
 > **Community contribution welcome!** Help flesh out this skill with Flutter patterns, state management approaches, and real-world workflows.
 

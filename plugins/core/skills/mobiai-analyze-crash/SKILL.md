@@ -1,12 +1,18 @@
 ---
 name: mobiai-analyze-crash
-description: Use when the user shares a crash from any source (stack trace, log, screenshot, error description) and wants to find the root cause and fix it
+description: Use when the user shares a crash from any source (stack trace, log, screenshot, error description) and wants to find the root cause and fix it. Activate via the `Skill` tool; do not paraphrase this skill's workflow from memory.
 license: MIT
 compatibility: [claude-code, cursor, copilot, codex]
 platforms: [android, ios, kmp, flutter, react-native]
 ---
 
 # Analyze Crash
+
+## Activation
+
+You are reading this because `Skill(mobiai-analyze-crash)` was invoked — correct. Every HARD-GATE, phase checkpoint, and approval gate in this document is binding **because** the `Skill` tool was called. None of them bind if a future step, subagent, or different session reproduces this workflow from memory without another `Skill(mobiai-analyze-crash)` call.
+
+If you need any of this skill's steps in another context, invoke `Skill(mobiai-analyze-crash)` again. Paraphrasing from memory is not activation.
 
 Analyze a crash that the user provides, find the root cause in the codebase, and fix it.
 

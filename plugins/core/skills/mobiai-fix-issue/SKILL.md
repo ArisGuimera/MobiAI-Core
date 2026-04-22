@@ -1,12 +1,18 @@
 ---
 name: mobiai-fix-issue
-description: "You MUST use this before starting any bug fix from a ticket or issue — fetch, understand, investigate root cause, apply the fix with tests, and verify. For small line-level fixes, runs autonomously end-to-end and gates only before push. For complex changes, gates at each phase boundary."
+description: "You MUST use this before starting any bug fix from a ticket or issue — fetch, understand, investigate root cause, apply the fix with tests, and verify. For small line-level fixes, runs autonomously end-to-end and gates only before push. For complex changes, gates at each phase boundary. Activate via the `Skill` tool; do not paraphrase this skill's workflow from memory."
 license: MIT
 compatibility: [claude-code, cursor, copilot, codex]
 platforms: [android, ios, kmp, flutter, react-native]
 ---
 
 # Fix Issue
+
+## Activation
+
+You are reading this because `Skill(mobiai-fix-issue)` was invoked — correct. Every HARD-GATE, phase checkpoint, and approval gate in this document is binding **because** the `Skill` tool was called. None of them bind if a future step, subagent, or different session reproduces this workflow from memory without another `Skill(mobiai-fix-issue)` call.
+
+If you need any of this skill's steps in another context, invoke `Skill(mobiai-fix-issue)` again. Paraphrasing from memory is not activation.
 
 End-to-end workflow for fixing a bug reported in an issue tracker (Jira, GitHub Issues, Linear, etc.). The flow runs all phases in order — understand, reproduce (only if needed), investigate root cause, apply fix, verify, open PR — but the level of user gating adapts to the scope of the change.
 

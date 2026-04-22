@@ -1,12 +1,18 @@
 ---
 name: mobiai-react-native
-description: Use when working on a React Native project — building, testing, debugging, understanding navigation and state management
+description: Use when working on a React Native project — building, testing, debugging, understanding navigation and state management. Activate via the `Skill` tool; do not paraphrase this skill's workflow from memory.
 license: MIT
 compatibility: [claude-code, cursor, copilot, codex]
 platforms: [react-native]
 ---
 
 # React Native
+
+## Activation
+
+You are reading this because `Skill(mobiai-react-native)` was invoked — correct. Every HARD-GATE, phase checkpoint, and approval gate in this document is binding **because** the `Skill` tool was called. None of them bind if a future step, subagent, or different session reproduces this workflow from memory without another `Skill(mobiai-react-native)` call.
+
+If you need any of this skill's steps in another context, invoke `Skill(mobiai-react-native)` again. Paraphrasing from memory is not activation.
 
 > **Community contribution welcome!** Help flesh out this skill with React Native patterns, debugging tips, and real-world workflows.
 

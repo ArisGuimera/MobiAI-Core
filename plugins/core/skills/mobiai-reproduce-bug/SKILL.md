@@ -1,12 +1,18 @@
 ---
 name: mobiai-reproduce-bug
-description: Use when the user wants to reproduce a bug on a mobile device, emulator, or simulator using UI automation
+description: Use when the user wants to reproduce a bug on a mobile device, emulator, or simulator using UI automation. Activate via the `Skill` tool; do not paraphrase this skill's workflow from memory.
 license: MIT
 compatibility: [claude-code, cursor, copilot, codex]
 platforms: [android, ios, flutter, react-native]
 ---
 
 # Reproduce Bug
+
+## Activation
+
+You are reading this because `Skill(mobiai-reproduce-bug)` was invoked — correct. Every HARD-GATE, phase checkpoint, and approval gate in this document is binding **because** the `Skill` tool was called. None of them bind if a future step, subagent, or different session reproduces this workflow from memory without another `Skill(mobiai-reproduce-bug)` call.
+
+If you need any of this skill's steps in another context, invoke `Skill(mobiai-reproduce-bug)` again. Paraphrasing from memory is not activation.
 
 Interact with a running mobile app on a device/emulator/simulator to reproduce a reported bug.
 

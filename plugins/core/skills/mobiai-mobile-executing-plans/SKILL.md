@@ -1,12 +1,18 @@
 ---
 name: mobiai-mobile-executing-plans
-description: "ALWAYS invoke this when a written mobile implementation plan exists and you are about to carry it out in a fresh session. Load and critique the plan before executing any task from it."
+description: "ALWAYS invoke this when a written mobile implementation plan exists and you are about to carry it out in a fresh session. Load and critique the plan before executing any task from it. Activate via the `Skill` tool; do not paraphrase this skill's workflow from memory."
 license: MIT
 compatibility: [claude-code, cursor, copilot, codex, gemini]
 platforms: [android, ios, kmp, flutter, react-native]
 ---
 
 # Executing Mobile Plans
+
+## Activation
+
+You are reading this because `Skill(mobiai-mobile-executing-plans)` was invoked — correct. Every HARD-GATE, phase checkpoint, and approval gate in this document is binding **because** the `Skill` tool was called. None of them bind if a future step, subagent, or different session reproduces this workflow from memory without another `Skill(mobiai-mobile-executing-plans)` call.
+
+If you need any of this skill's steps in another context, invoke `Skill(mobiai-mobile-executing-plans)` again. Paraphrasing from memory is not activation.
 
 ## Overview
 
