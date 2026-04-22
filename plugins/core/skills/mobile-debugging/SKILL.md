@@ -1,6 +1,6 @@
 ---
 name: mobile-debugging
-description: "You MUST use this before proposing any fix for a mobile bug, test failure, crash, or unexpected behavior. Walks root-cause analysis as phased evidence gathering with an explicit user-confirmation gate before any fix is proposed."
+description: "You MUST use this before proposing any fix for a mobile bug, test failure, crash, or unexpected behavior. Walks root-cause analysis as phased evidence gathering. For small fixes with clear evidence, runs autonomously and returns the root cause to the caller. For complex or uncertain cases, gates at known-vs-assumed and root-cause steps."
 license: MIT
 compatibility: [claude-code, cursor, copilot, codex, gemini]
 platforms: [android, ios, kmp, flutter, react-native]
@@ -13,29 +13,50 @@ Random fixes waste time and create new bugs. Quick patches mask underlying issue
 **Core principle:** ALWAYS find root cause before attempting fixes. Symptom fixes are failure.
 
 <HARD-GATE>
-Do NOT propose any fix, write any code, edit any production file, refactor any surrounding code, or invoke `mobile-tdd` until you have (a) gathered evidence, (b) separated what is known from what is assumed, (c) formed and verified a hypothesis, (d) stated the root cause, and (e) received explicit user confirmation that the root cause is correct. This applies to EVERY bug regardless of perceived simplicity, including "one-line" fixes and time-pressured emergencies.
+You MUST NOT propose any fix, write any code, edit any production file, refactor any surrounding code, or invoke `mobile-tdd` until you have (a) gathered evidence, (b) separated what is known from what is assumed, (c) formed and verified a hypothesis, and (d) stated the root cause.
+
+Whether you also need **explicit user confirmation** at steps (b) and (d) depends on the scope classification inherited from the caller (or declared at Pre-flight below). Fast path: no confirmation gate, proceed autonomously. Gated path: explicit confirmation required at both steps.
 </HARD-GATE>
 
 ## Anti-Pattern: "It's Obviously X"
 
-The most common failure mode is pattern-matching the symptom to a familiar-looking cause and proposing a fix before the evidence supports it — especially when a sub-agent or exploration returns a confident diagnosis that was never cross-checked against the code. Threading, null, lifecycle, cache, "the backend changed" — all tempting guesses. Every bug goes through the phased flow. The user must see the evidence, the known-vs-assumed split, the hypothesis, and confirm the root cause before any fix is discussed.
+The most common failure mode is pattern-matching the symptom to a familiar-looking cause and proposing a fix before the evidence supports it — especially when a sub-agent or exploration returns a confident diagnosis that was never cross-checked against the code. Threading, null, lifecycle, cache, "the backend changed" — all tempting guesses. Every bug goes through the phased flow.
+
+The scope classification only changes **whether you wait for user confirmation**, not **whether you do the analysis**. Fast path still gathers evidence, splits known vs. assumed, forms and verifies a hypothesis, and states the root cause — it just returns that result to the caller instead of pausing for approval.
 
 ## The Iron Law
 
 ```
-NO FIXES WITHOUT ROOT CAUSE INVESTIGATION AND USER CONFIRMATION FIRST
+NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST
 ```
+
+## Pre-flight: Scope Classification
+
+This skill inherits the scope from its caller (typically `fix-issue`). If invoked standalone, classify at the start:
+
+**Fast path** — work autonomously through all phases; return the confirmed root cause to the caller at Phase 6:
+- Clear symptom with obvious evidence (stack trace points at a specific line, log message is explicit)
+- Single root cause category (not contradictory evidence)
+- No architectural question, no cross-module mystery
+
+**Gated path** — stop and wait for user confirmation at Phase 2 and Phase 5:
+- Contradictory evidence or multiple plausible causes
+- Cross-module / cross-platform investigation required
+- Root cause involves architectural choices (e.g., "should this be on the main thread?")
+- Previous fix attempts failed
+
+In doubt → gated path.
 
 ## Checklist
 
-You MUST create a task for each of these items and complete them in order. Do not skip phases. Do not merge phases. Do not proceed past Phase 5 without the user's explicit confirmation.
+You MUST create a task for each of these items and complete them in order. Do not skip phases. Do not merge phases.
 
 1. **Gather evidence** — logs, stack traces, reproduction steps, affected platforms, recent changes
-2. **State known vs. assumed** — present to the user, labeling each fact as observed or inferred
+2. **State known vs. assumed** — present to the user, labeling each fact as observed or inferred (gated path: wait for confirmation; fast path: proceed)
 3. **Form a hypothesis** — a single, specific, testable theory about the root cause
 4. **Verify the hypothesis** — against code and evidence, not against intuition
-5. **Present the root cause — USER CONFIRMATION REQUIRED before proposing any fix**
-6. **Hand off to implementation** — invoke skill `mobile-tdd` (or return control to `fix-issue` if the broader pipeline is active)
+5. **Present the root cause** (gated path: wait for user confirmation before Phase 6; fast path: state the root cause and proceed to Phase 6)
+6. **Hand off to implementation** — return control to `fix-issue` if the broader pipeline is active, or invoke `mobile-tdd`
 
 ## When to Use
 
@@ -103,12 +124,15 @@ Before forming any opinion, collect the raw material.
 
 ## Phase 2: State Known vs. Assumed
 
-Separate what you actually observed from what you are inferring. Present to the user a short list in two columns:
+Separate what you actually observed from what you are inferring. List in two columns:
 
 - **Known** (direct evidence): log lines seen, stack traces captured, reproduction confirmed, git diff contents
 - **Assumed** (not yet verified): "probably caused by X", "likely a threading issue", "the backend probably returned null"
 
-Every item in "Assumed" is a candidate to either verify (moving it to Known) or to drop. **Wait for the user to confirm the split is accurate before proceeding to Phase 3.** If the user corrects an assumption, update the list.
+Every item in "Assumed" is a candidate to either verify (moving it to Known) or to drop.
+
+- **Fast path**: record the split internally, proceed directly to Phase 3.
+- **Gated path**: present the split to the user and wait for confirmation before Phase 3. If the user corrects an assumption, update the list.
 
 ## Phase 3: Form a Hypothesis
 
@@ -144,7 +168,7 @@ Check common mobile bug categories to frame the hypothesis:
 - Freezing/threading models in legacy Kotlin/Native
 - Serialization differences between JVM and Native
 
-State the single hypothesis to the user in the form: "I think X is the root cause because Y". Be specific.
+State the single hypothesis in the form: "I think X is the root cause because Y". Be specific.
 
 ## Phase 4: Verify the Hypothesis
 
@@ -169,29 +193,28 @@ Verify against code and evidence, not against intuition.
    - Return to Phase 3 and form a new one
    - Do NOT stack fixes on top of an unverified theory
 
-## Phase 5: Present Root Cause — USER CONFIRMATION REQUIRED
+## Phase 5: Present Root Cause
 
-Once the hypothesis is verified, present to the user:
+Once the hypothesis is verified, state:
 
 1. **The root cause** — one or two sentences, stated plainly
 2. **The evidence that proves it** — specific log lines, specific code locations, specific reproduction results
 3. **Why the symptom follows from the cause** — the causal chain from root cause to observed behavior
 4. **What is still uncertain**, if anything
 
-Then ask explicitly:
+- **Fast path**: state the root cause concisely and proceed to Phase 6 without pausing. If you discover during Phase 4 that the evidence is contradictory or the hypothesis doesn't hold cleanly, upgrade to gated path before presenting.
+- **Gated path**: ask explicitly:
 
-> "This is the root cause I've identified and verified. Do you confirm this is correct before I propose a fix?"
+  > "This is the root cause I've identified and verified. Do you confirm this is correct before I propose a fix?"
 
-**Wait for the user's explicit confirmation. Do not propose a fix, do not open files for editing, do not invoke `mobile-tdd`, until the user has said yes. If the user pushes back or points to evidence you missed, return to Phase 3 or Phase 4 as appropriate.**
+  Wait for the user's explicit confirmation. If the user pushes back or points to evidence you missed, return to Phase 3 or Phase 4 as appropriate.
 
 ## Phase 6: Hand Off to Implementation
 
-Only after Phase 5 confirmation:
+The fix itself is not proposed inside this skill. `mobile-debugging` ends when the root cause is stated (fast path) or confirmed (gated path).
 
-- If invoked from `fix-issue`, return control — `fix-issue`'s Phase 4 (Propose the Fix) takes over and runs its own user-approval gate before any code is written.
+- If invoked from `fix-issue`, return control — `fix-issue`'s Phase 4 (Propose the Fix) takes over with its own gating rules.
 - Otherwise, **invoke skill `mobile-tdd`** to write the failing test first, then the implementation.
-
-Either way, the fix itself is not proposed inside this skill. `mobile-debugging` ends when the root cause is confirmed.
 
 ## Red Flags — STOP and Follow Process
 
@@ -222,18 +245,18 @@ If you catch yourself thinking:
 
 ## Quick Reference
 
-| Phase | Key Activity | Success Criteria |
-|-------|--------------|------------------|
-| **1. Gather evidence** | Read errors, reproduce, check changes, instrument | Raw material collected |
-| **2. Known vs. assumed** | Split facts from inferences, present to user | User confirms the split |
-| **3. Hypothesis** | Single specific testable theory | Stated in "X because Y" form |
-| **4. Verify** | Compare to working code, test minimally | Hypothesis confirmed or discarded |
-| **5. Root cause** | Present cause + evidence + causal chain | User confirms |
-| **6. Hand off** | Return to `fix-issue` or invoke `mobile-tdd` | Implementation begins elsewhere |
+| Phase | Key Activity | Fast path | Gated path |
+|-------|--------------|-----------|------------|
+| **1. Gather evidence** | Read errors, reproduce, check changes, instrument | Proceed autonomously | Proceed autonomously |
+| **2. Known vs. assumed** | Split facts from inferences | Record internally, proceed | Present to user, wait for confirmation |
+| **3. Hypothesis** | Single specific testable theory | Proceed autonomously | Proceed autonomously |
+| **4. Verify** | Compare to working code, test minimally | Proceed autonomously | Proceed autonomously |
+| **5. Root cause** | Present cause + evidence + causal chain | State and proceed to Phase 6 | Ask user to confirm before Phase 6 |
+| **6. Hand off** | Return to `fix-issue` or invoke `mobile-tdd` | Implementation begins elsewhere | Implementation begins elsewhere |
 
 ## Related Skills
 
-- **`fix-issue`** — the broader pipeline; calls this skill for Phase 3 of its own flow
+- **`fix-issue`** — the broader pipeline; calls this skill for its Phase 3. The scope classification (fast/gated) declared in `fix-issue` is inherited by this skill.
 - **`mobile-tdd`** — for creating the failing test once the root cause is confirmed
 - **`mobile-verification`** — to verify the fix worked before claiming success
-- **`reproduce-bug`** — for driving a device/emulator/simulator to reproduce the bug in Phase 1
+- **`reproduce-bug`** — for driving a device/emulator/simulator to reproduce the bug in Phase 1 (use only when `fix-issue` Phase 2 authorized reproduction; do not invoke autonomously)
