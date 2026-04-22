@@ -101,10 +101,14 @@ Before forming any opinion, collect the raw material.
    | **React Native** | Metro console, `adb logcat` / Xcode console, check native bridge errors |
    | **KMP** | Reproduce on each target platform; check whether the issue is in shared code or platform-specific `actual` implementations |
 
-3. **Check recent changes**
+3. **Check recent changes & find the breaking commit**
    - What changed that could cause this?
-   - `git diff`, `git log --oneline -10`, `git blame <file>`
-   - New dependencies, config changes, Gradle/SPM/pubspec bumps
+   - `git log --oneline -20 -- <affected-file>` — commits that touched the affected file
+   - `git blame -L <line>,<line> <file>` — which commit last changed the specific failing line
+   - `git log --all --grep="<keyword>"` — past related fixes that might show the introduction of a conflicting pattern
+   - **If this is a regression**: identify the commit that introduced the bug. Record its SHA and subject. Use `git bisect` when the history is dense or the search space is large. The breaking commit goes into the PR description (it helps the reviewer assess scope and decide backport priority).
+   - **If the bug has always existed** (not a regression): state that explicitly. "Always-existed, not a regression" is valid and important information for the reviewer — don't leave it ambiguous.
+   - New dependencies, config changes, Gradle/SPM/pubspec bumps can themselves be the breaking commit.
 
 4. **Collect concrete evidence**
 

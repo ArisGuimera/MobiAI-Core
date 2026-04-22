@@ -177,15 +177,19 @@ If verification fails, do not rationalize. Return to Phase 3 with the new eviden
 
 ## Phase 7: Open the PR — FINAL GATE (always)
 
-**Invoke skill `create-pr`**. This is the non-negotiable gate for every ticket regardless of path — `create-pr` will show the user the diff and test evidence and require explicit approval before pushing.
+**Invoke skill `create-pr`**. This is the non-negotiable gate for every ticket regardless of path — before pushing, the user will see the full diff plus the context below and must explicitly approve.
 
-The PR description must include:
+What to present to the user at this gate (and include in the PR description):
 
-- The ticket reference
-- The root cause (from Phase 3)
-- The fix (from Phase 4 proposal, plus anything that changed during implementation)
-- The evidence that it works (from Phase 6)
-- Platform-specific notes where relevant
+1. **Ticket reference** — link/key of the issue
+2. **Root cause** — the confirmed root cause from Phase 3, in plain language (not the symptom)
+3. **Breaking commit** — identified during Phase 3 investigation. The SHA + subject of the commit that introduced the bug; or `"always-existed, not a regression"` if applicable. Do not leave this ambiguous.
+4. **What changed** — file-by-file factual summary (what code was touched)
+5. **Why each change** — the reasoning that connects the root cause to each specific modification. NOT what the diff already shows — why it had to change. One "why" per logical change.
+6. **Evidence it works** — test results, compile output, platform-specific checks from Phase 6
+7. **Platform notes** — risks, side effects, anything platform-specific the reviewer should know
+
+Do not push until the user has seen all seven and approved.
 
 ## Decision Rules
 
