@@ -17,3 +17,6 @@ node_modules/
 # Output
 output/
 *.log
+
+# Temporary upstream clones (used by sync-android-skills workflow)
+_upstream/
