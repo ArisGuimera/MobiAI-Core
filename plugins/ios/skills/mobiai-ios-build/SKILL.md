@@ -1,18 +1,12 @@
 ---
 name: mobiai-ios-build
-description: Use when building an iOS project, configuring schemes, troubleshooting build failures, or managing dependencies with CocoaPods or SPM. Activate via the `Skill` tool; do not paraphrase this skill's workflow from memory.
+description: Use when building an iOS project, configuring schemes, troubleshooting build failures, or managing dependencies with CocoaPods or SPM.
 license: MIT
 compatibility: [claude-code, cursor, copilot, codex]
 platforms: [ios]
 ---
 
 # iOS Build System
-
-## Activation
-
-You are reading this because `Skill(mobiai-ios-build)` was invoked — correct. Every HARD-GATE, phase checkpoint, and approval gate in this document is binding **because** the `Skill` tool was called. None of them bind if a future step, subagent, or different session reproduces this workflow from memory without another `Skill(mobiai-ios-build)` call.
-
-If you need any of this skill's steps in another context, invoke `Skill(mobiai-ios-build)` again. Paraphrasing from memory is not activation.
 
 > **Community contribution welcome!** This skill is a skeleton. Help flesh it out with real-world xcodebuild workflows and troubleshooting tips.
 

@@ -1,18 +1,12 @@
 ---
 name: mobiai-mobile-debugging
-description: "You MUST use this before proposing any fix for a mobile bug, test failure, crash, or unexpected behavior. Walks root-cause analysis as phased evidence gathering. For small fixes with clear evidence, runs autonomously and returns the root cause to the caller. For complex or uncertain cases, gates at known-vs-assumed and root-cause steps. Activate via the `Skill` tool; do not paraphrase this skill's workflow from memory."
+description: "You MUST use this before proposing any fix for a mobile bug, test failure, crash, or unexpected behavior — AND when re-investigating a bug whose previous fix didn't work (user shares a commit SHA and questions whether it resolves the bug). Walks root-cause analysis as phased evidence gathering. For small fixes with clear evidence, runs autonomously and returns the root cause to the caller. For complex or uncertain cases, gates at known-vs-assumed and root-cause steps."
 license: MIT
 compatibility: [claude-code, cursor, copilot, codex, gemini]
 platforms: [android, ios, kmp, flutter, react-native]
 ---
 
 # Systematic Mobile Debugging
-
-## Activation
-
-You are reading this because `Skill(mobiai-mobile-debugging)` was invoked — correct. Every HARD-GATE, phase checkpoint, and approval gate in this document is binding **because** the `Skill` tool was called. None of them bind if a future step, subagent, or different session reproduces this workflow from memory without another `Skill(mobiai-mobile-debugging)` call.
-
-If you need any of this skill's steps in another context, invoke `Skill(mobiai-mobile-debugging)` again. Paraphrasing from memory is not activation.
 
 Random fixes waste time and create new bugs. Quick patches mask underlying issues.
 

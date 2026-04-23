@@ -37,7 +37,7 @@ escape_for_json() {
 }
 
 SKILL_ESCAPED=$(escape_for_json "$SKILL_CONTENT")
-SESSION_CONTEXT="<MOBIAI_CONTEXT>\n${SKILL_ESCAPED}\n</MOBIAI_CONTEXT>"
+SESSION_CONTEXT="<EXTREMELY_IMPORTANT>\nYou have MobiAI.\n\n**Below is the full content of your 'core:using-mobiai' skill — your introduction to using MobiAI skills. For all other skills, invoke them via the \`Skill\` tool:**\n\n${SKILL_ESCAPED}\n</EXTREMELY_IMPORTANT>"
 
 # Output context injection as JSON.
 # Cursor hooks expect additional_context (snake_case).

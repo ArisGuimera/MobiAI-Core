@@ -1,18 +1,12 @@
 ---
 name: mobiai-ios-device
-description: Use when interacting with an iOS Simulator — run simctl commands, capture screenshots, read device logs, manage simulators. Activate via the `Skill` tool; do not paraphrase this skill's workflow from memory.
+description: Use when interacting with an iOS Simulator — run simctl commands, capture screenshots, read device logs, manage simulators.
 license: MIT
 compatibility: [claude-code, cursor, copilot, codex]
 platforms: [ios]
 ---
 
 # iOS Device Interaction
-
-## Activation
-
-You are reading this because `Skill(mobiai-ios-device)` was invoked — correct. Every HARD-GATE, phase checkpoint, and approval gate in this document is binding **because** the `Skill` tool was called. None of them bind if a future step, subagent, or different session reproduces this workflow from memory without another `Skill(mobiai-ios-device)` call.
-
-If you need any of this skill's steps in another context, invoke `Skill(mobiai-ios-device)` again. Paraphrasing from memory is not activation.
 
 > **Community contribution welcome!** This skill is a skeleton. If you have iOS development experience, please help flesh it out with battle-tested commands and workflows.
 

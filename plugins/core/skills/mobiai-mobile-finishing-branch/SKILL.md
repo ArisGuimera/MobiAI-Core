@@ -1,18 +1,12 @@
 ---
 name: mobiai-mobile-finishing-branch
-description: "You MUST use this once mobile implementation is finished and you are about to integrate the work — merging, pushing, opening a PR, or cleaning up the branch. Do not improvise the wrap-up; this skill gates verification, presents integration options, and handles cleanup. Activate via the `Skill` tool; do not paraphrase this skill's workflow from memory."
+description: "You MUST use this once mobile implementation is finished and you are about to integrate the work — merging, pushing, opening a PR, or cleaning up the branch. Do not improvise the wrap-up; this skill gates verification, presents integration options, and handles cleanup."
 license: MIT
 compatibility: [claude-code, cursor, copilot, codex, gemini]
 platforms: [android, ios, kmp, flutter, react-native]
 ---
 
 # Finishing a Mobile Development Branch
-
-## Activation
-
-You are reading this because `Skill(mobiai-mobile-finishing-branch)` was invoked — correct. Every HARD-GATE, phase checkpoint, and approval gate in this document is binding **because** the `Skill` tool was called. None of them bind if a future step, subagent, or different session reproduces this workflow from memory without another `Skill(mobiai-mobile-finishing-branch)` call.
-
-If you need any of this skill's steps in another context, invoke `Skill(mobiai-mobile-finishing-branch)` again. Paraphrasing from memory is not activation.
 
 ## Overview
 

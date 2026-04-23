@@ -1,18 +1,12 @@
 ---
 name: mobiai-mobile-parallel-agents
-description: "ALWAYS invoke this before dispatching agents for two or more independent mobile problems (unrelated failures, separate subsystems, disjoint investigations). Do not spawn parallel agents ad hoc — this skill defines how to isolate their context and scope. Activate via the `Skill` tool; do not paraphrase this skill's workflow from memory."
+description: "ALWAYS invoke this before dispatching agents for two or more independent mobile problems (unrelated failures, separate subsystems, disjoint investigations). Do not spawn parallel agents ad hoc — this skill defines how to isolate their context and scope."
 license: MIT
 compatibility: [claude-code, cursor, copilot, codex, gemini]
 platforms: [android, ios, kmp, flutter, react-native]
 ---
 
 # Dispatching Parallel Mobile Agents
-
-## Activation
-
-You are reading this because `Skill(mobiai-mobile-parallel-agents)` was invoked — correct. Every HARD-GATE, phase checkpoint, and approval gate in this document is binding **because** the `Skill` tool was called. None of them bind if a future step, subagent, or different session reproduces this workflow from memory without another `Skill(mobiai-mobile-parallel-agents)` call.
-
-If you need any of this skill's steps in another context, invoke `Skill(mobiai-mobile-parallel-agents)` again. Paraphrasing from memory is not activation.
 
 ## Overview
 

@@ -1,18 +1,12 @@
 ---
 name: mobiai-kmp
-description: Use when working on a Kotlin Multiplatform project — shared code, expect/actual declarations, platform-specific implementations, building and testing. Activate via the `Skill` tool; do not paraphrase this skill's workflow from memory.
+description: Use when working on a Kotlin Multiplatform project — shared code, expect/actual declarations, platform-specific implementations, building and testing.
 license: MIT
 compatibility: [claude-code, cursor, copilot, codex]
 platforms: [kmp]
 ---
 
 # Kotlin Multiplatform (KMP)
-
-## Activation
-
-You are reading this because `Skill(mobiai-kmp)` was invoked — correct. Every HARD-GATE, phase checkpoint, and approval gate in this document is binding **because** the `Skill` tool was called. None of them bind if a future step, subagent, or different session reproduces this workflow from memory without another `Skill(mobiai-kmp)` call.
-
-If you need any of this skill's steps in another context, invoke `Skill(mobiai-kmp)` again. Paraphrasing from memory is not activation.
 
 > **Community contribution welcome!** Help flesh out this skill with KMP patterns, common pitfalls, and real-world workflows.
 

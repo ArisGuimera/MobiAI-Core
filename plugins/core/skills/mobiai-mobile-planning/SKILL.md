@@ -1,18 +1,12 @@
 ---
 name: mobiai-mobile-planning
-description: "You MUST use this whenever a mobile task spans multiple steps, files, or subsystems — before touching code. Produce a written plan the user approves; do not improvise multi-step work from memory. Activate via the `Skill` tool; do not paraphrase this skill's workflow from memory."
+description: "You MUST use this whenever a mobile task spans multiple steps, files, or subsystems — before touching code. Produce a written plan the user approves; do not improvise multi-step work from memory."
 license: MIT
 compatibility: [claude-code, cursor, copilot, codex, gemini]
 platforms: [android, ios, kmp, flutter, react-native]
 ---
 
 # Writing Mobile Plans
-
-## Activation
-
-You are reading this because `Skill(mobiai-mobile-planning)` was invoked — correct. Every HARD-GATE, phase checkpoint, and approval gate in this document is binding **because** the `Skill` tool was called. None of them bind if a future step, subagent, or different session reproduces this workflow from memory without another `Skill(mobiai-mobile-planning)` call.
-
-If you need any of this skill's steps in another context, invoke `Skill(mobiai-mobile-planning)` again. Paraphrasing from memory is not activation.
 
 ## Overview
 

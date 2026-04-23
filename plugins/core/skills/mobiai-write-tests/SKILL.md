@@ -1,18 +1,12 @@
 ---
 name: mobiai-write-tests
-description: Use when the user asks to write tests for mobile code, or after applying a fix that needs regression tests. Activate via the `Skill` tool; do not paraphrase this skill's workflow from memory.
+description: Use when the user asks to write tests for mobile code, or after applying a fix that needs regression tests.
 license: MIT
 compatibility: [claude-code, cursor, copilot, codex]
 platforms: [android, ios, kmp, flutter, react-native]
 ---
 
 # Write Tests
-
-## Activation
-
-You are reading this because `Skill(mobiai-write-tests)` was invoked — correct. Every HARD-GATE, phase checkpoint, and approval gate in this document is binding **because** the `Skill` tool was called. None of them bind if a future step, subagent, or different session reproduces this workflow from memory without another `Skill(mobiai-write-tests)` call.
-
-If you need any of this skill's steps in another context, invoke `Skill(mobiai-write-tests)` again. Paraphrasing from memory is not activation.
 
 Write tests that cover a bug fix or new feature, following the project's existing patterns and platform conventions.
 

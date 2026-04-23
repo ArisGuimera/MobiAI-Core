@@ -1,7 +1,7 @@
 {
   "name": "android",
   "description": "MobiAI para Android — skills de device, build, testing, architecture, e integración con skills oficiales de Google (Apache 2.0)",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "author": {
     "name": "Matias Rosenstein",
     "url": "https://github.com/ArisGuimera/MobiAI-Core"

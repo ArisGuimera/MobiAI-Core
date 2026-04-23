@@ -1,18 +1,12 @@
 ---
 name: mobiai-mobile-tdd
-description: "You MUST use this before writing any implementation code for a mobile feature, bug fix, refactor, or behavior change. Tests come before implementation — no exceptions. Activate via the `Skill` tool; do not paraphrase this skill's workflow from memory."
+description: "You MUST use this before writing any implementation code for a mobile feature, bug fix, refactor, or behavior change. Tests come before implementation — no exceptions."
 license: MIT
 compatibility: [claude-code, cursor, copilot, codex, gemini]
 platforms: [android, ios, kmp, flutter, react-native]
 ---
 
 # Mobile Test-Driven Development (TDD)
-
-## Activation
-
-You are reading this because `Skill(mobiai-mobile-tdd)` was invoked — correct. Every HARD-GATE, phase checkpoint, and approval gate in this document is binding **because** the `Skill` tool was called. None of them bind if a future step, subagent, or different session reproduces this workflow from memory without another `Skill(mobiai-mobile-tdd)` call.
-
-If you need any of this skill's steps in another context, invoke `Skill(mobiai-mobile-tdd)` again. Paraphrasing from memory is not activation.
 
 <HARD-GATE>
 Do NOT write any production code for a mobile feature, fix, refactor, or behavior change until a failing test exists and you have observed it fail. This applies regardless of perceived simplicity or urgency.

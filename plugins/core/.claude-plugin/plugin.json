@@ -1,7 +1,7 @@
 {
   "name": "core",
   "description": "⚠️ Plugin interno — instalá mobile, android, ios, kmp, flutter o react-native en su lugar. Contiene skills cross-platform, el bootstrap using-mobiai y el SessionStart hook.",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "author": {
     "name": "Matias Rosenstein",
     "url": "https://github.com/ArisGuimera/MobiAI-Core"

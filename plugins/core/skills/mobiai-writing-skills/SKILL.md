@@ -1,17 +1,11 @@
 ---
 name: mobiai-writing-skills
-description: Guide the user through creating a new MobiAI skill — generate SKILL.md with proper structure, frontmatter, and actionable instructions. Activate via the `Skill` tool; do not paraphrase this skill's workflow from memory.
+description: Guide the user through creating a new MobiAI skill — generate SKILL.md with proper structure, frontmatter, and actionable instructions.
 license: MIT
 compatibility: [claude-code, cursor, copilot, codex]
 ---
 
 # Writing Skills
-
-## Activation
-
-You are reading this because `Skill(mobiai-writing-skills)` was invoked — correct. Every HARD-GATE, phase checkpoint, and approval gate in this document is binding **because** the `Skill` tool was called. None of them bind if a future step, subagent, or different session reproduces this workflow from memory without another `Skill(mobiai-writing-skills)` call.
-
-If you need any of this skill's steps in another context, invoke `Skill(mobiai-writing-skills)` again. Paraphrasing from memory is not activation.
 
 You are helping the user create a new skill for the MobiAI ecosystem. Guide them through the process step by step.
 

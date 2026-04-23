@@ -1,18 +1,12 @@
 ---
 name: mobiai-mobile-subagent-development
-description: "ALWAYS invoke this when executing a mobile implementation plan in the current session with subagent support available. Drives fresh-subagent-per-task execution with mandatory two-stage review; do not hand-execute plan tasks in-session when this workflow applies. Activate via the `Skill` tool; do not paraphrase this skill's workflow from memory."
+description: "ALWAYS invoke this when executing a mobile implementation plan in the current session with subagent support available. Drives fresh-subagent-per-task execution with mandatory two-stage review; do not hand-execute plan tasks in-session when this workflow applies."
 license: MIT
 compatibility: [claude-code, cursor, copilot, codex, gemini]
 platforms: [android, ios, kmp, flutter, react-native]
 ---
 
 # Mobile Subagent-Driven Development
-
-## Activation
-
-You are reading this because `Skill(mobiai-mobile-subagent-development)` was invoked — correct. Every HARD-GATE, phase checkpoint, and approval gate in this document is binding **because** the `Skill` tool was called. None of them bind if a future step, subagent, or different session reproduces this workflow from memory without another `Skill(mobiai-mobile-subagent-development)` call.
-
-If you need any of this skill's steps in another context, invoke `Skill(mobiai-mobile-subagent-development)` again. Paraphrasing from memory is not activation.
 
 Execute plan by dispatching fresh subagent per task, with two-stage review after each: spec compliance review first, then code quality review.
 

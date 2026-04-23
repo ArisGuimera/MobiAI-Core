@@ -1,18 +1,12 @@
 ---
 name: mobiai-ios-architecture
-description: Use when creating features, refactoring, or navigating an iOS codebase — understand project structure, find where to make changes, follow existing patterns. Activate via the `Skill` tool; do not paraphrase this skill's workflow from memory.
+description: Use when creating features, refactoring, or navigating an iOS codebase — understand project structure, find where to make changes, follow existing patterns.
 license: MIT
 compatibility: [claude-code, cursor, copilot, codex]
 platforms: [ios]
 ---
 
 # iOS Architecture
-
-## Activation
-
-You are reading this because `Skill(mobiai-ios-architecture)` was invoked — correct. Every HARD-GATE, phase checkpoint, and approval gate in this document is binding **because** the `Skill` tool was called. None of them bind if a future step, subagent, or different session reproduces this workflow from memory without another `Skill(mobiai-ios-architecture)` call.
-
-If you need any of this skill's steps in another context, invoke `Skill(mobiai-ios-architecture)` again. Paraphrasing from memory is not activation.
 
 > **Community contribution welcome!** Help improve this skill with your architecture insights, patterns, and real-world examples.
 

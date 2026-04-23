@@ -1,18 +1,12 @@
 ---
 name: mobiai-android-architecture
-description: Use when creating features, refactoring, or navigating an Android codebase — understand project structure, find where to make changes, follow existing patterns. Activate via the `Skill` tool; do not paraphrase this skill's workflow from memory.
+description: Use when creating features, refactoring, or navigating an Android codebase — understand project structure, find where to make changes, follow existing patterns.
 license: MIT
 compatibility: [claude-code, cursor, copilot, codex]
 platforms: [android]
 ---
 
 # Android Architecture
-
-## Activation
-
-You are reading this because `Skill(mobiai-android-architecture)` was invoked — correct. Every HARD-GATE, phase checkpoint, and approval gate in this document is binding **because** the `Skill` tool was called. None of them bind if a future step, subagent, or different session reproduces this workflow from memory without another `Skill(mobiai-android-architecture)` call.
-
-If you need any of this skill's steps in another context, invoke `Skill(mobiai-android-architecture)` again. Paraphrasing from memory is not activation.
 
 Common architecture patterns and project structures in Android apps.
 
