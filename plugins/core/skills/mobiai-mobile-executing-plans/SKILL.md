@@ -14,7 +14,7 @@ Load plan, review critically, execute all tasks, report when complete.
 
 **Announce at start:** "I'm using the mobiai-mobile-executing-plans skill to implement this plan."
 
-**Note:** If subagents are available, use `mobiai-mobile-subagent-development` instead of this skill — quality is significantly higher with subagent support.
+**Note:** If subagents are available, use `mobiai-mobile-executing-plans-with-subagents` instead of this skill — quality is significantly higher with subagent support.
 
 ## The Process
 

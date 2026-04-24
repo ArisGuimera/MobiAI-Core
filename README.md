@@ -96,7 +96,7 @@ cd ~/.codex/mobiai-core && git pull
 MobiAI incluye skills para todo el ciclo de desarrollo mobile:
 
 - **Flujo de trabajo** (en `core`, auto-instalado con cualquier plataforma) — mobiai-fix-issue, mobiai-reproduce-bug, mobiai-analyze-crash, mobiai-crashlytics, mobiai-write-tests, mobiai-review-code, mobiai-create-pr
-- **Proceso** (en `core`) — mobiai-mobile-brainstorming, mobiai-mobile-debugging, mobiai-mobile-tdd, mobiai-mobile-planning, mobiai-mobile-verification, mobiai-mobile-executing-plans, mobiai-mobile-parallel-agents, mobiai-mobile-subagent-development, mobiai-mobile-worktrees, mobiai-mobile-finishing-branch, mobiai-writing-skills
+- **Proceso** (en `core`) — mobiai-mobile-brainstorming, mobiai-mobile-debugging, mobiai-mobile-tdd, mobiai-mobile-planning, mobiai-mobile-verification, mobiai-mobile-executing-plans, mobiai-mobile-parallel-agents, mobiai-mobile-executing-plans-with-subagents, mobiai-mobile-worktrees, mobiai-mobile-finishing-branch, mobiai-writing-skills
 - **Android** (en `android`) — `mobiai-android-device`, `mobiai-android-build`, `mobiai-android-testing`, `mobiai-android-architecture`, más los [skills oficiales de Android mantenidos por Google](https://github.com/android/skills) (Apache 2.0, vendoreados en `plugins/android/skills/google/` con auto-sync semanal). Ver [NOTICE.md](NOTICE.md).
 - **iOS** (en `ios`) — mobiai-ios-device, mobiai-ios-build, mobiai-ios-testing, mobiai-ios-architecture
 - **Multiplataforma** — mobiai-kmp, mobiai-flutter, mobiai-react-native (cada uno en su plugin)

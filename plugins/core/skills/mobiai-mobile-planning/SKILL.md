@@ -17,6 +17,17 @@ Write comprehensive implementation plans assuming the engineer has zero context 
 **Save plans to:** `docs/plans/YYYY-MM-DD-<feature-name>.md`
 - (User preferences for plan location override this default)
 
+## Numbered Task Lists Are INPUT, Not Substitute
+
+If the user hands you a numbered list of 3+ tasks, that list is raw input — not a finished plan. You MUST still invoke this skill to validate:
+
+- **Dependencies**: which task must finish before another can start
+- **File-level conflicts**: can tasks be parallelized without agent collisions (e.g. two agents editing the same DI module or build file)
+- **Scope boundaries**: what each task pulls in (a "fix bug X" task may require related tests and touch adjacent code)
+- **Approval checkpoint**: present the dependency graph and wait for explicit user approval before dispatching any agent or writing any code
+
+A user-supplied list describes *what*. Planning determines *how, in what order, and by whom*.
+
 ## Scope Check
 
 If the spec covers multiple independent subsystems, suggest breaking into separate plans — one per subsystem. Each plan should produce working, testable software on its own.
@@ -41,7 +52,7 @@ Before defining tasks, map out which files will be created or modified. Design u
 ```markdown
 # [Feature Name] Implementation Plan
 
-> **For agentic workers:** Use `mobiai-mobile-subagent-development` (recommended) or `mobiai-mobile-executing-plans` to implement this plan task-by-task. Steps use checkbox syntax for tracking.
+> **For agentic workers:** Use `mobiai-mobile-executing-plans-with-subagents` (recommended) or `mobiai-mobile-executing-plans` to implement this plan task-by-task. Steps use checkbox syntax for tracking.
 
 **Goal:** [One sentence describing what this builds]
 
@@ -153,6 +164,6 @@ After saving the plan, offer execution choice:
 
 **Which approach?"**
 
-**If Subagent-Driven chosen:** Use `mobiai-mobile-subagent-development`
+**If Subagent-Driven chosen:** Use `mobiai-mobile-executing-plans-with-subagents`
 
 **If Inline Execution chosen:** Use `mobiai-mobile-executing-plans`

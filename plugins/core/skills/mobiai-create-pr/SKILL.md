@@ -1,6 +1,6 @@
 ---
 name: mobiai-create-pr
-description: Use whenever the user expresses intent to save, share, or submit mobile changes — regardless of wording or language. Covers committing, pushing, opening a PR, or approving finished work as ready to integrate. Also triggers proactively after a fix when the user signals completion or approval (always ask before pushing). Works with any git hosting provider.
+description: "YOU MUST use this before ANY git push, branch push to remote, merge, or PR creation — regardless of phrasing or language. Covers all irreversible integration actions (committing, pushing, opening a PR, shipping finished work). Also triggers proactively after a fix when the user signals completion (still ask before pushing). Works with any git hosting provider."
 license: MIT
 compatibility: [claude-code, cursor, copilot, codex]
 platforms: [android, ios, kmp, flutter, react-native]

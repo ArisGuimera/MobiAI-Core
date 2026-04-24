@@ -148,7 +148,7 @@ Ready to implement <feature-name>
 
 **Called by:**
 - **`mobiai-mobile-brainstorming`** - When design approved and implementation follows
-- **`mobiai-mobile-subagent-development`** - Before executing any tasks
+- **`mobiai-mobile-executing-plans-with-subagents`** - Before executing any tasks
 - **`mobiai-mobile-executing-plans`** - Before executing any tasks
 
 **Pairs with:**

@@ -149,7 +149,7 @@ git worktree remove <worktree-path>
 ## Integration
 
 **Called by:**
-- **`mobiai-mobile-subagent-development`** - After all tasks complete
+- **`mobiai-mobile-executing-plans-with-subagents`** - After all tasks complete
 - **`mobiai-mobile-executing-plans`** - After all tasks complete
 
 **Pairs with:**

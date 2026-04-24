@@ -52,7 +52,7 @@ Match the user's intent against the rows below. If any row matches even at 1% co
 | User wants to reproduce a bug on device/emulator/simulator | `mobiai-reproduce-bug` |
 | User asks to write or add tests | `mobiai-write-tests` |
 | User asks for a code review | `mobiai-review-code` |
-| User wants to commit, push, or open a PR | `mobiai-create-pr` |
+| User wants to commit, push, or open a PR (says "mergear", "push", "subir", "dale PR", "shipeá", "commit", "merge") | `mobiai-create-pr` |
 | Interact with Android device/emulator (adb, screenshots, logcat) | `mobiai-android-device` |
 | Build an Android project (Gradle, flavors, variants) | `mobiai-android-build` |
 | Interact with iOS Simulator (simctl) | `mobiai-ios-device` |
@@ -64,14 +64,14 @@ Match the user's intent against the rows below. If any row matches even at 1% co
 | Need to understand iOS project structure | `mobiai-ios-architecture` |
 | Writing Android tests specifically | `mobiai-android-testing` |
 | Writing iOS tests specifically | `mobiai-ios-testing` |
-| Design a new feature before coding | `mobiai-mobile-brainstorming` |
+| Design a new feature with **unclear intent or requirements** (user still exploring what to build) | `mobiai-mobile-brainstorming` |
 | Bug or unexpected behavior, need root cause | `mobiai-mobile-debugging` |
 | Implementing a feature/fix with tests first | `mobiai-mobile-tdd` |
-| Planning a multi-step feature | `mobiai-mobile-planning` |
+| User gives a **defined task list (3+ items)** or a multi-step spec — intent clear, "how" missing | `mobiai-mobile-planning` |
 | About to claim work is done | `mobiai-mobile-verification` |
 | Have a written plan to execute step by step | `mobiai-mobile-executing-plans` |
-| 2+ independent tasks to parallelize | `mobiai-mobile-parallel-agents` |
-| Executing a plan via subagents | `mobiai-mobile-subagent-development` |
+| 2+ independent tasks to parallelize (says "en paralelo", "orquestador", "agentes al mismo tiempo", "waves", "al mismo tiempo") | `mobiai-mobile-parallel-agents` |
+| Executing a plan via subagents (says "ejecutá el plan", "implementalo", "arrancá con esto", "hacelo con agentes") | `mobiai-mobile-executing-plans-with-subagents` |
 | Starting feature work in isolation | `mobiai-mobile-worktrees` |
 | Implementation done, need to integrate | `mobiai-mobile-finishing-branch` |
 | Creating a new MobiAI skill | `mobiai-writing-skills` |
