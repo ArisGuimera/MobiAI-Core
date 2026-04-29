@@ -1,0 +1,40 @@
+{
+  "name": "mobiai",
+  "owner": {
+    "name": "MobiAI Community",
+    "email": "noreply@example.com"
+  },
+  "metadata": {
+    "description": "Mobile development AI plugins (test fixture)",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "core",
+      "source": "./plugins/core",
+      "description": "Internal core plugin",
+      "category": "internal"
+    },
+    {
+      "name": "android",
+      "source": "./plugins/android",
+      "description": "Android platform plugin",
+      "category": "platform",
+      "tags": ["android", "kotlin"]
+    },
+    {
+      "name": "ios",
+      "source": "./plugins/ios",
+      "description": "iOS platform plugin",
+      "category": "platform",
+      "tags": ["ios", "swift"]
+    },
+    {
+      "name": "kmp",
+      "source": "./plugins/kmp",
+      "description": "KMP plugin (depends on android+ios)",
+      "category": "platform",
+      "tags": ["kmp"]
+    }
+  ]
+}
