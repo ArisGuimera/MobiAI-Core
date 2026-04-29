@@ -29,3 +29,6 @@ docs/roadmap-next-steps.md
 
 # Git worktrees (project-local)
 .worktrees/
+
+# GoReleaser build artifacts
+cli/dist/

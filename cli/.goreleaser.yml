@@ -1,0 +1,50 @@
+version: 2
+
+project_name: mobiai
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: mobiai
+    main: ./cmd/mobiai
+    binary: mobiai
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+
+archives:
+  - id: mobiai
+    format: tar.gz
+    name_template: >-
+      {{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - LICENSE*
+      - README*
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  name_template: "snapshot-{{ .ShortCommit }}"
+
+release:
+  github:
+    owner: ArisGuimera
+    name: MobiAI-Core
+  prerelease: auto
+  draft: false
+  name_template: "CLI {{.Tag}}"
