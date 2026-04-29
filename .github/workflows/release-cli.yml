@@ -20,6 +20,10 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.22'
+          cache-dependency-path: cli/go.sum
+
+      - name: Strip cli- prefix from tag for GoReleaser
+        run: echo "GORELEASER_CURRENT_TAG=${GITHUB_REF_NAME#cli-}" >> $GITHUB_ENV
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
@@ -27,6 +31,7 @@ jobs:
           distribution: goreleaser
           version: '~> v2'
           workdir: cli
-          args: release --clean
+          args: release --clean --skip=announce
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GORELEASER_CURRENT_TAG: ${{ env.GORELEASER_CURRENT_TAG }}
