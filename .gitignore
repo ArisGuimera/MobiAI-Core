@@ -20,3 +20,9 @@ output/
 
 # Temporary upstream clones (used by sync-android-skills workflow)
 _upstream/
+
+# Internal docs — commercial strategy, partnership, designs (NEVER commit)
+docs/designs/
+docs/plans/
+docs/strategy/
+docs/roadmap-next-steps.md
