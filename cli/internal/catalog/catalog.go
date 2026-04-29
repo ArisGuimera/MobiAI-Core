@@ -67,6 +67,16 @@ func (c *Catalog) Has(name string) bool {
 	return ok
 }
 
+// Reindex rebuilds the internal name → index map from c.Packs.
+// Useful when callers (notably tests) construct a Catalog by hand
+// instead of going through Load.
+func (c *Catalog) Reindex() {
+	c.byName = make(map[string]int, len(c.Packs))
+	for i, p := range c.Packs {
+		c.byName[p.Ref.Name] = i
+	}
+}
+
 // Skills enumerates the skills declared by pack p.
 // A skill is any direct subdirectory of one of the pack's skill dirs that
 // contains a SKILL.md file. If the manifest's Skills field is empty,
