@@ -2,13 +2,35 @@
 # Usage: iwr -useb https://mobiai.dev/install.ps1 | iex
 $ErrorActionPreference = "Stop"
 
-$InstallBase = if ($env:MOBIAI_INSTALL_BASE) { $env:MOBIAI_INSTALL_BASE } else { "https://github.com/ArisGuimera/MobiAI-Core/releases/latest/download" }
+$InstallBase = if ($env:MOBIAI_INSTALL_BASE) { $env:MOBIAI_INSTALL_BASE } else { "https://github.com/ArisGuimera/MobiAI-Core/releases" }
 $InstallDir  = if ($env:MOBIAI_INSTALL_DIR)  { $env:MOBIAI_INSTALL_DIR }  else { "$HOME\.mobiai\bin" }
 
 # Detect arch
 $Arch = if ($env:PROCESSOR_ARCHITECTURE -eq "ARM64") { "arm64" } else { "amd64" }
-$Archive = "mobiai-latest-windows-$Arch.zip"
-$Url = "$InstallBase/$Archive"
+
+# Resolve version
+if (-not $env:MOBIAI_VERSION) {
+    try {
+        $Releases = Invoke-RestMethod "https://api.github.com/repos/ArisGuimera/MobiAI-Core/releases?per_page=20"
+        $LatestTag = ($Releases | Where-Object { $_.tag_name -like "cli-v*" } | Select-Object -First 1).tag_name
+    } catch {
+        Write-Host "Error: could not query GitHub API: $_" -ForegroundColor Red
+        exit 1
+    }
+    if (-not $LatestTag) {
+        Write-Host "Error: could not detect latest mobiai CLI version. Set `$env:MOBIAI_VERSION explicitly." -ForegroundColor Red
+        exit 1
+    }
+    $Version = $LatestTag -replace '^cli-v', ''
+} else {
+    $Version = $env:MOBIAI_VERSION
+    $LatestTag = "cli-v$Version"
+}
+
+Write-Host "Resolved version: $Version"
+
+$Archive = "mobiai-$Version-windows-$Arch.zip"
+$Url = "$InstallBase/download/$LatestTag/$Archive"
 
 $Tmp = Join-Path $env:TEMP ("mobiai-install-" + (Get-Random))
 New-Item -ItemType Directory -Force -Path $Tmp | Out-Null

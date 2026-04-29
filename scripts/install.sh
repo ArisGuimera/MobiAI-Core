@@ -1,10 +1,10 @@
 #!/usr/bin/env sh
 # MobiAI CLI installer (Mac/Linux)
 # Usage: curl -fsSL https://mobiai.dev/install.sh | sh
-# Override: MOBIAI_INSTALL_BASE=<url> MOBIAI_INSTALL_DIR=<path>
+# Override: MOBIAI_INSTALL_BASE=<url> MOBIAI_INSTALL_DIR=<path> MOBIAI_VERSION=<version>
 set -e
 
-INSTALL_BASE="${MOBIAI_INSTALL_BASE:-https://github.com/ArisGuimera/MobiAI-Core/releases/latest/download}"
+INSTALL_BASE="${MOBIAI_INSTALL_BASE:-https://github.com/ArisGuimera/MobiAI-Core/releases}"
 INSTALL_DIR="${MOBIAI_INSTALL_DIR:-$HOME/.mobiai/bin}"
 
 # Detect OS
@@ -29,9 +29,28 @@ case "$(uname -m)" in
         ;;
 esac
 
+# Resolve version
+if [ -z "${MOBIAI_VERSION}" ]; then
+    API="https://api.github.com/repos/ArisGuimera/MobiAI-Core/releases?per_page=20"
+    if command -v jq >/dev/null 2>&1; then
+        LATEST_TAG="$(curl -fsSL "${API}" | jq -r '.[] | select(.tag_name | startswith("cli-v")) | .tag_name' | head -n1)"
+    else
+        LATEST_TAG="$(curl -fsSL "${API}" | grep -oE '"tag_name":[[:space:]]*"cli-v[^"]+"' | head -n1 | sed 's/.*"\(cli-v[^"]*\)".*/\1/')"
+    fi
+    if [ -z "${LATEST_TAG}" ]; then
+        echo "Error: could not detect latest mobiai CLI version from GitHub releases." >&2
+        echo "Set MOBIAI_VERSION explicitly (e.g., MOBIAI_VERSION=0.1.0) or check the repo." >&2
+        exit 1
+    fi
+    MOBIAI_VERSION="${LATEST_TAG#cli-v}"
+fi
+
+TAG="${LATEST_TAG:-cli-v${MOBIAI_VERSION}}"
+echo "Resolved version: ${MOBIAI_VERSION}"
+
 # Resolve URL — note: archive uses "tar.gz" for Mac/Linux
-ARCHIVE="mobiai-latest-${OS}-${ARCH}.tar.gz"
-URL="${INSTALL_BASE}/${ARCHIVE}"
+ARCHIVE="mobiai-${MOBIAI_VERSION}-${OS}-${ARCH}.tar.gz"
+URL="${INSTALL_BASE}/download/${TAG}/${ARCHIVE}"
 
 # Download to temp dir
 TMP="$(mktemp -d)"
