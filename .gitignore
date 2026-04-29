@@ -26,3 +26,6 @@ docs/designs/
 docs/plans/
 docs/strategy/
 docs/roadmap-next-steps.md
+
+# Git worktrees (project-local)
+.worktrees/
