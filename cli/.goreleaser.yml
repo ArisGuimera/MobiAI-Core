@@ -2,6 +2,10 @@ version: 2
 
 project_name: mobiai
 
+monorepo:
+  tag_prefix: cli-
+  dir: cli
+
 before:
   hooks:
     - go mod tidy
