@@ -1,0 +1,8 @@
+{
+  "name": "android",
+  "description": "Android plugin",
+  "version": "0.1.0",
+  "license": "MIT",
+  "dependencies": ["core"],
+  "skills": ["./skills/", "./skills/google/"]
+}

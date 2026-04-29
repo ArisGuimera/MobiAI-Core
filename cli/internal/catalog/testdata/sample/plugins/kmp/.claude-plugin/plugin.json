@@ -1,0 +1,7 @@
+{
+  "name": "kmp",
+  "description": "KMP plugin",
+  "version": "0.1.0",
+  "license": "MIT",
+  "dependencies": ["core", "android", "ios"]
+}
