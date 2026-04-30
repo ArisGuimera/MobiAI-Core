@@ -1,15 +1,16 @@
 module github.com/ArisGuimera/MobiAI-Core/cli
 
-go 1.22
+go 1.25.0
 
 require (
 	github.com/charmbracelet/bubbletea v0.27.1
+	github.com/charmbracelet/lipgloss v0.13.0
 	github.com/spf13/cobra v1.8.0
+	golang.org/x/term v0.42.0
 )
 
 require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
-	github.com/charmbracelet/lipgloss v0.13.0 // indirect
 	github.com/charmbracelet/x/ansi v0.1.4 // indirect
 	github.com/charmbracelet/x/input v0.1.0 // indirect
 	github.com/charmbracelet/x/term v0.1.1 // indirect
@@ -27,6 +28,6 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	golang.org/x/sync v0.8.0 // indirect
-	golang.org/x/sys v0.24.0 // indirect
+	golang.org/x/sys v0.43.0 // indirect
 	golang.org/x/text v0.3.8 // indirect
 )
