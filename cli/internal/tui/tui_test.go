@@ -171,3 +171,37 @@ func TestUpdate_EnterFromPickerGoesToConfirm(t *testing.T) {
 		t.Errorf("mode after enter: got %v, want ModeConfirm", updated.(Model).mode)
 	}
 }
+
+func TestUpdate_ConfirmYGoesToProgress(t *testing.T) {
+	m := sampleModel(t)
+	m.mode = ModeConfirm
+	m.userSelected = map[string]bool{"android": true}
+	updated, cmd := m.Update(keyMsg("y"))
+	if updated.(Model).mode != ModeProgress {
+		t.Errorf("mode after Y: got %v, want ModeProgress", updated.(Model).mode)
+	}
+	if cmd == nil {
+		t.Error("expected install Cmd to start, got nil")
+	}
+}
+
+func TestUpdate_ConfirmNGoesBackToPicker(t *testing.T) {
+	m := sampleModel(t)
+	m.mode = ModeConfirm
+	updated, _ := m.Update(keyMsg("n"))
+	if updated.(Model).mode != ModePicker {
+		t.Errorf("mode after N: got %v, want ModePicker", updated.(Model).mode)
+	}
+}
+
+func TestUpdate_ProgressMsgsTransitionToResult(t *testing.T) {
+	m := sampleModel(t)
+	m.mode = ModeProgress
+	m.installPlan = []installStep{
+		{pack: "android", host: "stub"},
+	}
+	updated, _ := m.Update(installStepDoneMsg{pack: "android", host: "stub"})
+	if updated.(Model).mode != ModeResult {
+		t.Errorf("mode after last step: got %v, want ModeResult", updated.(Model).mode)
+	}
+}

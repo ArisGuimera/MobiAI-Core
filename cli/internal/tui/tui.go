@@ -2,6 +2,9 @@
 package tui
 
 import (
+	"fmt"
+	"strings"
+
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/ArisGuimera/MobiAI-Core/cli/internal/catalog"
@@ -33,7 +36,24 @@ type Model struct {
 	userSelected  map[string]bool // packs the user toggled on
 	requiredByDep map[string]bool // packs marked required because of dep expansion
 
+	installPlan   []installStep
+	installDone   int
+	installErrors []installStepDoneMsg
+
 	width, height int
+}
+
+// installStep is one (pack, host) pair to install.
+type installStep struct {
+	pack string
+	host string
+}
+
+// installStepDoneMsg is emitted by the install runner once a step finishes.
+type installStepDoneMsg struct {
+	pack string
+	host string
+	err  error
 }
 
 // NewModel builds the picker model from already-loaded catalog/state/hosts.
@@ -100,11 +120,103 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.width, m.height = msg.Width, msg.Height
 		return m, nil
 	case tea.KeyMsg:
-		if m.mode == ModePicker {
+		switch m.mode {
+		case ModePicker:
 			return m.updatePicker(msg)
+		case ModeConfirm:
+			return m.updateConfirm(msg)
+		case ModeResult:
+			if msg.String() == "enter" || msg.String() == "q" {
+				return m, tea.Quit
+			}
 		}
+	case installStepDoneMsg:
+		return m.handleInstallStep(msg)
 	}
 	return m, nil
+}
+
+func (m Model) updateConfirm(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch strings.ToLower(msg.String()) {
+	case "y":
+		m.mode = ModeProgress
+		m.installPlan = m.buildInstallPlan()
+		m.installDone = 0
+		m.installErrors = nil
+		if len(m.installPlan) == 0 {
+			m.mode = ModeResult
+			return m, nil
+		}
+		return m, m.runInstallStep(0)
+	case "n":
+		m.mode = ModePicker
+	case "esc":
+		return m, tea.Quit
+	}
+	return m, nil
+}
+
+func (m Model) handleInstallStep(msg installStepDoneMsg) (tea.Model, tea.Cmd) {
+	if msg.err != nil {
+		m.installErrors = append(m.installErrors, msg)
+	}
+	m.installDone++
+	if m.installDone >= len(m.installPlan) {
+		m.mode = ModeResult
+		return m, nil
+	}
+	return m, m.runInstallStep(m.installDone)
+}
+
+func (m Model) buildInstallPlan() []installStep {
+	if len(m.userSelected) == 0 || len(m.hosts) == 0 {
+		return nil
+	}
+	req := make([]string, 0, len(m.userSelected))
+	for name := range m.userSelected {
+		req = append(req, name)
+	}
+	order, err := resolver.Resolve(m.catalog, req)
+	if err != nil {
+		return nil
+	}
+	var plan []installStep
+	for _, packName := range order {
+		for _, h := range m.hosts {
+			plan = append(plan, installStep{pack: packName, host: h.ID()})
+		}
+	}
+	return plan
+}
+
+func (m Model) runInstallStep(idx int) tea.Cmd {
+	step := m.installPlan[idx]
+	hosts := m.hosts
+	c := m.catalog
+	return func() tea.Msg {
+		var hostAdapter host.HostAdapter
+		for _, h := range hosts {
+			if h.ID() == step.host {
+				hostAdapter = h
+				break
+			}
+		}
+		if hostAdapter == nil {
+			return installStepDoneMsg{pack: step.pack, host: step.host, err: fmt.Errorf("host %q no encontrado", step.host)}
+		}
+		pack, err := c.Get(step.pack)
+		if err != nil {
+			return installStepDoneMsg{pack: step.pack, host: step.host, err: err}
+		}
+		skills, err := c.Skills(pack)
+		if err != nil {
+			return installStepDoneMsg{pack: step.pack, host: step.host, err: err}
+		}
+		if err := hostAdapter.Install(skills); err != nil {
+			return installStepDoneMsg{pack: step.pack, host: step.host, err: err}
+		}
+		return installStepDoneMsg{pack: step.pack, host: step.host}
+	}
 }
 
 func (m Model) updatePicker(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
@@ -170,7 +282,12 @@ func (m Model) View() string {
 		return "No detecté ningún cliente de IA.\nInstalá Claude Code, Cursor, Gemini CLI o Codex y volvé a correr `mobiai`.\n"
 	case ModePicker:
 		return m.viewPicker()
-	default:
-		return "(placeholder)\n"
+	case ModeConfirm:
+		return m.viewConfirm()
+	case ModeProgress:
+		return m.viewProgress()
+	case ModeResult:
+		return m.viewResult()
 	}
+	return ""
 }
