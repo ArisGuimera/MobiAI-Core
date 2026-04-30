@@ -73,3 +73,32 @@ func (a *genericAdapter) Uninstall(skillIDs []string) error {
 	}
 	return nil
 }
+
+// List returns every direct subdirectory of SkillsDir as an InstalledSkill.
+// Loose files in SkillsDir are ignored.
+func (a *genericAdapter) List() ([]InstalledSkill, error) {
+	dir := a.SkillsDir()
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("read skills dir %s: %w", dir, err)
+	}
+	var out []InstalledSkill
+	for _, e := range entries {
+		if !e.IsDir() {
+			continue
+		}
+		out = append(out, InstalledSkill{
+			ID:   e.Name(),
+			Path: filepath.Join(dir, e.Name()),
+		})
+	}
+	return out, nil
+}
+
+// Verify is a stub. Real drift detection ships with `mobiai doctor` polish.
+func (a *genericAdapter) Verify() DriftReport {
+	return DriftReport{}
+}

@@ -142,3 +142,69 @@ func TestGenericAdapter_Uninstall_NoOpForMissing(t *testing.T) {
 		t.Errorf("should be no-op, got: %v", err)
 	}
 }
+
+func TestGenericAdapter_List_Empty(t *testing.T) {
+	tmp := t.TempDir()
+	setFakeHome(t, tmp)
+	got, err := newTestAdapter().List()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 0 {
+		t.Errorf("List: got %v, want empty", got)
+	}
+}
+
+func TestGenericAdapter_List_AfterInstall(t *testing.T) {
+	tmp := t.TempDir()
+	setFakeHome(t, tmp)
+
+	a := newTestAdapter()
+	if err := a.Install([]catalog.Skill{
+		makeFakeSkill(t, "one"),
+		makeFakeSkill(t, "two"),
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := a.List()
+	if err != nil {
+		t.Fatal(err)
+	}
+	ids := map[string]bool{}
+	for _, s := range got {
+		ids[s.ID] = true
+	}
+	if !ids["one"] || !ids["two"] {
+		t.Errorf("List IDs: got %v", ids)
+	}
+}
+
+func TestGenericAdapter_List_IgnoresFiles(t *testing.T) {
+	tmp := t.TempDir()
+	setFakeHome(t, tmp)
+
+	a := newTestAdapter()
+	if err := os.MkdirAll(a.SkillsDir(), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(a.SkillsDir(), "stray.txt"), []byte("x"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	got, err := a.List()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 0 {
+		t.Errorf("List: got %v, want empty (loose files ignored)", got)
+	}
+}
+
+func TestGenericAdapter_Verify_StubEmpty(t *testing.T) {
+	tmp := t.TempDir()
+	setFakeHome(t, tmp)
+	rep := newTestAdapter().Verify()
+	if len(rep.Issues) != 0 {
+		t.Errorf("Verify (stub): got %d issues", len(rep.Issues))
+	}
+}
