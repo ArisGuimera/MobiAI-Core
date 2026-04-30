@@ -89,6 +89,7 @@ func newRootCmd(v string) *cobra.Command {
 	root.AddCommand(cmd.NewHostsCmd())
 	root.AddCommand(cmd.NewSkillsCmd())
 	root.AddCommand(cmd.NewStatusCmd())
+	root.AddCommand(cmd.NewDoctorCmd())
 	return root
 }
 
