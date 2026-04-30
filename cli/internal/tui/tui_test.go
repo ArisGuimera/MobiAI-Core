@@ -39,3 +39,25 @@ func (s stubHost) Install(skills []catalog.Skill) error                { return 
 func (s stubHost) Uninstall(skillIDs []string) error                   { return nil }
 func (s stubHost) List() ([]host.InstalledSkill, error)                { return nil, nil }
 func (s stubHost) Verify() host.DriftReport                            { return host.DriftReport{} }
+
+func TestNewModel_BuildsPackRowsFromCatalog(t *testing.T) {
+	c := &catalog.Catalog{
+		Marketplace: &catalog.Marketplace{},
+		Packs: []catalog.Pack{
+			{Ref: catalog.PluginRef{Name: "core", Description: "Core"}, Manifest: catalog.PluginManifest{Version: "2.3.0"}},
+			{Ref: catalog.PluginRef{Name: "android", Description: "Android"}, Manifest: catalog.PluginManifest{Version: "2.3.0", Dependencies: []string{"core"}}},
+			{Ref: catalog.PluginRef{Name: "kmp", Description: "KMP"}, Manifest: catalog.PluginManifest{Version: "2.2.0", Dependencies: []string{"core", "android"}}},
+		},
+	}
+	c.Reindex()
+	m := NewModel(c, &state.Installed{Packs: map[string][]string{}}, []host.HostAdapter{stubHost{}})
+
+	// `core` should be filtered out (universal dep, not user-pickable).
+	rows := m.PackRows()
+	if len(rows) != 2 {
+		t.Fatalf("PackRows: got %d, want 2 (excluding core)", len(rows))
+	}
+	if rows[0].Name != "android" || rows[1].Name != "kmp" {
+		t.Errorf("PackRows order: got [%s %s], want [android kmp]", rows[0].Name, rows[1].Name)
+	}
+}
