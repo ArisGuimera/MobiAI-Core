@@ -32,3 +32,7 @@ docs/roadmap-next-steps.md
 
 # GoReleaser build artifacts
 cli/dist/
+
+# Go test binaries (created when using `go test -c -o test.exe` workaround)
+**/test.exe
+**/*.test.exe
