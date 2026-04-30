@@ -39,6 +39,7 @@ Usá "{{.CommandPath}} [comando] --help" para más información sobre un comando
 `
 
 func newRootCmd(v string) *cobra.Command {
+	cmd.SetVersion(v)
 	root := &cobra.Command{
 		Use:     "mobiai",
 		Short:   "MobiAI CLI — gestiona el ecosistema MobiAI para desarrollo móvil con IA",
@@ -87,6 +88,7 @@ func newRootCmd(v string) *cobra.Command {
 	root.AddCommand(cmd.NewCatalogCmd())
 	root.AddCommand(cmd.NewHostsCmd())
 	root.AddCommand(cmd.NewSkillsCmd())
+	root.AddCommand(cmd.NewStatusCmd())
 	return root
 }
 
