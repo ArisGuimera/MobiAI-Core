@@ -51,6 +51,7 @@ func newRootCmd(v string) *cobra.Command {
 	}
 	root.SetVersionTemplate("mobiai {{.Version}}\n")
 	root.SetUsageTemplate(usageTemplate)
+	cmd.AddPersistentFlags(root)
 
 	// Spanish help subcommand (replaces cobra's auto-added English one).
 	root.SetHelpCommand(&cobra.Command{
