@@ -6,6 +6,7 @@ import (
 
 	"github.com/ArisGuimera/MobiAI-Core/cli/internal/catalog"
 	"github.com/ArisGuimera/MobiAI-Core/cli/internal/host"
+	"github.com/ArisGuimera/MobiAI-Core/cli/internal/resolver"
 	"github.com/ArisGuimera/MobiAI-Core/cli/internal/state"
 )
 
@@ -28,6 +29,9 @@ type Model struct {
 
 	mode   Mode
 	cursor int
+
+	userSelected  map[string]bool // packs the user toggled on
+	requiredByDep map[string]bool // packs marked required because of dep expansion
 
 	width, height int
 }
@@ -77,6 +81,8 @@ func (m Model) PackRows() []PackRow {
 			Description: p.Ref.Description,
 			Version:     p.Manifest.Version,
 			Deps:        append([]string(nil), p.Manifest.Dependencies...),
+			Selected:    m.userSelected[p.Ref.Name],
+			Required:    m.requiredByDep[p.Ref.Name],
 		}
 		if hosts, ok := m.state.Packs[p.Ref.Name]; ok {
 			row.InstalledIn = append([]string(nil), hosts...)
@@ -94,11 +100,68 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.width, m.height = msg.Width, msg.Height
 		return m, nil
 	case tea.KeyMsg:
-		if msg.String() == "q" || msg.String() == "ctrl+c" {
-			return m, tea.Quit
+		if m.mode == ModePicker {
+			return m.updatePicker(msg)
 		}
 	}
 	return m, nil
+}
+
+func (m Model) updatePicker(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	rows := m.PackRows()
+	switch msg.String() {
+	case "q", "ctrl+c", "esc":
+		return m, tea.Quit
+	case "up", "k":
+		if m.cursor > 0 {
+			m.cursor--
+		}
+	case "down", "j":
+		if m.cursor < len(rows)-1 {
+			m.cursor++
+		}
+	case " ", "x":
+		if m.cursor < len(rows) {
+			m = m.toggleAt(m.cursor)
+		}
+	case "enter":
+		m.mode = ModeConfirm
+	}
+	return m, nil
+}
+
+// toggleAt flips the user-selected flag on the pack at index i (in PackRows
+// order) and recomputes the required-by-dep set via the resolver.
+func (m Model) toggleAt(i int) Model {
+	rows := m.PackRows()
+	target := rows[i].Name
+
+	if m.userSelected == nil {
+		m.userSelected = map[string]bool{}
+	}
+	if m.userSelected[target] {
+		delete(m.userSelected, target)
+	} else {
+		m.userSelected[target] = true
+	}
+
+	required := map[string]bool{}
+	if len(m.userSelected) > 0 {
+		req := make([]string, 0, len(m.userSelected))
+		for name := range m.userSelected {
+			req = append(req, name)
+		}
+		order, err := resolver.Resolve(m.catalog, req)
+		if err == nil {
+			for _, name := range order {
+				if !m.userSelected[name] && name != "core" {
+					required[name] = true
+				}
+			}
+		}
+	}
+	m.requiredByDep = required
+	return m
 }
 
 func (m Model) View() string {
