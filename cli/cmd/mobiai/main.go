@@ -15,8 +15,8 @@ var version = "dev"
 func newRootCmd(v string) *cobra.Command {
 	root := &cobra.Command{
 		Use:     "mobiai",
-		Short:   "MobiAI CLI — manage skills across AI clients",
-		Long:    "MobiAI CLI installs and manages mobile-development skills across any AI client that supports the agentskills.io standard.",
+		Short:   "MobiAI CLI — gestiona skills en clientes de IA",
+		Long:    "MobiAI CLI instala y gestiona skills de desarrollo móvil en cualquier cliente de IA compatible con el standard agentskills.io.",
 		Version: v,
 		// When called with no args, show help instead of erroring.
 		Run: func(cmd *cobra.Command, args []string) {

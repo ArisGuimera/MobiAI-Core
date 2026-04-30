@@ -12,8 +12,8 @@ case "$(uname -s)" in
     Linux*)  OS="linux";;
     Darwin*) OS="darwin";;
     *)
-        echo "Error: unsupported OS: $(uname -s)" >&2
-        echo "Supported: Linux, Darwin (macOS)" >&2
+        echo "Error: SO no soportado: $(uname -s)" >&2
+        echo "Soportados: Linux, Darwin (macOS)" >&2
         exit 1
         ;;
 esac
@@ -23,8 +23,8 @@ case "$(uname -m)" in
     x86_64|amd64)  ARCH="amd64";;
     arm64|aarch64) ARCH="arm64";;
     *)
-        echo "Error: unsupported arch: $(uname -m)" >&2
-        echo "Supported: amd64 (x86_64), arm64 (aarch64)" >&2
+        echo "Error: arquitectura no soportada: $(uname -m)" >&2
+        echo "Soportadas: amd64 (x86_64), arm64 (aarch64)" >&2
         exit 1
         ;;
 esac
@@ -38,15 +38,15 @@ if [ -z "${MOBIAI_VERSION}" ]; then
         LATEST_TAG="$(curl -fsSL "${API}" | grep -oE '"tag_name":[[:space:]]*"cli-v[^"]+"' | head -n1 | sed 's/.*"\(cli-v[^"]*\)".*/\1/')"
     fi
     if [ -z "${LATEST_TAG}" ]; then
-        echo "Error: could not detect latest mobiai CLI version from GitHub releases." >&2
-        echo "Set MOBIAI_VERSION explicitly (e.g., MOBIAI_VERSION=0.1.0) or check the repo." >&2
+        echo "Error: no pude detectar la última versión de MobiAI CLI en GitHub releases." >&2
+        echo "Configurá MOBIAI_VERSION manualmente (ej: MOBIAI_VERSION=0.1.0) o revisá el repo." >&2
         exit 1
     fi
     MOBIAI_VERSION="${LATEST_TAG#cli-v}"
 fi
 
 TAG="${LATEST_TAG:-cli-v${MOBIAI_VERSION}}"
-echo "Resolved version: ${MOBIAI_VERSION}"
+echo "Versión: ${MOBIAI_VERSION}"
 
 # Resolve URL — note: archive uses "tar.gz" for Mac/Linux
 ARCHIVE="mobiai-${MOBIAI_VERSION}-${OS}-${ARCH}.tar.gz"
@@ -56,13 +56,13 @@ URL="${INSTALL_BASE}/download/${TAG}/${ARCHIVE}"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
-echo "MobiAI CLI installer"
-echo "Detected: ${OS} ${ARCH}"
-echo "Downloading from: ${URL}"
+echo "Instalador de MobiAI CLI"
+echo "Detectado: ${OS} ${ARCH}"
+echo "Descargando desde: ${URL}"
 
 if ! curl -fsSL "${URL}" -o "${TMP}/${ARCHIVE}"; then
-    echo "Error: download failed" >&2
-    echo "Check your network or set MOBIAI_INSTALL_BASE to a working mirror." >&2
+    echo "Error: falló la descarga" >&2
+    echo "Revisá tu conexión o configurá MOBIAI_INSTALL_BASE apuntando a un mirror." >&2
     exit 1
 fi
 
@@ -75,7 +75,7 @@ mv "${TMP}/mobiai" "${INSTALL_DIR}/mobiai"
 chmod +x "${INSTALL_DIR}/mobiai"
 
 echo ""
-echo "Installed to: ${INSTALL_DIR}/mobiai"
+echo "Instalado en: ${INSTALL_DIR}/mobiai"
 
 # PATH hint
 case "${SHELL}" in
@@ -87,10 +87,10 @@ esac
 
 if [ -n "${RC}" ] && ! echo "${PATH}" | grep -q "${INSTALL_DIR}"; then
     echo ""
-    echo "Add to PATH (run this manually):"
+    echo "Agregalo al PATH (ejecutá esto a mano):"
     echo "  echo 'export PATH=\"${INSTALL_DIR}:\$PATH\"' >> ${RC}"
     echo "  source ${RC}"
 fi
 
 echo ""
-echo "Next step: mobiai --version"
+echo "Próximo paso: mobiai --version"

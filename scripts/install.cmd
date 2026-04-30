@@ -23,8 +23,8 @@ REM Resolve version
 if "%MOBIAI_VERSION%"=="" (
     for /f "delims=" %%i in ('powershell -NoProfile -Command "(Invoke-RestMethod 'https://api.github.com/repos/ArisGuimera/MobiAI-Core/releases?per_page=20') ^| Where-Object { $_.tag_name -like 'cli-v*' } ^| Select-Object -First 1 -ExpandProperty tag_name"') do set "LATEST_TAG=%%i"
     if "!LATEST_TAG!"=="" (
-        echo Error: could not detect latest mobiai CLI version.
-        echo Set MOBIAI_VERSION explicitly or check the repo.
+        echo Error: no pude detectar la ultima version de MobiAI CLI.
+        echo Configura MOBIAI_VERSION manualmente o revisa el repo.
         exit /b 1
     )
     set "MOBIAI_VERSION=!LATEST_TAG:cli-v=!"
@@ -32,7 +32,7 @@ if "%MOBIAI_VERSION%"=="" (
     set "LATEST_TAG=cli-v%MOBIAI_VERSION%"
 )
 
-echo Resolved version: !MOBIAI_VERSION!
+echo Version: !MOBIAI_VERSION!
 
 set "ARCHIVE=mobiai-!MOBIAI_VERSION!-windows-%ARCH%.zip"
 set "URL=%INSTALL_BASE%/download/!LATEST_TAG!/!ARCHIVE!"
@@ -40,20 +40,20 @@ set "URL=%INSTALL_BASE%/download/!LATEST_TAG!/!ARCHIVE!"
 set "TMP=%TEMP%\mobiai-install-%RANDOM%"
 mkdir "%TMP%" 2>nul
 
-echo MobiAI CLI installer
-echo Detected: windows %ARCH%
-echo Downloading from: !URL!
+echo Instalador de MobiAI CLI
+echo Detectado: windows %ARCH%
+echo Descargando desde: !URL!
 
 curl.exe -fsSL "!URL!" -o "%TMP%\!ARCHIVE!"
 if errorlevel 1 (
-    echo Error: download failed
+    echo Error: fallo la descarga
     rmdir /s /q "%TMP%"
     exit /b 1
 )
 
 powershell -NoProfile -Command "Expand-Archive -Force \"%TMP%\!ARCHIVE!\" \"%TMP%\""
 if errorlevel 1 (
-    echo Error: extract failed
+    echo Error: fallo la extraccion
     rmdir /s /q "%TMP%"
     exit /b 1
 )
@@ -63,8 +63,8 @@ move /y "%TMP%\mobiai.exe" "%INSTALL_DIR%\mobiai.exe" >nul
 rmdir /s /q "%TMP%"
 
 echo.
-echo Installed to: %INSTALL_DIR%\mobiai.exe
-powershell -NoProfile -Command "$p = [Environment]::GetEnvironmentVariable('Path', 'User'); if ($p -notlike '*%INSTALL_DIR%*') { [Environment]::SetEnvironmentVariable('Path', '%INSTALL_DIR%;' + $p, 'User'); Write-Host 'Added to user PATH (restart terminal to apply).' }"
+echo Instalado en: %INSTALL_DIR%\mobiai.exe
+powershell -NoProfile -Command "$p = [Environment]::GetEnvironmentVariable('Path', 'User'); if ($p -notlike '*%INSTALL_DIR%*') { [Environment]::SetEnvironmentVariable('Path', '%INSTALL_DIR%;' + $p, 'User'); Write-Host 'Agregado al PATH del usuario (reinicia la terminal).' }"
 
 echo.
-echo Next step: mobiai --version
+echo Proximo paso: mobiai --version
