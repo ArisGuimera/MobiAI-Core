@@ -1,8 +1,11 @@
 package host
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/ArisGuimera/MobiAI-Core/cli/internal/catalog"
 )
 
 // genericAdapter implements every HostAdapter method against a configurable
@@ -42,4 +45,31 @@ func (a *genericAdapter) Detect() DetectResult {
 		return DetectResult{Found: true, Path: dir, Searched: []string{dir}}
 	}
 	return DetectResult{Found: false, Searched: []string{dir}}
+}
+
+// Install copies each skill's source directory into <SkillsDir>/<skill.ID>/.
+// Existing files in the target are overwritten (Install is idempotent).
+func (a *genericAdapter) Install(skills []catalog.Skill) error {
+	if err := os.MkdirAll(a.SkillsDir(), 0o755); err != nil {
+		return fmt.Errorf("mkdir skills dir: %w", err)
+	}
+	for _, s := range skills {
+		dst := filepath.Join(a.SkillsDir(), s.ID)
+		if err := copyDir(s.AbsPath, dst); err != nil {
+			return fmt.Errorf("install skill %q: %w", s.ID, err)
+		}
+	}
+	return nil
+}
+
+// Uninstall removes <SkillsDir>/<skillID>/ for each ID. Missing directories
+// are silently ignored (idempotent).
+func (a *genericAdapter) Uninstall(skillIDs []string) error {
+	for _, id := range skillIDs {
+		dir := filepath.Join(a.SkillsDir(), id)
+		if err := os.RemoveAll(dir); err != nil {
+			return fmt.Errorf("uninstall skill %q: %w", id, err)
+		}
+	}
+	return nil
 }
