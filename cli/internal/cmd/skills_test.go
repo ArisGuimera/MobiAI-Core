@@ -95,3 +95,36 @@ func TestSkillsRemove_RemovesInstalledPack(t *testing.T) {
 		t.Errorf("expected android skills removed; stat err: %v", err)
 	}
 }
+
+func TestSkillsList_PrintsTable(t *testing.T) {
+	tmp := t.TempDir()
+	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
+	t.Setenv("MOBIAI_HOME", filepath.Join(tmp, ".mobiai"))
+	if err := os.MkdirAll(filepath.Join(tmp, ".claude"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	root := repoRootForFixture(t)
+
+	addCmd := NewSkillsCmd()
+	addCmd.SetArgs([]string{"add", "android", "--catalog-root", root, "--yes"})
+	if err := addCmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	listCmd := NewSkillsCmd()
+	var out bytes.Buffer
+	listCmd.SetOut(&out)
+	listCmd.SetErr(&out)
+	listCmd.SetArgs([]string{"list"})
+	if err := listCmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+	got := out.String()
+	if !strings.Contains(got, "android") {
+		t.Errorf("list should mention android; got: %q", got)
+	}
+	if !strings.Contains(got, "claude-code") {
+		t.Errorf("list should mention claude-code; got: %q", got)
+	}
+}

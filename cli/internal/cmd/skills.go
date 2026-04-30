@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"fmt"
+	"sort"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -42,7 +44,38 @@ func NewSkillsCmd() *cobra.Command {
 		},
 	}
 
-	root.AddCommand(addCmd, removeCmd)
+	listCmd := &cobra.Command{
+		Use:   "list",
+		Short: "Listar packs instalados",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			paths, err := state.NewPaths()
+			if err != nil {
+				return err
+			}
+			installed, err := state.LoadInstalled(paths)
+			if err != nil {
+				return err
+			}
+			out := cmd.OutOrStdout()
+			if len(installed.Packs) == 0 {
+				fmt.Fprintln(out, "No hay packs instalados.")
+				return nil
+			}
+			fmt.Fprintln(out, "Pack          | Hosts")
+			fmt.Fprintln(out, "──────────────┼─────────────────────────────")
+			names := make([]string, 0, len(installed.Packs))
+			for name := range installed.Packs {
+				names = append(names, name)
+			}
+			sort.Strings(names)
+			for _, n := range names {
+				fmt.Fprintf(out, "%-13s │ %s\n", n, strings.Join(installed.Packs[n], ", "))
+			}
+			return nil
+		},
+	}
+
+	root.AddCommand(addCmd, removeCmd, listCmd)
 	return root
 }
 
