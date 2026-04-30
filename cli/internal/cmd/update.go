@@ -17,7 +17,10 @@ func NewUpdateCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			rootFlag, _ := cmd.Flags().GetString("catalog-root")
 			if rootFlag == "" {
-				return fmt.Errorf("falta --catalog-root (clone remoto via git automático queda para polish posterior)")
+				rootFlag = defaultCatalogRoot()
+			}
+			if rootFlag == "" {
+				return fmt.Errorf("falta --catalog-root y no hay cache local. Pasá --catalog-root <ruta>")
 			}
 			c, err := catalog.Load(rootFlag)
 			if err != nil {

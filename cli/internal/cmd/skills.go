@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -196,10 +198,50 @@ func flagsFromAnyCmd(cmd *cobra.Command) GlobalFlags {
 }
 
 func loadCatalog(g GlobalFlags) (*catalog.Catalog, error) {
-	if g.Root == "" {
-		return nil, fmt.Errorf("falta --catalog-root y el cache local todavía no está implementado (Phase 5 polish)")
+	root := g.Root
+	if root == "" {
+		root = defaultCatalogRoot()
 	}
-	return catalog.Load(g.Root)
+	if root == "" {
+		return nil, fmt.Errorf("no encontré el catálogo. Opciones:\n" +
+			"  - pasá --catalog-root <ruta>\n" +
+			"  - configurá MOBIAI_CATALOG_ROOT=<ruta>\n" +
+			"  - corré 'mobiai update --catalog-root <ruta>' para popular ~/.mobiai/cache/catalog/")
+	}
+	return catalog.Load(root)
+}
+
+// defaultCatalogRoot returns the resolved catalog root using a fallback chain.
+// Returns empty string if nothing is found.
+func defaultCatalogRoot() string {
+	// 1. Env var
+	if env := os.Getenv("MOBIAI_CATALOG_ROOT"); env != "" {
+		return env
+	}
+	// 2. ~/.mobiai/cache/catalog/ (populated by 'mobiai update')
+	paths, err := state.NewPaths()
+	if err == nil {
+		cacheCatalog := paths.CatalogDir()
+		if _, err := os.Stat(filepath.Join(cacheCatalog, ".claude-plugin", "marketplace.json")); err == nil {
+			return cacheCatalog
+		}
+	}
+	// 3. Walk up from cwd looking for .claude-plugin/marketplace.json
+	cwd, err := os.Getwd()
+	if err == nil {
+		dir := cwd
+		for {
+			if _, err := os.Stat(filepath.Join(dir, ".claude-plugin", "marketplace.json")); err == nil {
+				return dir
+			}
+			parent := filepath.Dir(dir)
+			if parent == dir {
+				break
+			}
+			dir = parent
+		}
+	}
+	return ""
 }
 
 func selectHosts(g GlobalFlags) ([]host.HostAdapter, error) {
