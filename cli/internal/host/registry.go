@@ -21,7 +21,6 @@ func NewDefaultRegistry() *Registry {
 			// Tier 2 — best-effort vía el standard agentskills.io.
 			newGoose(),
 			newGitHubCopilot(),
-			newVSCode(),
 			newOpenCode(),
 			newJunie(),
 			newRooCode(),
