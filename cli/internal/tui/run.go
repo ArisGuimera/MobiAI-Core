@@ -17,10 +17,15 @@ import (
 // fall back to non-interactive flags.
 var ErrNoTTY = errors.New("no hay terminal interactiva")
 
+// IsTTY reports whether stdin and stdout are both connected to a terminal.
+func IsTTY() bool {
+	return term.IsTerminal(int(os.Stdin.Fd())) && term.IsTerminal(int(os.Stdout.Fd()))
+}
+
 // Run launches the picker and blocks until the user quits. Returns ErrNoTTY
 // if stdin or stdout is not a terminal.
 func Run(c *catalog.Catalog, s *state.Installed, hosts []host.HostAdapter) error {
-	if !term.IsTerminal(int(os.Stdin.Fd())) || !term.IsTerminal(int(os.Stdout.Fd())) {
+	if !IsTTY() {
 		return ErrNoTTY
 	}
 	m := NewModel(c, s, hosts)
