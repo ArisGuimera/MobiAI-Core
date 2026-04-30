@@ -1,0 +1,97 @@
+package cmd
+
+import (
+	"bytes"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+)
+
+// repoRootForFixture returns the path to the actual MobiAI-Core repo so we
+// test against the real catalog. From cli/internal/cmd/, we go up 3 dirs.
+func repoRootForFixture(t *testing.T) string {
+	t.Helper()
+	abs, err := filepath.Abs(filepath.Join("..", "..", ".."))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return abs
+}
+
+func TestSkillsAdd_HappyPath(t *testing.T) {
+	tmp := t.TempDir()
+	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
+	t.Setenv("MOBIAI_HOME", filepath.Join(tmp, ".mobiai"))
+
+	if err := os.MkdirAll(filepath.Join(tmp, ".claude"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	root := repoRootForFixture(t)
+	cmd := NewSkillsCmd()
+	var out bytes.Buffer
+	cmd.SetOut(&out)
+	cmd.SetErr(&out)
+	cmd.SetArgs([]string{"add", "android", "--catalog-root", root, "--yes"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("execute: %v", err)
+	}
+
+	if _, err := os.Stat(filepath.Join(tmp, ".claude", "skills", "mobiai-android-build", "SKILL.md")); err != nil {
+		t.Errorf("expected skill installed: %v", err)
+	}
+	if !strings.Contains(out.String(), "android") {
+		t.Errorf("output should mention android; got: %q", out.String())
+	}
+}
+
+func TestSkillsAdd_UnknownPack(t *testing.T) {
+	tmp := t.TempDir()
+	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
+	t.Setenv("MOBIAI_HOME", filepath.Join(tmp, ".mobiai"))
+	if err := os.MkdirAll(filepath.Join(tmp, ".claude"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	cmd := NewSkillsCmd()
+	var out bytes.Buffer
+	cmd.SetOut(&out)
+	cmd.SetErr(&out)
+	cmd.SetArgs([]string{"add", "androyd", "--catalog-root", repoRootForFixture(t), "--yes"})
+	if err := cmd.Execute(); err == nil {
+		t.Error("expected error for unknown pack")
+	}
+}
+
+func TestSkillsRemove_RemovesInstalledPack(t *testing.T) {
+	tmp := t.TempDir()
+	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
+	t.Setenv("MOBIAI_HOME", filepath.Join(tmp, ".mobiai"))
+	if err := os.MkdirAll(filepath.Join(tmp, ".claude"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	root := repoRootForFixture(t)
+
+	addCmd := NewSkillsCmd()
+	addCmd.SetArgs([]string{"add", "android", "--catalog-root", root, "--yes"})
+	if err := addCmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	removeCmd := NewSkillsCmd()
+	var out bytes.Buffer
+	removeCmd.SetOut(&out)
+	removeCmd.SetErr(&out)
+	removeCmd.SetArgs([]string{"remove", "android", "--catalog-root", root, "--yes"})
+	if err := removeCmd.Execute(); err != nil {
+		t.Fatalf("remove: %v", err)
+	}
+
+	if _, err := os.Stat(filepath.Join(tmp, ".claude", "skills", "mobiai-android-build")); !os.IsNotExist(err) {
+		t.Errorf("expected android skills removed; stat err: %v", err)
+	}
+}
