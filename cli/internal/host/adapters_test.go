@@ -17,10 +17,18 @@ type adapterCase struct {
 
 func adapterCases() []adapterCase {
 	return []adapterCase{
+		// Tier 1
 		{newClaudeCode, "claude-code", "Claude Code", ".claude", true, true},
 		{newCursor, "cursor", "Cursor", ".cursor", true, true},
 		{newGemini, "gemini", "Gemini CLI", ".gemini", false, false},
 		{newCodex, "codex", "Codex", ".codex", false, false},
+		// Tier 2 (best-effort)
+		{newGoose, "goose", "Goose", ".config/goose", false, false},
+		{newGitHubCopilot, "github-copilot", "GitHub Copilot", ".copilot", false, false},
+		{newVSCode, "vscode", "VS Code", ".vscode", false, false},
+		{newOpenCode, "opencode", "OpenCode", ".opencode", false, false},
+		{newJunie, "junie", "Junie", ".junie", false, false},
+		{newRooCode, "roo-code", "Roo Code", ".roo-code", false, false},
 	}
 }
 

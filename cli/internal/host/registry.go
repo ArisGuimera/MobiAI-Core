@@ -13,10 +13,18 @@ type Registry struct {
 func NewDefaultRegistry() *Registry {
 	return &Registry{
 		adapters: []HostAdapter{
+			// Tier 1 — adapter dedicado, testeado a fondo.
 			newClaudeCode(),
 			newCursor(),
 			newGemini(),
 			newCodex(),
+			// Tier 2 — best-effort vía el standard agentskills.io.
+			newGoose(),
+			newGitHubCopilot(),
+			newVSCode(),
+			newOpenCode(),
+			newJunie(),
+			newRooCode(),
 		},
 	}
 }

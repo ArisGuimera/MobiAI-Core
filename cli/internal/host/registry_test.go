@@ -7,10 +7,10 @@ import (
 	"testing"
 )
 
-func TestNewDefaultRegistry_Has4Adapters(t *testing.T) {
+func TestNewDefaultRegistry_Has10Adapters(t *testing.T) {
 	r := NewDefaultRegistry()
-	if got := len(r.Adapters()); got != 4 {
-		t.Fatalf("Adapters: got %d, want 4", got)
+	if got := len(r.Adapters()); got != 10 {
+		t.Fatalf("Adapters: got %d, want 10 (4 tier-1 + 6 tier-2)", got)
 	}
 }
 
