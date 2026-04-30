@@ -84,6 +84,7 @@ func newRootCmd(v string) *cobra.Command {
 	}
 
 	root.AddCommand(cmd.NewCatalogCmd())
+	root.AddCommand(cmd.NewHostsCmd())
 	return root
 }
 
