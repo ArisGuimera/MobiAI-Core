@@ -33,6 +33,9 @@ docs/roadmap-next-steps.md
 # GoReleaser build artifacts
 cli/dist/
 
+# Embedded catalog (populated by go generate before build)
+cli/internal/embedded/plugins/
+
 # Go test binaries (created when using `go test -c -o test.exe` workaround)
 **/test.exe
 **/*.test.exe

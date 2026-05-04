@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/ArisGuimera/MobiAI-Core/cli/internal/catalog"
+	"github.com/ArisGuimera/MobiAI-Core/cli/internal/embedded"
 	"github.com/ArisGuimera/MobiAI-Core/cli/internal/host"
 	"github.com/ArisGuimera/MobiAI-Core/cli/internal/resolver"
 	"github.com/ArisGuimera/MobiAI-Core/cli/internal/state"
@@ -218,9 +219,9 @@ func defaultCatalogRoot() string {
 	if env := os.Getenv("MOBIAI_CATALOG_ROOT"); env != "" {
 		return env
 	}
-	// 2. ~/.mobiai/cache/catalog/ (populated by 'mobiai update')
 	paths, err := state.NewPaths()
 	if err == nil {
+		// 2. ~/.mobiai/cache/catalog/ (populated by 'mobiai update')
 		cacheCatalog := paths.CatalogDir()
 		if _, err := os.Stat(filepath.Join(cacheCatalog, ".claude-plugin", "marketplace.json")); err == nil {
 			return cacheCatalog
@@ -241,7 +242,66 @@ func defaultCatalogRoot() string {
 			dir = parent
 		}
 	}
+	// 4. Embedded catalog: extract to ~/.mobiai/cache/embedded/ on first use,
+	//    then return its path. The embed has no top-level marketplace.json
+	//    (it lives at .claude-plugin/marketplace.json which is outside the
+	//    plugins/ tree the embed captures). We synthesize a minimal
+	//    marketplace.json from plugin.json files at extract time.
+	if !embedded.IsEmpty() && err == nil {
+		paths, perr := state.NewPaths()
+		if perr == nil {
+			embedRoot := filepath.Join(paths.Cache(), "embedded")
+			if eerr := ensureEmbeddedExtracted(embedRoot); eerr == nil {
+				return embedRoot
+			}
+		}
+	}
 	return ""
+}
+
+// ensureEmbeddedExtracted writes the bundled catalog to embedRoot (idempotent).
+// The embedded FS only ships plugins/ — to make catalog.Load happy, we also
+// synthesize a .claude-plugin/marketplace.json that lists every embedded pack.
+func ensureEmbeddedExtracted(embedRoot string) error {
+	marketplaceFile := filepath.Join(embedRoot, ".claude-plugin", "marketplace.json")
+	if _, err := os.Stat(marketplaceFile); err == nil {
+		return nil // already extracted
+	}
+
+	pluginsDst := filepath.Join(embedRoot, "plugins")
+	if err := embedded.Extract(pluginsDst); err != nil {
+		return err
+	}
+
+	// Synthesize marketplace.json by listing every plugin dir.
+	entries, err := os.ReadDir(pluginsDst)
+	if err != nil {
+		return err
+	}
+	var plugins []string
+	for _, e := range entries {
+		if !e.IsDir() {
+			continue
+		}
+		if _, err := os.Stat(filepath.Join(pluginsDst, e.Name(), ".claude-plugin", "plugin.json")); err == nil {
+			plugins = append(plugins, e.Name())
+		}
+	}
+	sort.Strings(plugins)
+
+	if err := os.MkdirAll(filepath.Dir(marketplaceFile), 0o755); err != nil {
+		return err
+	}
+	var b strings.Builder
+	b.WriteString(`{"name":"mobiai","owner":{"name":"MobiAI","email":""},"metadata":{"description":"Embedded","version":"embed"},"plugins":[`)
+	for i, name := range plugins {
+		if i > 0 {
+			b.WriteString(",")
+		}
+		fmt.Fprintf(&b, `{"name":%q,"source":"./plugins/%s","description":"","category":""}`, name, name)
+	}
+	b.WriteString("]}")
+	return os.WriteFile(marketplaceFile, []byte(b.String()), 0o644)
 }
 
 func selectHosts(g GlobalFlags) ([]host.HostAdapter, error) {
