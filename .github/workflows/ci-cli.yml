@@ -27,6 +27,8 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: 'stable'
+      - name: Generate embedded catalog
+        run: go generate ./...
       - name: Test
         run: go test -v ./...
       - name: Build
