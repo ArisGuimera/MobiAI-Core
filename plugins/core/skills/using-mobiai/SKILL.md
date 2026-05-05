@@ -90,6 +90,39 @@ Immediately after invoking a skill, announce one sentence to the user:
 
 This makes the invocation visible and commits you to following the skill's workflow instead of drifting back to improvisation.
 
+## Asking the User
+
+When a skill needs decisions or clarifications from the user, ask **one question at a time** — never batch multiple decisions into a single message.
+
+**The rule:**
+1. Identify all open questions internally.
+2. Ask only the **first** one. Present it as multiple choice (A/B/C) with a recommended option and a one-line reason for the recommendation.
+3. **Wait for the answer.** The user may pick an option, push back, or open a side discussion — engage with that before moving on.
+4. Once resolved, ask the next question. Repeat until done.
+
+**Why this matters:** Dumping 5+ decisions in one message forces the user to context-switch through all of them at once and short-circuits the chance to debate any single choice. One-at-a-time keeps the dialogue tight, and earlier answers often reshape later questions (eliminating some entirely).
+
+**Format each question like this:**
+
+> **D1 — &lt;topic&gt;.** &lt;one-sentence framing&gt;
+> - **A)** &lt;option&gt; — &lt;one-line tradeoff&gt;
+> - **B)** &lt;option&gt; — &lt;one-line tradeoff&gt; ← **recommend**, &lt;reason&gt;
+> - **C)** &lt;option&gt; — &lt;one-line tradeoff&gt;
+>
+> Pick one, or push back if none of these fit.
+
+**Exceptions:**
+- The user explicitly asks for everything at once ("dame todas las decisiones de un saque", "tirame el plan completo", "give me all the questions"). Follow that instruction.
+- Purely informational previews (a triage table, a list of findings) where no decision is required yet — those can be longer. But the **questions** that follow them must still come one at a time.
+
+**Anti-patterns:**
+- Six decisions + a "confirm everything and let's go" in a single message.
+- Open-ended questions with no options ("what do you want to do about photos?") — always offer concrete A/B/C choices with a recommendation.
+- Asking the next question before the user has confirmed (or pushed back on) the previous one.
+- Hiding the recommendation ("here are three options, which do you prefer?"). Always state which one you'd pick and why.
+
+This rule applies to **every** skill — `mobiai-mobile-brainstorming`, `mobiai-mobile-planning`, `mobiai-mobile-parallel-agents`, `mobiai-fix-issue`, anything that gathers user input. If a downstream skill seems to want a batch of questions, override it: ask one at a time anyway.
+
 ## Red Flags
 
 These thoughts mean STOP — you're rationalizing:
