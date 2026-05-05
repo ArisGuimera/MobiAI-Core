@@ -24,11 +24,11 @@ func IsTTY() bool {
 
 // Run launches the picker and blocks until the user quits. Returns ErrNoTTY
 // if stdin or stdout is not a terminal.
-func Run(c *catalog.Catalog, s *state.Installed, hosts []host.HostAdapter) error {
+func Run(c *catalog.Catalog, s *state.Installed, paths state.Paths, hosts []host.HostAdapter) error {
 	if !IsTTY() {
 		return ErrNoTTY
 	}
-	m := NewModel(c, s, hosts)
+	m := NewModel(c, s, paths, hosts)
 	prog := tea.NewProgram(m)
 	_, err := prog.Run()
 	return err

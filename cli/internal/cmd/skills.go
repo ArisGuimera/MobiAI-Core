@@ -1,13 +1,16 @@
 package cmd
 
 import (
+	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 
 	"github.com/spf13/cobra"
+	"golang.org/x/term"
 
 	"github.com/ArisGuimera/MobiAI-Core/cli/internal/catalog"
 	"github.com/ArisGuimera/MobiAI-Core/cli/internal/embedded"
@@ -111,6 +114,18 @@ func runSkillsAdd(cmd *cobra.Command, packs []string) error {
 	}
 
 	out := cmd.OutOrStdout()
+
+	if !g.Yes {
+		ok, err := confirmInstall(out, cmd.InOrStdin(), order, hosts)
+		if err != nil {
+			return err
+		}
+		if !ok {
+			fmt.Fprintln(out, "Cancelado.")
+			return nil
+		}
+	}
+
 	for _, packName := range order {
 		pack, _ := c.Get(packName)
 		skills, err := c.Skills(pack)
@@ -130,6 +145,33 @@ func runSkillsAdd(cmd *cobra.Command, packs []string) error {
 	}
 	fmt.Fprintln(out, "Listo.")
 	return nil
+}
+
+// confirmInstall prints the install plan and reads y/N from in. Returns
+// (true, nil) if the user accepts. If in is not a terminal and the caller
+// did not pass --yes, it returns an error so CI scripts fail loudly instead
+// of hanging on a closed pipe.
+func confirmInstall(out io.Writer, in io.Reader, packs []string, hosts []host.HostAdapter) (bool, error) {
+	hostNames := make([]string, 0, len(hosts))
+	for _, h := range hosts {
+		hostNames = append(hostNames, h.Name())
+	}
+	fmt.Fprintln(out, "Plan de instalación:")
+	fmt.Fprintf(out, "  Packs (%d): %s\n", len(packs), strings.Join(packs, ", "))
+	fmt.Fprintf(out, "  Hosts (%d): %s\n", len(hosts), strings.Join(hostNames, ", "))
+
+	if f, ok := in.(*os.File); ok && !term.IsTerminal(int(f.Fd())) {
+		return false, fmt.Errorf("stdin no es interactivo: pasá --yes para confirmar sin prompt")
+	}
+
+	fmt.Fprint(out, "¿Continuar? [y/N]: ")
+	r := bufio.NewReader(in)
+	line, err := r.ReadString('\n')
+	if err != nil && err != io.EOF {
+		return false, fmt.Errorf("leer confirmación: %w", err)
+	}
+	answer := strings.ToLower(strings.TrimSpace(line))
+	return answer == "y" || answer == "yes" || answer == "s" || answer == "si" || answer == "sí", nil
 }
 
 func runSkillsRemove(cmd *cobra.Command, packs []string) error {
@@ -194,6 +236,14 @@ func flagsFromAnyCmd(cmd *cobra.Command) GlobalFlags {
 	}
 	if f, err := cmd.Flags().GetString("catalog-root"); err == nil {
 		g.Root = f
+	}
+	if f, err := cmd.Flags().GetBool("include-experimental"); err == nil {
+		g.IncludeExperimental = f
+	}
+	// Honor MOBIAI_INCLUDE_EXPERIMENTAL env var as a fallback so users can
+	// opt in once across a shell session without typing the flag every time.
+	if !g.IncludeExperimental && os.Getenv("MOBIAI_INCLUDE_EXPERIMENTAL") != "" {
+		g.IncludeExperimental = true
 	}
 	return g
 }
@@ -304,8 +354,17 @@ func ensureEmbeddedExtracted(embedRoot string) error {
 	return os.WriteFile(marketplaceFile, []byte(b.String()), 0o644)
 }
 
-func selectHosts(g GlobalFlags) ([]host.HostAdapter, error) {
+// newRegistry returns a fresh registry with the experimental flag
+// applied per the global config. Centralized so every callsite agrees
+// on how --include-experimental affects auto-detection.
+func newRegistry(g GlobalFlags) *host.Registry {
 	r := host.NewDefaultRegistry()
+	r.SetIncludeExperimental(g.IncludeExperimental)
+	return r
+}
+
+func selectHosts(g GlobalFlags) ([]host.HostAdapter, error) {
+	r := newRegistry(g)
 	if len(g.Hosts) > 0 {
 		var out []host.HostAdapter
 		for _, id := range g.Hosts {
@@ -322,4 +381,11 @@ func selectHosts(g GlobalFlags) ([]host.HostAdapter, error) {
 		return nil, fmt.Errorf("no detecté ningún cliente de IA — instalá Claude Code, Cursor, Gemini CLI o Codex")
 	}
 	return detected, nil
+}
+
+// detectHosts is selectHosts minus the "no hosts found" error: returns the
+// auto-detected adapters (possibly empty). Used by the picker, which has a
+// dedicated UI state for the empty case.
+func detectHosts(g GlobalFlags) []host.HostAdapter {
+	return newRegistry(g).Detect()
 }

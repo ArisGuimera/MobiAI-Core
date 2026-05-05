@@ -88,6 +88,9 @@ func (m Model) viewResult() string {
 			b.WriteString(fmt.Sprintf("  ✗ %s → %s: %v\n", e.pack, e.host, e.err))
 		}
 	}
+	if m.installSaveErr != nil {
+		b.WriteString(fmt.Sprintf("\n⚠ No pude guardar installed.json: %v\n", m.installSaveErr))
+	}
 	b.WriteString(dimStyle.Render("\n[enter] cerrar"))
 	return b.String()
 }

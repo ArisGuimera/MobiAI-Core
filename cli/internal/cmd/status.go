@@ -7,7 +7,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/ArisGuimera/MobiAI-Core/cli/internal/host"
 	"github.com/ArisGuimera/MobiAI-Core/cli/internal/state"
 )
 
@@ -26,7 +25,8 @@ func NewStatusCmd() *cobra.Command {
 			out := cmd.OutOrStdout()
 			fmt.Fprintf(out, "MobiAI %s\n\n", version)
 
-			r := host.NewDefaultRegistry()
+			g := flagsFromAnyCmd(cmd)
+			r := newRegistry(g)
 			adapters := r.Adapters()
 			present := r.Detect()
 			fmt.Fprintf(out, "Hosts presentes: %d de %d soportados\n", len(present), len(adapters))
@@ -36,7 +36,11 @@ func NewStatusCmd() *cobra.Command {
 				if det.Found {
 					marker = "✓"
 				}
-				fmt.Fprintf(out, "  %s %-14s %s\n", marker, a.Name(), det.Path)
+				note := ""
+				if a.Experimental() {
+					note = " (experimental)"
+				}
+				fmt.Fprintf(out, "  %s %-14s %s%s\n", marker, a.Name(), det.Path, note)
 			}
 			fmt.Fprintln(out)
 

@@ -36,6 +36,9 @@ func NewHostsCmd() *cobra.Command {
 				} else if len(det.Searched) > 0 {
 					path = det.Searched[0]
 				}
+				if a.Experimental() {
+					status += " (experimental)"
+				}
 				fmt.Fprintf(out, "  %s %-14s %-30s %s\n", marker, a.Name(), path, status)
 			}
 			return nil

@@ -28,6 +28,7 @@ const (
 type Model struct {
 	catalog *catalog.Catalog
 	state   *state.Installed
+	paths   state.Paths
 	hosts   []host.HostAdapter
 
 	mode   Mode
@@ -36,9 +37,10 @@ type Model struct {
 	userSelected  map[string]bool // packs the user toggled on
 	requiredByDep map[string]bool // packs marked required because of dep expansion
 
-	installPlan   []installStep
-	installDone   int
-	installErrors []installStepDoneMsg
+	installPlan    []installStep
+	installDone    int
+	installErrors  []installStepDoneMsg
+	installSaveErr error // error saving installed.json after the install plan finishes
 
 	width, height int
 }
@@ -57,7 +59,9 @@ type installStepDoneMsg struct {
 }
 
 // NewModel builds the picker model from already-loaded catalog/state/hosts.
-func NewModel(c *catalog.Catalog, s *state.Installed, hosts []host.HostAdapter) Model {
+// paths is used to persist installed.json after a successful install. If
+// paths.Home is empty (e.g., in unit tests), persistence is skipped.
+func NewModel(c *catalog.Catalog, s *state.Installed, paths state.Paths, hosts []host.HostAdapter) Model {
 	mode := ModePicker
 	if len(hosts) == 0 {
 		mode = ModeNoHosts
@@ -65,6 +69,7 @@ func NewModel(c *catalog.Catalog, s *state.Installed, hosts []host.HostAdapter) 
 	return Model{
 		catalog: c,
 		state:   s,
+		paths:   paths,
 		hosts:   hosts,
 		mode:    mode,
 	}
@@ -159,10 +164,22 @@ func (m Model) updateConfirm(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 func (m Model) handleInstallStep(msg installStepDoneMsg) (tea.Model, tea.Cmd) {
 	if msg.err != nil {
 		m.installErrors = append(m.installErrors, msg)
+	} else {
+		// Mirror the persistence behavior of `mobiai skills add`: every
+		// successful (pack, host) is recorded in installed.json so that
+		// `mobiai status`/`skills list` reflect TUI installs too.
+		if m.state != nil {
+			m.state.Add(msg.pack, msg.host)
+		}
 	}
 	m.installDone++
 	if m.installDone >= len(m.installPlan) {
 		m.mode = ModeResult
+		if m.paths.Home != "" && m.state != nil {
+			if err := m.state.Save(m.paths); err != nil {
+				m.installSaveErr = err
+			}
+		}
 		return m, nil
 	}
 	return m, m.runInstallStep(m.installDone)

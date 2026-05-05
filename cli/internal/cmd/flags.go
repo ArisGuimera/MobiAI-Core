@@ -7,15 +7,16 @@ import (
 // GlobalFlags hold the persistent flags shared across all subcommands.
 // Subcommands read them via FlagsFromCmd(cmd).
 type GlobalFlags struct {
-	Hosts    []string // --host=<id,id> (default empty = all detected)
-	NoTUI    bool     // --no-tui
-	Yes      bool     // --yes / -y
-	Verbose  bool     // --verbose / -V
-	Quiet    bool     // --quiet / -q
-	NoColor  bool     // --no-color
-	Offline  bool     // --offline
-	CacheDir string   // --cache-dir
-	Root     string   // --catalog-root: path to a local catalog (overrides ~/.mobiai/cache/catalog/)
+	Hosts                []string // --host=<id,id> (default empty = all detected)
+	NoTUI                bool     // --no-tui
+	Yes                  bool     // --yes / -y
+	Verbose              bool     // --verbose / -V
+	Quiet                bool     // --quiet / -q
+	NoColor              bool     // --no-color
+	Offline              bool     // --offline
+	CacheDir             string   // --cache-dir
+	Root                 string   // --catalog-root: path to a local catalog (overrides ~/.mobiai/cache/catalog/)
+	IncludeExperimental  bool     // --include-experimental: enable tier-3 adapter auto-detection
 }
 
 // AddPersistentFlags attaches the global flags to the root command.
@@ -29,6 +30,7 @@ func AddPersistentFlags(root *cobra.Command) {
 	root.PersistentFlags().Bool("offline", false, "no refresca el catálogo, usa cache")
 	root.PersistentFlags().String("cache-dir", "", "override del cache (~/.mobiai/cache)")
 	root.PersistentFlags().String("catalog-root", "", "ruta a un catálogo local (override de ~/.mobiai/cache/catalog)")
+	root.PersistentFlags().Bool("include-experimental", false, "incluir adapters tier-3 (paths especulativos) en la auto-detección")
 }
 
 // FlagsFromCmd extracts the global flags from a cobra command's flag set.
@@ -43,5 +45,6 @@ func FlagsFromCmd(cmd *cobra.Command) GlobalFlags {
 	g.Offline, _ = cmd.Flags().GetBool("offline")
 	g.CacheDir, _ = cmd.Flags().GetString("cache-dir")
 	g.Root, _ = cmd.Flags().GetString("catalog-root")
+	g.IncludeExperimental, _ = cmd.Flags().GetBool("include-experimental")
 	return g
 }

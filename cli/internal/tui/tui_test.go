@@ -13,7 +13,7 @@ import (
 func TestNewModel_Smoke(t *testing.T) {
 	c := &catalog.Catalog{Marketplace: &catalog.Marketplace{}}
 	c.Reindex()
-	m := NewModel(c, &state.Installed{Packs: map[string][]string{}}, []host.HostAdapter{stubHost{}})
+	m := NewModel(c, &state.Installed{Packs: map[string][]string{}}, state.Paths{}, []host.HostAdapter{stubHost{}})
 	if m.Mode() != ModePicker {
 		t.Errorf("default mode: got %v, want ModePicker", m.Mode())
 	}
@@ -22,25 +22,66 @@ func TestNewModel_Smoke(t *testing.T) {
 func TestNewModel_NoHostsTriggersModeNoHosts(t *testing.T) {
 	c := &catalog.Catalog{Marketplace: &catalog.Marketplace{}}
 	c.Reindex()
-	m := NewModel(c, &state.Installed{Packs: map[string][]string{}}, nil)
+	m := NewModel(c, &state.Installed{Packs: map[string][]string{}}, state.Paths{}, nil)
 	if m.Mode() != ModeNoHosts {
 		t.Errorf("got %v, want ModeNoHosts", m.Mode())
+	}
+}
+
+func TestUpdate_ProgressTransition_PersistsInstalledJSON(t *testing.T) {
+	tmp := t.TempDir()
+	t.Setenv("MOBIAI_HOME", tmp)
+	paths, _ := state.NewPaths()
+	if err := paths.EnsureDirs(); err != nil {
+		t.Fatal(err)
+	}
+
+	c := &catalog.Catalog{
+		Marketplace: &catalog.Marketplace{},
+		Packs: []catalog.Pack{
+			{Ref: catalog.PluginRef{Name: "core"}, Manifest: catalog.PluginManifest{}},
+			{Ref: catalog.PluginRef{Name: "android"}, Manifest: catalog.PluginManifest{Dependencies: []string{"core"}}},
+		},
+	}
+	c.Reindex()
+	installed := &state.Installed{Packs: map[string][]string{}}
+	m := NewModel(c, installed, paths, []host.HostAdapter{stubHost{}})
+	m.mode = ModeProgress
+	m.installPlan = []installStep{{pack: "android", host: "stub"}}
+
+	updated, _ := m.Update(installStepDoneMsg{pack: "android", host: "stub"})
+	final := updated.(Model)
+	if final.mode != ModeResult {
+		t.Fatalf("mode: got %v, want ModeResult", final.mode)
+	}
+	if final.installSaveErr != nil {
+		t.Errorf("installSaveErr: %v", final.installSaveErr)
+	}
+
+	reloaded, err := state.LoadInstalled(paths)
+	if err != nil {
+		t.Fatal(err)
+	}
+	hosts := reloaded.HostsFor("android")
+	if len(hosts) != 1 || hosts[0] != "stub" {
+		t.Errorf("HostsFor(android): got %v, want [stub]", hosts)
 	}
 }
 
 // stubHost is a minimal HostAdapter for tests that don't care about install behavior.
 type stubHost struct{}
 
-func (s stubHost) ID() string                                          { return "stub" }
-func (s stubHost) Name() string                                        { return "stub" }
-func (s stubHost) Homepage() string                                    { return "" }
-func (s stubHost) Detect() host.DetectResult                           { return host.DetectResult{Found: true} }
-func (s stubHost) SkillsDir() string                                   { return "" }
-func (s stubHost) Capabilities() host.Caps                             { return host.Caps{Skills: true} }
-func (s stubHost) Install(skills []catalog.Skill) error                { return nil }
-func (s stubHost) Uninstall(skillIDs []string) error                   { return nil }
-func (s stubHost) List() ([]host.InstalledSkill, error)                { return nil, nil }
-func (s stubHost) Verify() host.DriftReport                            { return host.DriftReport{} }
+func (s stubHost) ID() string                           { return "stub" }
+func (s stubHost) Name() string                         { return "stub" }
+func (s stubHost) Homepage() string                     { return "" }
+func (s stubHost) Detect() host.DetectResult            { return host.DetectResult{Found: true} }
+func (s stubHost) SkillsDir() string                    { return "" }
+func (s stubHost) Capabilities() host.Caps              { return host.Caps{Skills: true} }
+func (s stubHost) Install(skills []catalog.Skill) error { return nil }
+func (s stubHost) Uninstall(skillIDs []string) error    { return nil }
+func (s stubHost) List() ([]host.InstalledSkill, error) { return nil, nil }
+func (s stubHost) Verify() host.DriftReport             { return host.DriftReport{} }
+func (s stubHost) Experimental() bool                   { return false }
 
 func TestNewModel_BuildsPackRowsFromCatalog(t *testing.T) {
 	c := &catalog.Catalog{
@@ -52,7 +93,7 @@ func TestNewModel_BuildsPackRowsFromCatalog(t *testing.T) {
 		},
 	}
 	c.Reindex()
-	m := NewModel(c, &state.Installed{Packs: map[string][]string{}}, []host.HostAdapter{stubHost{}})
+	m := NewModel(c, &state.Installed{Packs: map[string][]string{}}, state.Paths{}, []host.HostAdapter{stubHost{}})
 
 	// `core` should be filtered out (universal dep, not user-pickable).
 	rows := m.PackRows()
@@ -90,7 +131,7 @@ func sampleModel(t *testing.T) Model {
 		},
 	}
 	c.Reindex()
-	return NewModel(c, &state.Installed{Packs: map[string][]string{}}, []host.HostAdapter{stubHost{}})
+	return NewModel(c, &state.Installed{Packs: map[string][]string{}}, state.Paths{}, []host.HostAdapter{stubHost{}})
 }
 
 func TestUpdate_NavigationDown(t *testing.T) {

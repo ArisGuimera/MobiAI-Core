@@ -5,7 +5,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/ArisGuimera/MobiAI-Core/cli/internal/host"
 	"github.com/ArisGuimera/MobiAI-Core/cli/internal/state"
 )
 
@@ -18,7 +17,8 @@ func NewDoctorCmd() *cobra.Command {
 			fmt.Fprintf(out, "MobiAI %s — diagnóstico\n\n", version)
 
 			fmt.Fprintln(out, "Hosts soportados:")
-			r := host.NewDefaultRegistry()
+			g := flagsFromAnyCmd(cmd)
+			r := newRegistry(g)
 			for _, a := range r.Adapters() {
 				det := a.Detect()
 				marker := "-"
@@ -26,6 +26,9 @@ func NewDoctorCmd() *cobra.Command {
 				if det.Found {
 					marker = "✓"
 					note = "OK"
+				}
+				if a.Experimental() {
+					note += " (experimental)"
 				}
 				fmt.Fprintf(out, "  %s %-14s %-30s %s\n", marker, a.Name(), det.Path, note)
 			}

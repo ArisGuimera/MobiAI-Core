@@ -21,10 +21,23 @@ func RunPicker(g GlobalFlags) error {
 	if err != nil {
 		return err
 	}
+	if err := paths.EnsureDirs(); err != nil {
+		return err
+	}
 	installed, err := state.LoadInstalled(paths)
 	if err != nil {
 		return err
 	}
-	hosts := host.NewDefaultRegistry().Detect()
-	return tui.Run(c, installed, hosts)
+	// For the picker we want explicit --host filtering to apply, but
+	// "no hosts detected" is a UI state (ModeNoHosts), not a fatal error.
+	var hosts []host.HostAdapter
+	if len(g.Hosts) > 0 {
+		hosts, err = selectHosts(g)
+		if err != nil {
+			return err
+		}
+	} else {
+		hosts = detectHosts(g)
+	}
+	return tui.Run(c, installed, paths, hosts)
 }
