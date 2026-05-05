@@ -31,7 +31,13 @@ func NewCatalogCmd() *cobra.Command {
 		Use:   "list",
 		Short: "Lista los packs del catálogo",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := catalog.Load(rootFlag)
+			root := rootFlag
+			if root == "" || root == "." {
+				if r := defaultCatalogRoot(); r != "" {
+					root = r
+				}
+			}
+			c, err := catalog.Load(root)
 			if err != nil {
 				return err
 			}
@@ -55,7 +61,13 @@ func NewCatalogCmd() *cobra.Command {
 		Short: "Resuelve el orden de instalación para los packs dados",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := catalog.Load(rootFlag)
+			root := rootFlag
+			if root == "" || root == "." {
+				if r := defaultCatalogRoot(); r != "" {
+					root = r
+				}
+			}
+			c, err := catalog.Load(root)
 			if err != nil {
 				return err
 			}
