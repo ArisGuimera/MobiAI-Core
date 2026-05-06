@@ -27,20 +27,19 @@ func NewStatusCmd() *cobra.Command {
 
 			g := flagsFromAnyCmd(cmd)
 			r := newRegistry(g)
-			adapters := r.Adapters()
 			present := r.Detect()
-			fmt.Fprintf(out, "Hosts presentes: %d de %d soportados\n", len(present), len(adapters))
-			for _, a := range adapters {
-				det := a.Detect()
-				marker := "-"
-				if det.Found {
-					marker = "✓"
+			fmt.Fprintln(out, "Hosts:")
+			if len(present) == 0 {
+				fmt.Fprintln(out, "  (ninguno detectado — instalá Claude Code, Cursor, Gemini CLI, Codex u otro cliente compatible con agentskills.io)")
+			} else {
+				for _, a := range present {
+					det := a.Detect()
+					note := ""
+					if a.Experimental() {
+						note = " (experimental)"
+					}
+					fmt.Fprintf(out, "  ✓ %-14s %s%s\n", a.Name(), det.Path, note)
 				}
-				note := ""
-				if a.Experimental() {
-					note = " (experimental)"
-				}
-				fmt.Fprintf(out, "  %s %-14s %s%s\n", marker, a.Name(), det.Path, note)
 			}
 			fmt.Fprintln(out)
 
