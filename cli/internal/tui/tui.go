@@ -24,6 +24,29 @@ const (
 	ModeNoHosts
 )
 
+// Action is the pending action a user has marked for a pack in the picker.
+// Tri-state: nada, instalar, desinstalar. El cycle por espacio depende del
+// estado actual del pack:
+//   - pack no instalado: None ↔ Install
+//   - pack instalado en todos los hosts: None ↔ Uninstall
+//   - pack parcialmente instalado: None ↔ Install (relleno)
+type Action int
+
+const (
+	ActionNone Action = iota
+	ActionInstall
+	ActionUninstall
+)
+
+// stepKind discriminates between Install and Uninstall steps in the
+// install plan executed by the picker after confirmation.
+type stepKind int
+
+const (
+	stepInstall stepKind = iota
+	stepUninstall
+)
+
 // Model is the Bubble Tea model.
 type Model struct {
 	catalog *catalog.Catalog
@@ -34,8 +57,8 @@ type Model struct {
 	mode   Mode
 	cursor int
 
-	userSelected  map[string]bool // packs the user toggled on
-	requiredByDep map[string]bool // packs marked required because of dep expansion
+	userActions   map[string]Action // pending action per pack (Install/Uninstall/None)
+	requiredByDep map[string]bool   // packs marked required because of dep expansion (Install only)
 
 	installPlan    []installStep
 	installDone    int
@@ -45,16 +68,18 @@ type Model struct {
 	width, height int
 }
 
-// installStep is one (pack, host) pair to install.
+// installStep is one (pack, host, kind) tuple to apply.
 type installStep struct {
 	pack string
 	host string
+	kind stepKind
 }
 
 // installStepDoneMsg is emitted by the install runner once a step finishes.
 type installStepDoneMsg struct {
 	pack string
 	host string
+	kind stepKind
 	err  error
 }
 
@@ -85,8 +110,8 @@ type PackRow struct {
 	Version     string
 	Deps        []string
 
-	Selected    bool     // user toggled on
-	Required    bool     // required because another selected pack depends on it
+	Action      Action   // pending action (None/Install/Uninstall)
+	Required    bool     // required because another Install-marked pack depends on it
 	InstalledIn []string // host IDs where it's already installed
 }
 
@@ -106,7 +131,7 @@ func (m Model) PackRows() []PackRow {
 			Description: p.Ref.Description,
 			Version:     p.Manifest.Version,
 			Deps:        append([]string(nil), p.Manifest.Dependencies...),
-			Selected:    m.userSelected[p.Ref.Name],
+			Action:      m.userActions[p.Ref.Name],
 			Required:    m.requiredByDep[p.Ref.Name],
 		}
 		if hosts, ok := m.state.Packs[p.Ref.Name]; ok {
@@ -164,11 +189,14 @@ func (m Model) updateConfirm(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 func (m Model) handleInstallStep(msg installStepDoneMsg) (tea.Model, tea.Cmd) {
 	if msg.err != nil {
 		m.installErrors = append(m.installErrors, msg)
-	} else {
-		// Mirror the persistence behavior of `mobiai skills add`: every
+	} else if m.state != nil {
+		// Mirror the persistence behavior of `mobiai skills add/remove`: every
 		// successful (pack, host) is recorded in installed.json so that
-		// `mobiai status`/`skills list` reflect TUI installs too.
-		if m.state != nil {
+		// `mobiai status`/`skills list` reflect TUI changes too.
+		switch msg.kind {
+		case stepUninstall:
+			m.state.Remove(msg.pack, msg.host)
+		default:
 			m.state.Add(msg.pack, msg.host)
 		}
 	}
@@ -185,22 +213,50 @@ func (m Model) handleInstallStep(msg installStepDoneMsg) (tea.Model, tea.Cmd) {
 	return m, m.runInstallStep(m.installDone)
 }
 
+// hasPendingActions reports whether the user has any non-None action queued.
+func (m Model) hasPendingActions() bool {
+	for _, a := range m.userActions {
+		if a != ActionNone {
+			return true
+		}
+	}
+	return false
+}
+
+// buildInstallPlan produces the full ordered list of (pack, host, kind)
+// steps to apply. Install steps come first (in resolved dep order so deps
+// install before dependents), uninstall steps come second (no transitive
+// removal — user-listed packs only).
 func (m Model) buildInstallPlan() []installStep {
-	if len(m.userSelected) == 0 || len(m.hosts) == 0 {
+	if !m.hasPendingActions() || len(m.hosts) == 0 {
 		return nil
 	}
-	req := make([]string, 0, len(m.userSelected))
-	for name := range m.userSelected {
-		req = append(req, name)
+
+	var installs, uninstalls []string
+	for name, act := range m.userActions {
+		switch act {
+		case ActionInstall:
+			installs = append(installs, name)
+		case ActionUninstall:
+			uninstalls = append(uninstalls, name)
+		}
 	}
-	order, err := resolver.Resolve(m.catalog, req)
-	if err != nil {
-		return nil
-	}
+
 	var plan []installStep
-	for _, packName := range order {
+	if len(installs) > 0 {
+		order, err := resolver.Resolve(m.catalog, installs)
+		if err != nil {
+			return nil
+		}
+		for _, packName := range order {
+			for _, h := range m.hosts {
+				plan = append(plan, installStep{pack: packName, host: h.ID(), kind: stepInstall})
+			}
+		}
+	}
+	for _, packName := range uninstalls {
 		for _, h := range m.hosts {
-			plan = append(plan, installStep{pack: packName, host: h.ID()})
+			plan = append(plan, installStep{pack: packName, host: h.ID(), kind: stepUninstall})
 		}
 	}
 	return plan
@@ -219,20 +275,31 @@ func (m Model) runInstallStep(idx int) tea.Cmd {
 			}
 		}
 		if hostAdapter == nil {
-			return installStepDoneMsg{pack: step.pack, host: step.host, err: fmt.Errorf("host %q no encontrado", step.host)}
+			return installStepDoneMsg{pack: step.pack, host: step.host, kind: step.kind, err: fmt.Errorf("host %q no encontrado", step.host)}
 		}
 		pack, err := c.Get(step.pack)
 		if err != nil {
-			return installStepDoneMsg{pack: step.pack, host: step.host, err: err}
+			return installStepDoneMsg{pack: step.pack, host: step.host, kind: step.kind, err: err}
 		}
 		skills, err := c.Skills(pack)
 		if err != nil {
-			return installStepDoneMsg{pack: step.pack, host: step.host, err: err}
+			return installStepDoneMsg{pack: step.pack, host: step.host, kind: step.kind, err: err}
 		}
-		if err := hostAdapter.Install(skills); err != nil {
-			return installStepDoneMsg{pack: step.pack, host: step.host, err: err}
+		switch step.kind {
+		case stepUninstall:
+			ids := make([]string, len(skills))
+			for i, s := range skills {
+				ids[i] = s.ID
+			}
+			if err := hostAdapter.Uninstall(ids); err != nil {
+				return installStepDoneMsg{pack: step.pack, host: step.host, kind: step.kind, err: err}
+			}
+		default:
+			if err := hostAdapter.Install(skills); err != nil {
+				return installStepDoneMsg{pack: step.pack, host: step.host, kind: step.kind, err: err}
+			}
 		}
-		return installStepDoneMsg{pack: step.pack, host: step.host}
+		return installStepDoneMsg{pack: step.pack, host: step.host, kind: step.kind}
 	}
 }
 
@@ -254,36 +321,64 @@ func (m Model) updatePicker(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			m = m.toggleAt(m.cursor)
 		}
 	case "enter":
+		// Si no hay acciones pendientes, auto-cyclear el pack bajo el
+		// cursor antes de transicionar. Matchea expectativa "estoy
+		// parado en kmp, le doy enter, instalo (o desinstalo) kmp"
+		// sin requerir que conozca el toggle por espacio.
+		if !m.hasPendingActions() && m.cursor < len(rows) {
+			m = m.toggleAt(m.cursor)
+		}
 		m.mode = ModeConfirm
 	}
 	return m, nil
 }
 
-// toggleAt flips the user-selected flag on the pack at index i (in PackRows
-// order) and recomputes the required-by-dep set via the resolver.
+// toggleAt cycles the action on the pack at index i (in PackRows order)
+// and recomputes the required-by-dep set.
+//
+// Cycle:
+//   - pack fully installed (in all detected hosts) → None ↔ Uninstall
+//   - pack not installed (or partial) → None ↔ Install
+//
+// Required-by-dep is computed only for Install actions (uninstall doesn't
+// auto-pull deps; user removes packs explicitly to avoid surprise removals).
 func (m Model) toggleAt(i int) Model {
 	rows := m.PackRows()
-	target := rows[i].Name
+	row := rows[i]
+	target := row.Name
 
-	if m.userSelected == nil {
-		m.userSelected = map[string]bool{}
-	}
-	if m.userSelected[target] {
-		delete(m.userSelected, target)
-	} else {
-		m.userSelected[target] = true
+	if m.userActions == nil {
+		m.userActions = map[string]Action{}
 	}
 
-	required := map[string]bool{}
-	if len(m.userSelected) > 0 {
-		req := make([]string, 0, len(m.userSelected))
-		for name := range m.userSelected {
-			req = append(req, name)
+	current := m.userActions[target]
+	fullyInstalled := len(row.InstalledIn) > 0 && len(row.InstalledIn) == len(m.hosts)
+
+	switch current {
+	case ActionNone:
+		if fullyInstalled {
+			m.userActions[target] = ActionUninstall
+		} else {
+			m.userActions[target] = ActionInstall
 		}
-		order, err := resolver.Resolve(m.catalog, req)
+	default:
+		// Either Install or Uninstall → reset to None.
+		delete(m.userActions, target)
+	}
+
+	// Recompute required-by-dep: only Install actions pull transitive deps.
+	required := map[string]bool{}
+	var installReq []string
+	for name, act := range m.userActions {
+		if act == ActionInstall {
+			installReq = append(installReq, name)
+		}
+	}
+	if len(installReq) > 0 {
+		order, err := resolver.Resolve(m.catalog, installReq)
 		if err == nil {
 			for _, name := range order {
-				if !m.userSelected[name] && name != "core" {
+				if m.userActions[name] != ActionInstall && name != "core" {
 					required[name] = true
 				}
 			}

@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
@@ -11,6 +12,7 @@ var (
 	titleStyle    = lipgloss.NewStyle().Bold(true)
 	cursorStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("212"))
 	checkboxStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("39"))
+	removalStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("196"))
 	dimStyle      = lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
 )
 
@@ -24,16 +26,7 @@ func (m Model) viewPicker() string {
 
 	rows := m.PackRows()
 	for i, r := range rows {
-		marker := "[ ]"
-		if r.Required {
-			marker = checkboxStyle.Render("[●]")
-		} else if r.Selected {
-			marker = checkboxStyle.Render("[✓]")
-		} else if len(r.InstalledIn) > 0 && len(r.InstalledIn) == len(m.hosts) {
-			marker = checkboxStyle.Render("[✓]")
-		} else if len(r.InstalledIn) > 0 {
-			marker = checkboxStyle.Render("[~]")
-		}
+		marker := pickerMarker(r, len(m.hosts))
 
 		prefix := "  "
 		if i == m.cursor {
@@ -43,19 +36,72 @@ func (m Model) viewPicker() string {
 		b.WriteString(line + "\n")
 	}
 
-	b.WriteString("\n" + dimStyle.Render("↑↓ navegar  [espacio] toggle  [enter] aplicar  [q] salir") + "\n")
+	b.WriteString("\n" + dimStyle.Render("↑↓ navegar  [espacio] cambiar acción  [enter] aplicar  [q] salir") + "\n")
 	return b.String()
+}
+
+// pickerMarker returns the visual checkbox-like marker for a pack row,
+// based on its pending action, required-by-dep flag, and how many of the
+// detected hosts already have it installed.
+//
+//   - Required (dep of an Install): [●]
+//   - ActionInstall:                [+] (cyan) — will install
+//   - ActionUninstall:              [-] (red)  — will uninstall
+//   - ActionNone, fully installed:  [✓]        — already there, no change
+//   - ActionNone, partial install:  [~]        — some hosts only
+//   - ActionNone, not installed:    [ ]
+func pickerMarker(r PackRow, totalHosts int) string {
+	if r.Required {
+		return checkboxStyle.Render("[●]")
+	}
+	switch r.Action {
+	case ActionInstall:
+		return checkboxStyle.Render("[+]")
+	case ActionUninstall:
+		return removalStyle.Render("[-]")
+	}
+	switch {
+	case len(r.InstalledIn) == 0:
+		return "[ ]"
+	case len(r.InstalledIn) == totalHosts:
+		return checkboxStyle.Render("[✓]")
+	default:
+		return checkboxStyle.Render("[~]")
+	}
 }
 
 func (m Model) viewConfirm() string {
 	var b strings.Builder
 	b.WriteString(titleStyle.Render("Confirmar cambios") + "\n\n")
-	if len(m.userSelected) == 0 {
-		b.WriteString("No hay packs seleccionados.\n")
-	} else {
+
+	var installs, uninstalls []string
+	for name, act := range m.userActions {
+		switch act {
+		case ActionInstall:
+			installs = append(installs, name)
+		case ActionUninstall:
+			uninstalls = append(uninstalls, name)
+		}
+	}
+	sort.Strings(installs)
+	sort.Strings(uninstalls)
+
+	if len(installs) == 0 && len(uninstalls) == 0 {
+		b.WriteString("No hay cambios pendientes.\n")
+	}
+	if len(installs) > 0 {
 		b.WriteString("A instalar:\n")
-		for name := range m.userSelected {
-			b.WriteString("  + " + name + "\n")
+		for _, name := range installs {
+			b.WriteString(checkboxStyle.Render("  + ") + name + "\n")
+		}
+	}
+	if len(uninstalls) > 0 {
+		if len(installs) > 0 {
+			b.WriteString("\n")
+		}
+		b.WriteString("A desinstalar:\n")
+		for _, name := range uninstalls {
+			b.WriteString(removalStyle.Render("  - ") + name + "\n")
 		}
 	}
 	b.WriteString(fmt.Sprintf("\nEn %d hosts detectados.\n\n", len(m.hosts)))
