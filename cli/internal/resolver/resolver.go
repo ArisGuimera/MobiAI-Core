@@ -6,9 +6,20 @@ package resolver
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/ArisGuimera/MobiAI-Core/cli/internal/catalog"
 )
+
+// NotFoundError signals that a pack the user explicitly requested is
+// not present in the catalog (typo, stale catalog, etc.).
+type NotFoundError struct {
+	Pack string
+}
+
+func (e *NotFoundError) Error() string {
+	return fmt.Sprintf("requested pack %q not found in catalog", e.Pack)
+}
 
 // MissingDepError signals that pack From declares a dependency on
 // Missing, which is not present in the catalog.
@@ -28,7 +39,7 @@ type CycleError struct {
 }
 
 func (e *CycleError) Error() string {
-	return fmt.Sprintf("dependency cycle detected: %v", e.Cycle)
+	return fmt.Sprintf("dependency cycle detected: %s", strings.Join(e.Cycle, " → "))
 }
 
 // Resolve returns the install order for the requested packs:
@@ -39,7 +50,7 @@ func Resolve(c *catalog.Catalog, requested []string) ([]string, error) {
 	// 1. Validate every requested name exists in the catalog.
 	for _, name := range requested {
 		if !c.Has(name) {
-			return nil, fmt.Errorf("requested pack %q not found in catalog", name)
+			return nil, &NotFoundError{Pack: name}
 		}
 	}
 

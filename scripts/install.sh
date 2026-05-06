@@ -2,7 +2,10 @@
 # MobiAI CLI installer (Mac/Linux)
 # Usage: curl -fsSL https://mobiai.dev/install.sh | sh
 # Override: MOBIAI_INSTALL_BASE=<url> MOBIAI_INSTALL_DIR=<path> MOBIAI_VERSION=<version>
-set -e
+#
+# set -e: fail on first error.
+# set -u: fail on undefined variable — protects against typos like $INSTAL_DIR.
+set -eu
 
 INSTALL_BASE="${MOBIAI_INSTALL_BASE:-https://github.com/ArisGuimera/MobiAI-Core/releases}"
 INSTALL_DIR="${MOBIAI_INSTALL_DIR:-$HOME/.mobiai/bin}"
@@ -30,7 +33,7 @@ case "$(uname -m)" in
 esac
 
 # Resolve version
-if [ -z "${MOBIAI_VERSION}" ]; then
+if [ -z "${MOBIAI_VERSION:-}" ]; then
     API="https://api.github.com/repos/ArisGuimera/MobiAI-Core/releases?per_page=20"
     if command -v jq >/dev/null 2>&1; then
         LATEST_TAG="$(curl -fsSL "${API}" | jq -r '.[] | select(.tag_name | startswith("cli-v")) | .tag_name' | head -n1)"
@@ -78,7 +81,7 @@ echo ""
 echo "Instalado en: ${INSTALL_DIR}/mobiai"
 
 # PATH hint
-case "${SHELL}" in
+case "${SHELL:-}" in
     */zsh)  RC="${HOME}/.zshrc";;
     */bash) RC="${HOME}/.bashrc";;
     */fish) RC="${HOME}/.config/fish/config.fish";;

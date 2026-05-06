@@ -11,37 +11,46 @@ import (
 // genericAdapter implements every HostAdapter method against a configurable
 // home subdirectory. Tier-1 adapters are thin factories around it.
 type genericAdapter struct {
-	id         string
-	name       string
-	homepage   string
-	homeSubdir string // e.g., ".claude"
-	caps       Caps
+	id           string
+	name         string
+	homepage     string
+	homeSubdir   string // e.g., ".claude"
+	caps         Caps
+	experimental bool // tier-3: speculative path
 }
 
-func (a *genericAdapter) ID() string         { return a.id }
-func (a *genericAdapter) Name() string       { return a.name }
-func (a *genericAdapter) Homepage() string   { return a.homepage }
-func (a *genericAdapter) Capabilities() Caps { return a.caps }
+func (a *genericAdapter) ID() string           { return a.id }
+func (a *genericAdapter) Name() string         { return a.name }
+func (a *genericAdapter) Homepage() string     { return a.homepage }
+func (a *genericAdapter) Capabilities() Caps   { return a.caps }
+func (a *genericAdapter) Experimental() bool   { return a.experimental }
 
-func (a *genericAdapter) hostDir() string {
+// hostDir returns the absolute host home dir. Returns an error if the
+// user home dir cannot be resolved — callers must surface this rather
+// than silently producing a relative path that would write to CWD.
+func (a *genericAdapter) hostDir() (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return ""
+		return "", fmt.Errorf("resolve user home dir for %s: %w", a.id, err)
 	}
-	return filepath.Join(home, a.homeSubdir)
+	return filepath.Join(home, a.homeSubdir), nil
 }
 
 func (a *genericAdapter) SkillsDir() string {
-	return filepath.Join(a.hostDir(), "skills")
+	dir, err := a.hostDir()
+	if err != nil {
+		return ""
+	}
+	return filepath.Join(dir, "skills")
 }
 
 func (a *genericAdapter) Detect() DetectResult {
-	dir := a.hostDir()
-	if dir == "" {
+	dir, err := a.hostDir()
+	if err != nil {
 		return DetectResult{Found: false, Searched: []string{"<unresolved home>"}}
 	}
-	info, err := os.Stat(dir)
-	if err == nil && info.IsDir() {
+	info, statErr := os.Stat(dir)
+	if statErr == nil && info.IsDir() {
 		return DetectResult{Found: true, Path: dir, Searched: []string{dir}}
 	}
 	return DetectResult{Found: false, Searched: []string{dir}}
@@ -50,11 +59,16 @@ func (a *genericAdapter) Detect() DetectResult {
 // Install copies each skill's source directory into <SkillsDir>/<skill.ID>/.
 // Existing files in the target are overwritten (Install is idempotent).
 func (a *genericAdapter) Install(skills []catalog.Skill) error {
-	if err := os.MkdirAll(a.SkillsDir(), 0o755); err != nil {
+	hostDir, err := a.hostDir()
+	if err != nil {
+		return err
+	}
+	skillsDir := filepath.Join(hostDir, "skills")
+	if err := os.MkdirAll(skillsDir, 0o755); err != nil {
 		return fmt.Errorf("mkdir skills dir: %w", err)
 	}
 	for _, s := range skills {
-		dst := filepath.Join(a.SkillsDir(), s.ID)
+		dst := filepath.Join(skillsDir, s.ID)
 		if err := copyDir(s.AbsPath, dst); err != nil {
 			return fmt.Errorf("install skill %q: %w", s.ID, err)
 		}
@@ -65,8 +79,13 @@ func (a *genericAdapter) Install(skills []catalog.Skill) error {
 // Uninstall removes <SkillsDir>/<skillID>/ for each ID. Missing directories
 // are silently ignored (idempotent).
 func (a *genericAdapter) Uninstall(skillIDs []string) error {
+	hostDir, err := a.hostDir()
+	if err != nil {
+		return err
+	}
+	skillsDir := filepath.Join(hostDir, "skills")
 	for _, id := range skillIDs {
-		dir := filepath.Join(a.SkillsDir(), id)
+		dir := filepath.Join(skillsDir, id)
 		if err := os.RemoveAll(dir); err != nil {
 			return fmt.Errorf("uninstall skill %q: %w", id, err)
 		}
@@ -77,7 +96,11 @@ func (a *genericAdapter) Uninstall(skillIDs []string) error {
 // List returns every direct subdirectory of SkillsDir as an InstalledSkill.
 // Loose files in SkillsDir are ignored.
 func (a *genericAdapter) List() ([]InstalledSkill, error) {
-	dir := a.SkillsDir()
+	hostDir, err := a.hostDir()
+	if err != nil {
+		return nil, err
+	}
+	dir := filepath.Join(hostDir, "skills")
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		if os.IsNotExist(err) {

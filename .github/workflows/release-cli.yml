@@ -42,8 +42,13 @@ jobs:
       - name: Publish GitHub release with cli-v* tag
         run: |
           cd cli/dist
+          # SemVer-aware prerelease detection. The version is everything
+          # after `cli-v`. A `-` in that suffix means a SemVer pre-release
+          # identifier (e.g. 1.0.0-rc.1, 0.2.0-beta.3). Stable releases
+          # like 1.0.0 have no `-` in the suffix and ship as full releases.
+          VERSION="${GITHUB_REF_NAME#cli-v}"
           PRERELEASE_FLAG=""
-          if [[ "$GITHUB_REF_NAME" == *-* ]] && [[ "$GITHUB_REF_NAME" != *-final* ]]; then
+          if [[ "$VERSION" == *-* ]]; then
             PRERELEASE_FLAG="--prerelease"
           fi
           gh release create "$GITHUB_REF_NAME" \

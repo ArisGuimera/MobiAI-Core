@@ -13,7 +13,7 @@ import (
 func TestNewModel_Smoke(t *testing.T) {
 	c := &catalog.Catalog{Marketplace: &catalog.Marketplace{}}
 	c.Reindex()
-	m := NewModel(c, &state.Installed{Packs: map[string][]string{}}, []host.HostAdapter{stubHost{}})
+	m := NewModel(c, &state.Installed{Packs: map[string][]string{}}, state.Paths{}, []host.HostAdapter{stubHost{}})
 	if m.Mode() != ModePicker {
 		t.Errorf("default mode: got %v, want ModePicker", m.Mode())
 	}
@@ -22,25 +22,66 @@ func TestNewModel_Smoke(t *testing.T) {
 func TestNewModel_NoHostsTriggersModeNoHosts(t *testing.T) {
 	c := &catalog.Catalog{Marketplace: &catalog.Marketplace{}}
 	c.Reindex()
-	m := NewModel(c, &state.Installed{Packs: map[string][]string{}}, nil)
+	m := NewModel(c, &state.Installed{Packs: map[string][]string{}}, state.Paths{}, nil)
 	if m.Mode() != ModeNoHosts {
 		t.Errorf("got %v, want ModeNoHosts", m.Mode())
+	}
+}
+
+func TestUpdate_ProgressTransition_PersistsInstalledJSON(t *testing.T) {
+	tmp := t.TempDir()
+	t.Setenv("MOBIAI_HOME", tmp)
+	paths, _ := state.NewPaths()
+	if err := paths.EnsureDirs(); err != nil {
+		t.Fatal(err)
+	}
+
+	c := &catalog.Catalog{
+		Marketplace: &catalog.Marketplace{},
+		Packs: []catalog.Pack{
+			{Ref: catalog.PluginRef{Name: "core"}, Manifest: catalog.PluginManifest{}},
+			{Ref: catalog.PluginRef{Name: "android"}, Manifest: catalog.PluginManifest{Dependencies: []string{"core"}}},
+		},
+	}
+	c.Reindex()
+	installed := &state.Installed{Packs: map[string][]string{}}
+	m := NewModel(c, installed, paths, []host.HostAdapter{stubHost{}})
+	m.mode = ModeProgress
+	m.installPlan = []installStep{{pack: "android", host: "stub"}}
+
+	updated, _ := m.Update(installStepDoneMsg{pack: "android", host: "stub"})
+	final := updated.(Model)
+	if final.mode != ModeResult {
+		t.Fatalf("mode: got %v, want ModeResult", final.mode)
+	}
+	if final.installSaveErr != nil {
+		t.Errorf("installSaveErr: %v", final.installSaveErr)
+	}
+
+	reloaded, err := state.LoadInstalled(paths)
+	if err != nil {
+		t.Fatal(err)
+	}
+	hosts := reloaded.HostsFor("android")
+	if len(hosts) != 1 || hosts[0] != "stub" {
+		t.Errorf("HostsFor(android): got %v, want [stub]", hosts)
 	}
 }
 
 // stubHost is a minimal HostAdapter for tests that don't care about install behavior.
 type stubHost struct{}
 
-func (s stubHost) ID() string                                          { return "stub" }
-func (s stubHost) Name() string                                        { return "stub" }
-func (s stubHost) Homepage() string                                    { return "" }
-func (s stubHost) Detect() host.DetectResult                           { return host.DetectResult{Found: true} }
-func (s stubHost) SkillsDir() string                                   { return "" }
-func (s stubHost) Capabilities() host.Caps                             { return host.Caps{Skills: true} }
-func (s stubHost) Install(skills []catalog.Skill) error                { return nil }
-func (s stubHost) Uninstall(skillIDs []string) error                   { return nil }
-func (s stubHost) List() ([]host.InstalledSkill, error)                { return nil, nil }
-func (s stubHost) Verify() host.DriftReport                            { return host.DriftReport{} }
+func (s stubHost) ID() string                           { return "stub" }
+func (s stubHost) Name() string                         { return "stub" }
+func (s stubHost) Homepage() string                     { return "" }
+func (s stubHost) Detect() host.DetectResult            { return host.DetectResult{Found: true} }
+func (s stubHost) SkillsDir() string                    { return "" }
+func (s stubHost) Capabilities() host.Caps              { return host.Caps{Skills: true} }
+func (s stubHost) Install(skills []catalog.Skill) error { return nil }
+func (s stubHost) Uninstall(skillIDs []string) error    { return nil }
+func (s stubHost) List() ([]host.InstalledSkill, error) { return nil, nil }
+func (s stubHost) Verify() host.DriftReport             { return host.DriftReport{} }
+func (s stubHost) Experimental() bool                   { return false }
 
 func TestNewModel_BuildsPackRowsFromCatalog(t *testing.T) {
 	c := &catalog.Catalog{
@@ -52,7 +93,7 @@ func TestNewModel_BuildsPackRowsFromCatalog(t *testing.T) {
 		},
 	}
 	c.Reindex()
-	m := NewModel(c, &state.Installed{Packs: map[string][]string{}}, []host.HostAdapter{stubHost{}})
+	m := NewModel(c, &state.Installed{Packs: map[string][]string{}}, state.Paths{}, []host.HostAdapter{stubHost{}})
 
 	// `core` should be filtered out (universal dep, not user-pickable).
 	rows := m.PackRows()
@@ -90,7 +131,7 @@ func sampleModel(t *testing.T) Model {
 		},
 	}
 	c.Reindex()
-	return NewModel(c, &state.Installed{Packs: map[string][]string{}}, []host.HostAdapter{stubHost{}})
+	return NewModel(c, &state.Installed{Packs: map[string][]string{}}, state.Paths{}, []host.HostAdapter{stubHost{}})
 }
 
 func TestUpdate_NavigationDown(t *testing.T) {
@@ -114,11 +155,11 @@ func TestUpdate_NavigationUp_DoesNotGoNegative(t *testing.T) {
 
 func TestUpdate_ToggleSelectsPack(t *testing.T) {
 	m := sampleModel(t)
-	// cursor=0 → "android" (core is filtered out)
+	// cursor=0 → "android" (core is filtered out, not installed)
 	updated, _ := m.Update(keyMsg("space"))
 	rows := updated.(Model).PackRows()
-	if !rows[0].Selected {
-		t.Error("expected android to be selected after space at cursor 0")
+	if rows[0].Action != ActionInstall {
+		t.Errorf("expected android Action=ActionInstall after space at cursor 0; got %v", rows[0].Action)
 	}
 }
 
@@ -138,8 +179,8 @@ func TestUpdate_ToggleKMP_MarksAndroidAndIOSAsRequired(t *testing.T) {
 	for _, r := range rows {
 		byName[r.Name] = r
 	}
-	if !byName["kmp"].Selected {
-		t.Error("kmp should be Selected")
+	if byName["kmp"].Action != ActionInstall {
+		t.Errorf("kmp Action: got %v, want ActionInstall", byName["kmp"].Action)
 	}
 	if !byName["android"].Required {
 		t.Error("android should be Required (dep of kmp)")
@@ -158,8 +199,8 @@ func TestUpdate_UntoggleKMP_ReleasesRequiredFlags(t *testing.T) {
 	}
 	rows := m.PackRows()
 	for _, r := range rows {
-		if r.Selected || r.Required {
-			t.Errorf("after toggle off, %s still has Selected=%v Required=%v", r.Name, r.Selected, r.Required)
+		if r.Action != ActionNone || r.Required {
+			t.Errorf("after toggle off, %s still has Action=%v Required=%v", r.Name, r.Action, r.Required)
 		}
 	}
 }
@@ -172,10 +213,161 @@ func TestUpdate_EnterFromPickerGoesToConfirm(t *testing.T) {
 	}
 }
 
+// TestUpdate_EnterAutoSelectsCursorWhenNothingSelected verifies that pressing
+// Enter from the picker with no pending actions auto-selects the pack under
+// the cursor before transitioning to ModeConfirm. Matches user intuition
+// ("estoy parado en kmp, le doy enter, instalo kmp").
+func TestUpdate_EnterAutoSelectsCursorWhenNothingSelected(t *testing.T) {
+	m := sampleModel(t)
+	// Precondition: nothing pending, cursor at 0 (android in sampleModel).
+	if hasPendingActions(m) {
+		t.Fatalf("precondition: userActions should be empty, got %v", m.userActions)
+	}
+
+	updated, _ := m.Update(keyMsg("enter"))
+	final := updated.(Model)
+
+	if final.mode != ModeConfirm {
+		t.Errorf("mode: got %v, want ModeConfirm", final.mode)
+	}
+	if final.userActions["android"] != ActionInstall {
+		t.Errorf("Enter with no pending actions should auto-mark cursor row 'android' for Install; got userActions=%v", final.userActions)
+	}
+}
+
+// hasPendingActions reports whether the model has any non-None action set.
+func hasPendingActions(m Model) bool {
+	for _, a := range m.userActions {
+		if a != ActionNone {
+			return true
+		}
+	}
+	return false
+}
+
+// TestUpdate_EnterPreservesPreviousSelections verifies that if user already
+// toggled some packs with space, Enter does NOT auto-add the cursor row —
+// it just transitions to confirm with the explicit selection intact.
+func TestUpdate_EnterPreservesPreviousSelections(t *testing.T) {
+	m := sampleModel(t)
+	// User explicitly selected ios. Cursor still at 0 (android).
+	m.userActions = map[string]Action{"ios": ActionInstall}
+
+	updated, _ := m.Update(keyMsg("enter"))
+	final := updated.(Model)
+
+	if final.mode != ModeConfirm {
+		t.Errorf("mode: got %v, want ModeConfirm", final.mode)
+	}
+	if final.userActions["ios"] != ActionInstall {
+		t.Errorf("ios selection should persist; got userActions=%v", final.userActions)
+	}
+	if final.userActions["android"] != ActionNone {
+		t.Errorf("android should NOT be auto-added when user already selected something else; got userActions=%v", final.userActions)
+	}
+}
+
+// TestToggle_OnInstalledPack_MarksForUninstall verifies that pressing space
+// on a pack already installed in all detected hosts cycles the Action to
+// Uninstall (visual `[-]`), so the user can remove it via the picker.
+func TestToggle_OnInstalledPack_MarksForUninstall(t *testing.T) {
+	m := sampleModel(t)
+	// android is currently installed in the only host (stub). Cursor at 0.
+	m.state.Packs["android"] = []string{"stub"}
+
+	updated, _ := m.Update(keyMsg("space"))
+	final := updated.(Model)
+
+	rows := final.PackRows()
+	if rows[0].Name != "android" {
+		t.Fatalf("precondition: expected cursor on android, got %s", rows[0].Name)
+	}
+	if rows[0].Action != ActionUninstall {
+		t.Errorf("space on installed pack should mark for Uninstall; got Action=%v", rows[0].Action)
+	}
+}
+
+// TestToggle_OnUninstallAction_ResetsToNone verifies that pressing space
+// twice on an installed pack (Install→Uninstall→None) cycles back without
+// committing accidentally.
+func TestToggle_OnUninstallAction_ResetsToNone(t *testing.T) {
+	m := sampleModel(t)
+	m.state.Packs["android"] = []string{"stub"}
+
+	// First space: ActionUninstall
+	updated, _ := m.Update(keyMsg("space"))
+	m = updated.(Model)
+	// Second space: ActionNone
+	updated, _ = m.Update(keyMsg("space"))
+	m = updated.(Model)
+
+	if m.userActions["android"] != ActionNone {
+		t.Errorf("two spaces on installed pack should cycle back to None; got %v", m.userActions["android"])
+	}
+}
+
+// TestBuildInstallPlan_MixedInstallAndUninstall verifies that when the user
+// has both Install and Uninstall actions pending, the plan contains the
+// right step kinds for each (pack, host) pair.
+func TestBuildInstallPlan_MixedInstallAndUninstall(t *testing.T) {
+	m := sampleModel(t)
+	m.state.Packs["android"] = []string{"stub"} // currently installed
+	m.userActions = map[string]Action{
+		"ios":     ActionInstall,
+		"android": ActionUninstall,
+	}
+
+	plan := m.buildInstallPlan()
+	if len(plan) == 0 {
+		t.Fatal("expected non-empty plan")
+	}
+	byPackKind := map[string]stepKind{}
+	for _, s := range plan {
+		byPackKind[s.pack] = s.kind
+	}
+	if byPackKind["android"] != stepUninstall {
+		t.Errorf("android step kind: got %v, want stepUninstall", byPackKind["android"])
+	}
+	// ios install also pulls core (transitive dep).
+	if byPackKind["ios"] != stepInstall {
+		t.Errorf("ios step kind: got %v, want stepInstall", byPackKind["ios"])
+	}
+}
+
+// TestHandleInstallStep_UninstallSuccess_RemovesFromState verifies that a
+// successful uninstall step calls state.Remove (so installed.json reflects
+// the removal).
+func TestHandleInstallStep_UninstallSuccess_RemovesFromState(t *testing.T) {
+	tmp := t.TempDir()
+	t.Setenv("MOBIAI_HOME", tmp)
+	paths, _ := state.NewPaths()
+	if err := paths.EnsureDirs(); err != nil {
+		t.Fatal(err)
+	}
+
+	c := &catalog.Catalog{Marketplace: &catalog.Marketplace{}}
+	c.Reindex()
+	installed := &state.Installed{Packs: map[string][]string{"android": {"stub"}}}
+	m := NewModel(c, installed, paths, []host.HostAdapter{stubHost{}})
+	m.mode = ModeProgress
+	m.installPlan = []installStep{{pack: "android", host: "stub", kind: stepUninstall}}
+
+	updated, _ := m.Update(installStepDoneMsg{pack: "android", host: "stub", kind: stepUninstall})
+	final := updated.(Model)
+
+	if final.mode != ModeResult {
+		t.Errorf("mode: got %v, want ModeResult", final.mode)
+	}
+	hosts := final.state.HostsFor("android")
+	if len(hosts) != 0 {
+		t.Errorf("after Uninstall step, android should be gone from state; got hosts=%v", hosts)
+	}
+}
+
 func TestUpdate_ConfirmYGoesToProgress(t *testing.T) {
 	m := sampleModel(t)
 	m.mode = ModeConfirm
-	m.userSelected = map[string]bool{"android": true}
+	m.userActions = map[string]Action{"android": ActionInstall}
 	updated, cmd := m.Update(keyMsg("y"))
 	if updated.(Model).mode != ModeProgress {
 		t.Errorf("mode after Y: got %v, want ModeProgress", updated.(Model).mode)

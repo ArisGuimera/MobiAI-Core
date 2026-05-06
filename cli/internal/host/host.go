@@ -17,6 +17,13 @@ type HostAdapter interface {
 	Uninstall(skillIDs []string) error
 	List() ([]InstalledSkill, error)
 	Verify() DriftReport
+
+	// Experimental returns true for adapters whose home subdir is
+	// speculative (tier-3). The default Registry excludes them from
+	// auto-detection so we don't hijack unrelated directories like
+	// ~/.mux or ~/.factory; users opt in via --include-experimental
+	// or by passing --host=<id> explicitly.
+	Experimental() bool
 }
 
 type DetectResult struct {
