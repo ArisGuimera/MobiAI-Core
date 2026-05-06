@@ -1,0 +1,55 @@
+name: release-cli
+on:
+  push:
+    tags:
+      - 'cli-v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 'stable'
+          cache-dependency-path: cli/go.sum
+
+      - name: Strip cli- prefix and create local semver tag
+        run: |
+          STRIPPED="${GITHUB_REF_NAME#cli-}"
+          echo "STRIPPED=$STRIPPED" >> $GITHUB_ENV
+          git tag "$STRIPPED"
+
+      - name: Build artifacts with GoReleaser (no publish)
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: '~> v2'
+          workdir: cli
+          args: release --clean --skip=publish --skip=announce
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GORELEASER_CURRENT_TAG: ${{ env.STRIPPED }}
+
+      - name: Publish GitHub release with cli-v* tag
+        run: |
+          cd cli/dist
+          PRERELEASE_FLAG=""
+          if [[ "$GITHUB_REF_NAME" == *-* ]] && [[ "$GITHUB_REF_NAME" != *-final* ]]; then
+            PRERELEASE_FLAG="--prerelease"
+          fi
+          gh release create "$GITHUB_REF_NAME" \
+            --title "CLI ${STRIPPED}" \
+            --notes "Automated release for tag $GITHUB_REF_NAME" \
+            $PRERELEASE_FLAG \
+            mobiai-*.tar.gz mobiai-*.zip checksums.txt
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

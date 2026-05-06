@@ -1,0 +1,49 @@
+name: ci-cli
+on:
+  pull_request:
+    paths:
+      - 'cli/**'
+      - 'scripts/**'
+      - '.github/workflows/ci-cli.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'cli/**'
+      - 'scripts/**'
+
+jobs:
+  test:
+    name: test (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: cli
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: 'stable'
+      - name: Generate embedded catalog
+        run: go generate ./...
+      - name: Test
+        run: go test -v ./...
+      - name: Build
+        run: go build -o mobiai-test ./cmd/mobiai
+        if: runner.os != 'Windows'
+      - name: Build (Windows)
+        run: go build -o mobiai-test.exe ./cmd/mobiai
+        if: runner.os == 'Windows'
+
+  shellcheck:
+    name: shellcheck install scripts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install shellcheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+      - name: Lint install.sh
+        run: shellcheck scripts/install.sh
