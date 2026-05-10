@@ -158,6 +158,9 @@ Consulta [CONTRIBUTING.md](CONTRIBUTING.md) para más detalles.
   <img src="https://contrib.rocks/image?repo=ArisGuimera/mobiai-core" />
 </a>
 
-## Licencia
 
-MIT — ver [LICENSE](LICENSE)
+---
+
+<div align="center">
+<a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
+</div>
