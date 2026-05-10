@@ -141,7 +141,7 @@ Consulta [CONTRIBUTING.md](CONTRIBUTING.md) para más detalles.
 ## 👨‍💻 Colaboradores
 
 <a href="https://github.com/ArisGuimera/JetpackComposePro/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=ArisGuimera/JetpackComposePro" />
+  <img src="https://contrib.rocks/image?repo=ArisGuimera/mobiai-core" />
 </a>
 
 ## Licencia
