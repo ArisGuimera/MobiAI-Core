@@ -19,15 +19,41 @@ Per-project living memory for mobile projects. Lives at `<repo>/.mobiai/brain/` 
 
 If the project has no `.mobiai/brain/` yet and the user wants project memory, suggest running `mobiai brain init`. Don't run it yourself unless asked.
 
-## Phase 1 commands available today
+## Commands available today
 
 ```
-mobiai brain init      # Create .mobiai/brain/ in the current project (idempotent)
-mobiai brain scan      # Detect stack: Android / iOS / KMP / Flutter / RN + libraries
-mobiai brain context   # Print Markdown context: config + scan + memories
+mobiai brain init                  # Create .mobiai/brain/ in the project (idempotent)
+mobiai brain scan                  # Detect stack: Android / iOS / KMP / Flutter / RN + libs
+mobiai brain context               # Print Markdown context: config + scan + memories
+
+mobiai brain save decision         # Append an architecture decision
+mobiai brain save bugfix           # Append a bugfix or workaround
+mobiai brain save testing          # Append a reusable testing pattern
 ```
 
-`save` and `search` subcommands are coming in Phase 2. Until then, the user (or you, with their consent) appends entries to `.mobiai/brain/memories/*.md` by hand.
+`search` is still coming in a future phase — for now use `mobiai brain context` (or grep over `.mobiai/brain/memories/*.md` directly) to retrieve.
+
+### `save` flags
+
+All three save subcommands share the same flags:
+
+| Flag | Required? | Notes |
+|---|---|---|
+| `--title <str>` | yes | Short descriptive title (becomes the H2 heading) |
+| `--platform <plat>` | no | `android` \| `ios` \| `shared` \| `kmp` \| `flutter` \| `react-native` |
+| `--area <str>` | no | Free-form (e.g. `firebase_auth`, `dependency_injection`, `datastore`) |
+| `--status <s>` | no | `active` (default) \| `temporary` \| `deprecated` |
+| `--review-after YYYY-MM-DD` | no | Mostly meaningful for `temporary` status |
+| `--files a,b,c` | no | Comma-separated repo-relative paths the entry refers to |
+| `--body <md>` | no | Markdown body. If omitted, the command reads stdin (handy for piping multi-line content) |
+
+**Type label mapping** (visible in the rendered entry):
+- `decision` → `architecture_decision`
+- `bugfix` + `temporary` → `platform_workaround`
+- `bugfix` + `active`/`deprecated` → `bug_fix`
+- `testing` → `testing_pattern`
+
+**Guard**: every `save` errors out if `.mobiai/brain/config.json` is missing. The CLI does NOT auto-init the brain — it suggests `mobiai brain init` and exits non-zero. When invoking from another skill, check the file first and skip silently if absent.
 
 ## Recommended flow
 

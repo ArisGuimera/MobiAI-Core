@@ -24,9 +24,13 @@ Eso no entra cómodo en CLAUDE.md (no es regla estable) ni en una skill (no es m
 ## Comandos disponibles
 
 ```bash
-mobiai brain init      # Crea .mobiai/brain/ en el proyecto actual (idempotente)
-mobiai brain scan      # Detecta stack: Android, iOS, KMP, Flutter, RN, librerías, CI/CD
-mobiai brain context   # Imprime Markdown con config + scan + memorias
+mobiai brain init                  # Crea .mobiai/brain/ en el proyecto actual (idempotente)
+mobiai brain scan                  # Detecta stack: Android, iOS, KMP, Flutter, RN, librerías, CI/CD
+mobiai brain context               # Imprime Markdown con config + scan + memorias
+
+mobiai brain save decision ...     # Guarda una decisión de arquitectura
+mobiai brain save bugfix ...       # Guarda un bugfix o workaround
+mobiai brain save testing ...      # Guarda un patrón de testing reusable
 ```
 
 Todos aceptan `--root <ruta>` para apuntar a un proyecto distinto del directorio actual.
@@ -75,6 +79,45 @@ Recorre el árbol del proyecto (profundidad máx. 6, ignorando `.git`, `node_mod
 - `warnings`: archivos sensibles detectados (sin leer su contenido).
 
 `scan` requiere haber corrido `init` antes.
+
+### `mobiai brain save <type>`
+
+Tres subcomandos: `decision`, `bugfix`, `testing`. Todos comparten los mismos flags:
+
+| Flag | ¿Requerido? | Notas |
+|---|---|---|
+| `--title <str>` | sí | Título corto, se usa como heading H2 |
+| `--platform <plat>` | no | `android` \| `ios` \| `shared` \| `kmp` \| `flutter` \| `react-native` |
+| `--area <str>` | no | Libre (`firebase_auth`, `dependency_injection`, `datastore`, ...) |
+| `--status <s>` | no | `active` (default) \| `temporary` \| `deprecated` |
+| `--review-after YYYY-MM-DD` | no | Sentido sobre todo en `temporary` |
+| `--files a,b,c` | no | Lista de paths relevantes |
+| `--body <md>` | no | Cuerpo Markdown. Si se omite, lee de stdin (útil para pipear contenido multilínea). |
+
+Ejemplo:
+
+```bash
+mobiai brain save decision \
+  --title "Use Koin como DI" \
+  --platform shared \
+  --area dependency_injection \
+  --files "composeApp/src/commonMain/di/Module.kt" \
+  --body "### Decision
+Usar Koin como framework de DI para todo el código compartido.
+
+### Reason
+KMP-friendly, sin code generation, ya integrado con composeApp/iosApp."
+```
+
+**Guard**: si no existe `.mobiai/brain/config.json` el comando falla con un error claro y exit code 1. No crea el brain solo — sugiere correr `mobiai brain init` primero.
+
+El tipo interno (`type:` en la entrada renderizada) se deriva del subcomando + status:
+- `decision` → `architecture_decision`
+- `bugfix` + `temporary` → `platform_workaround`
+- `bugfix` + `active`/`deprecated` → `bug_fix`
+- `testing` → `testing_pattern`
+
+Cada entrada recibe un `id` estable basado en el slug del título + timestamp UTC, así dos saves con el mismo título no colisionan.
 
 ### `mobiai brain context`
 
@@ -125,12 +168,20 @@ Platforms: android, ios, shared
 | **Estructura** | SKILL.md | Markdown libre | Markdown estructurado + JSON |
 | **Caduca?** | No (se actualiza vía PR) | Pocas veces | A menudo (workarounds temporales, decisiones revisables) |
 
+## Integración con skills
+
+`mobiai-fix-issue` propone guardar el bugfix automáticamente al final de Phase 6 (verification), pero **solo si** el proyecto ya tiene un brain inicializado. Si no, el hook se salta sin ruido. Otras skills (write-tests, mobile-debugging, etc.) seguirán el mismo patrón a medida que se vayan integrando.
+
 ## Roadmap
 
-**Fase 1 (este PR)** — `init`, `scan`, `context`.
+**Fase 1** — `init`, `scan`, `context`. ✓
+**Fase 2 (este PR)** — `save decision|bugfix|testing` + hook en `mobiai-fix-issue`. ✓
 
-**Fase 2** — `save decision|bugfix|testing|integration|release`, `search`, flags `--section` / `--platform` en `context`.
-
-**Fase 3** — MCP tools (`mobile_context`, `mobile_save_decision`, `mobile_search`, ...) para que el agente llame al Brain directamente.
+**Próximos pasos**:
+- `save integration` y `save release` (categorías de menor volumen).
+- `search <query>` con grep simple sobre los `.md`.
+- Flags `--section` / `--platform` en `context`.
+- Auto-save desde más skills (`mobiai-write-tests` → testing pattern, `mobiai-mobile-debugging` → bugfix).
+- MCP tools (`mobile_context`, `mobile_save_decision`, `mobile_search`, ...) para que el agente llame al Brain directamente.
 
 **Fase futura** — migración a SQLite + FTS5 si Markdown se queda corto.

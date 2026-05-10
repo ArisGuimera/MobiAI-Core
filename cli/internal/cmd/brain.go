@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"os"
@@ -25,7 +26,7 @@ func NewBrainCmd() *cobra.Command {
 			"decisiones, bugfixes, patrones de testing e integraciones. " +
 			"Vive en <repo>/.mobiai/brain/ — separado del estado global de la CLI.",
 	}
-	root.AddCommand(newBrainInitCmd(), newBrainScanCmd(), newBrainContextCmd())
+	root.AddCommand(newBrainInitCmd(), newBrainScanCmd(), newBrainContextCmd(), newBrainSaveCmd())
 	return root
 }
 
@@ -229,6 +230,127 @@ func runBrainContext(c *cobra.Command, _ []string) error {
 	md := brain.BuildContext(cfg, scan, paths)
 	fmt.Fprint(c.OutOrStdout(), md)
 	return nil
+}
+
+func newBrainSaveCmd() *cobra.Command {
+	root := &cobra.Command{
+		Use:   "save",
+		Short: "Guardar una entrada en las memorias del Brain",
+		Long: "Añade una entrada estructurada al archivo de memoria correspondiente. " +
+			"Requiere que el Brain esté inicializado en el proyecto " +
+			"(corré `mobiai brain init` primero).",
+	}
+	root.AddCommand(
+		newBrainSaveSubCmd(brain.SaveTypeDecision, "decision",
+			"Guardar una decisión de arquitectura"),
+		newBrainSaveSubCmd(brain.SaveTypeBugfix, "bugfix",
+			"Guardar un bugfix o workaround"),
+		newBrainSaveSubCmd(brain.SaveTypeTesting, "testing",
+			"Guardar un patrón de testing reusable"),
+	)
+	return root
+}
+
+func newBrainSaveSubCmd(saveType brain.SaveType, use, short string) *cobra.Command {
+	c := &cobra.Command{
+		Use:   use,
+		Short: short,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			return runBrainSave(cmd, saveType)
+		},
+	}
+	brainCommonFlags(c)
+	c.Flags().String("title", "", "título corto de la entrada (requerido)")
+	c.Flags().String("platform", "", "android|ios|shared|kmp|flutter|react-native (opcional)")
+	c.Flags().String("area", "", "área del proyecto (libre, opcional)")
+	c.Flags().String("status", "active", "active|temporary|deprecated")
+	c.Flags().String("review-after", "", "fecha YYYY-MM-DD para revisar (opcional)")
+	c.Flags().String("body", "", "cuerpo Markdown (si se omite, se lee de stdin)")
+	c.Flags().StringSlice("files", nil, "archivos relacionados, separados por coma (opcional)")
+	_ = c.MarkFlagRequired("title")
+	return c
+}
+
+func runBrainSave(c *cobra.Command, saveType brain.SaveType) error {
+	out := c.OutOrStdout()
+	info, err := resolveBrainRoot(c)
+	if err != nil {
+		return err
+	}
+	paths := brain.NewBrainPaths(info.Path)
+	if !paths.Exists() {
+		return fmt.Errorf("brain no inicializado en %s — corré `mobiai brain init` primero", info.Path)
+	}
+
+	title, _ := c.Flags().GetString("title")
+	platform, _ := c.Flags().GetString("platform")
+	area, _ := c.Flags().GetString("area")
+	status, _ := c.Flags().GetString("status")
+	reviewAfter, _ := c.Flags().GetString("review-after")
+	body, _ := c.Flags().GetString("body")
+	files, _ := c.Flags().GetStringSlice("files")
+
+	if body == "" {
+		// stdin fallback: lets the agent pipe a multi-line markdown body
+		// without struggling with shell-escaping a flag value.
+		piped, err := readPipedStdin(c.InOrStdin())
+		if err != nil {
+			return fmt.Errorf("leer body desde stdin: %w", err)
+		}
+		body = piped
+	}
+
+	entry := &brain.SaveEntry{
+		Type:        saveType,
+		Title:       title,
+		Platform:    platform,
+		Area:        area,
+		Status:      status,
+		ReviewAfter: reviewAfter,
+		Body:        body,
+		Files:       files,
+	}
+	id, err := brain.AppendEntry(paths, entry)
+	if err != nil {
+		return err
+	}
+
+	fileBase := map[brain.SaveType]string{
+		brain.SaveTypeDecision: "decisions.md",
+		brain.SaveTypeBugfix:   "bugfixes.md",
+		brain.SaveTypeTesting:  "testing.md",
+	}[saveType]
+	rel := filepath.Join(".mobiai", "brain", "memories", fileBase)
+	fmt.Fprintf(out, "✓ guardado en %s\n  id: %s\n", rel, id)
+	return nil
+}
+
+// readPipedStdin returns stdin content only when stdin is a pipe (not a
+// tty). Returns "" when running interactively so the command doesn't
+// hang waiting for input the user didn't intend to provide.
+func readPipedStdin(in io.Reader) (string, error) {
+	f, ok := in.(*os.File)
+	if ok {
+		stat, err := f.Stat()
+		if err != nil {
+			return "", err
+		}
+		if (stat.Mode() & os.ModeCharDevice) != 0 {
+			// stdin is a terminal — nothing being piped.
+			return "", nil
+		}
+	}
+	var b strings.Builder
+	scanner := bufio.NewScanner(in)
+	scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)
+	for scanner.Scan() {
+		b.WriteString(scanner.Text())
+		b.WriteString("\n")
+	}
+	if err := scanner.Err(); err != nil {
+		return "", err
+	}
+	return strings.TrimRight(b.String(), "\n"), nil
 }
 
 // relTo returns target relative to base, falling back to the absolute

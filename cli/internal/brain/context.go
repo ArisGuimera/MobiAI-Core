@@ -108,10 +108,11 @@ func writeRulesSection(b *strings.Builder, cfg Config) {
 func writeMemorySection(b *strings.Builder, p BrainPaths, mf MemoryFile) {
 	body := readMemory(p, mf.Name)
 	body = stripLeadingTitle(body)
+	body = stripHTMLComments(body)
 	body = strings.TrimSpace(body)
 
 	fmt.Fprintf(b, "%s\n\n", mf.ContextHead)
-	if body == "" || onlyHTMLComments(body) {
+	if body == "" {
 		b.WriteString("_No entries yet._\n\n")
 		return
 	}
@@ -132,22 +133,22 @@ func stripLeadingTitle(content string) string {
 	return ""
 }
 
-// onlyHTMLComments returns true if the (trimmed) content has no real
-// prose — only the `<!-- ... -->` placeholder we wrote at init time.
-func onlyHTMLComments(content string) bool {
-	stripped := content
+// stripHTMLComments removes every `<!-- ... -->` block from content.
+// Used to drop the init-time placeholders before printing a section
+// (they're meant for whoever opens the .md, not for the context dump).
+func stripHTMLComments(content string) string {
 	for {
-		start := strings.Index(stripped, "<!--")
+		start := strings.Index(content, "<!--")
 		if start < 0 {
-			break
+			return content
 		}
-		end := strings.Index(stripped[start:], "-->")
+		rest := content[start:]
+		end := strings.Index(rest, "-->")
 		if end < 0 {
-			break
+			return content
 		}
-		stripped = stripped[:start] + stripped[start+end+3:]
+		content = content[:start] + content[start+end+3:]
 	}
-	return strings.TrimSpace(stripped) == ""
 }
 
 func writeWarningsSection(b *strings.Builder, scan *Scan) {
