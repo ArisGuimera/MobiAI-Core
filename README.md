@@ -1,12 +1,13 @@
 # MobiAI-Core
 
-El plugin de IA para desarrolladores mobile. Skills, agentes y pipelines automatizados para Android, iOS, KMP, Flutter y React Native.
+Evoluciona tu stack móvil con Inteligencia Artificial.
 
 ## ¿Qué es MobiAI?
 
-MobiAI es un ecosistema open source que potencia tu desarrollo mobile con IA. No es solo un conjunto de skills — es una plataforma completa que crece con la comunidad:
+MobiAI es un ecosistema Open Source diseñado para llevar la Inteligencia Artificial al corazón de tu flujo de trabajo. Más que una librería de funciones, es una plataforma evolutiva que automatiza lo complejo para que tú te centres en crear.
 
 - **Skills** — Contexto experto que adapta lo que la IA ya sabe al escenario adecuado. Los skills no le enseñan a programar — le dan el contexto, las herramientas y los flujos específicos de cada plataforma para que aplique su conocimiento de forma precisa. Corregir bugs, reproducir incidencias, escribir tests, analizar crashes, crear PRs... todo siguiendo las mejores prácticas de cada plataforma.
+- **Brain** - El cerebro contextual de cada proyecto: entiende tu stack mobile, recuerda decisiones, bugfixes y patrones clave, y entrega a la IA contexto preciso y filtrado para trabajar alineada con tu arquitectura, evitando ruido y ahorrando tokens.
 - **Agentes** — Agentes especializados que ejecutan tareas complejas de forma autónoma: un agente que analiza código, otro que interactúa con el dispositivo, otro que escribe tests.
 - **Pipeline automatizado** — Un flujo completo de corrección de bugs: recibe un error o ticket desde cualquier plataforma de mensajería, reproduce el bug en un emulador, encuentra la causa raíz, aplica el fix, ejecuta tests y crea el PR. Todo sin intervención humana.
 
