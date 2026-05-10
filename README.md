@@ -17,14 +17,15 @@ Compatible con **Claude Code**, **Cursor**, **Copilot CLI**, **Codex** y **Gemin
 
 | Componente | Estado |
 |------------|--------|
-| Skills (multi-plataforma) | Disponible |
+| Skills (multi-plataforma) | Estable |
+| Brain | Alpha |
 | Agentes autónomos | En desarrollo |
 | Pipeline automatizado (bot de mensajería) | Planificado |
 | Marketplace de skills comunitarios | Planificado |
 
 ## Instalación
 
-MobiAI se organiza en plugins granulares. Instalá sólo las plataformas que uses, o instalá el meta-plugin `mobile` para todo el stack.
+MobiAI se organiza en plugins granulares. Instala sólo las plataformas que uses, o instala el meta-plugin `mobile` para todo el stack.
 
 ### Claude Code
 
