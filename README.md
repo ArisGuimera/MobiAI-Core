@@ -103,6 +103,18 @@ MobiAI incluye skills para todo el ciclo de desarrollo mobile:
 
 Consulta el [catálogo completo de skills](plugins/core/skills/using-mobiai/SKILL.md) para ver cuándo usar cada uno.
 
+## MobiAI Brain (preview)
+
+`mobiai brain` añade **memoria viva por proyecto** a la CLI: decisiones, bugfixes, workarounds e integraciones específicas de cada repo mobile, separadas del estado global de MobiAI.
+
+```bash
+mobiai brain init      # crea <repo>/.mobiai/brain/ (idempotente)
+mobiai brain scan      # detecta stack: Android/iOS/KMP/Flutter/RN + librerías
+mobiai brain context   # imprime Markdown listo para agentes
+```
+
+Detalle completo en [docs/brain.md](docs/brain.md). Los subcomandos `save` y `search` llegan en una próxima fase.
+
 ## ¿Cómo funciona?
 
 1. **Instala el plugin** — MobiAI registra sus skills en tu asistente de IA (Claude Code, Cursor, Copilot CLI, Codex o Gemini CLI)

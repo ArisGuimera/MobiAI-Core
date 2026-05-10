@@ -106,6 +106,7 @@ func newRootCmd(v string) *cobra.Command {
 	root.AddCommand(cmd.NewDoctorCmd())
 	root.AddCommand(cmd.NewUpdateCmd())
 	root.AddCommand(cmd.NewTelemetryCmd())
+	root.AddCommand(cmd.NewBrainCmd())
 	return root
 }
 
