@@ -202,6 +202,36 @@ func TestScan_SkipsNoiseDirs(t *testing.T) {
 	}
 }
 
+func TestScan_SkipsAgentWorkspaceDirs(t *testing.T) {
+	root := t.TempDir()
+	mustWrite(t, filepath.Join(root, "settings.gradle.kts"), "")
+	// Real .env at root must be flagged.
+	mustWrite(t, filepath.Join(root, ".env"), "API_KEY=x")
+	// Copies inside agent workspaces (Claude Code worktrees, Cursor, etc.)
+	// must NOT appear in warnings — those are full repo clones and would
+	// produce duplicate signals on every run.
+	mustWrite(t, filepath.Join(root, ".claude", "worktrees", "abc", ".env"), "API_KEY=x")
+	mustWrite(t, filepath.Join(root, ".claude", "worktrees", "abc", "GoogleService-Info.plist"), "")
+	mustWrite(t, filepath.Join(root, ".cursor", "session", "google-services.json"), "")
+
+	s, err := ScanProject(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	envWarnings := 0
+	for _, w := range s.Warnings {
+		if strings.Contains(w, ".claude/") || strings.Contains(w, ".cursor/") {
+			t.Errorf("agent workspace leaked into warnings: %q", w)
+		}
+		if strings.Contains(w, ".env") {
+			envWarnings++
+		}
+	}
+	if envWarnings != 1 {
+		t.Errorf(".env should be flagged exactly once, got %d (warnings=%v)", envWarnings, s.Warnings)
+	}
+}
+
 func TestScan_EmptyDirectoryIsUnknown(t *testing.T) {
 	root := t.TempDir()
 	s, err := ScanProject(root)

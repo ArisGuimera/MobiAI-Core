@@ -20,22 +20,30 @@ const maxScanDepth = 6
 const maxFileSize = 1 << 20 // 1 MiB
 
 // skipDirs are directory names ignored during the walk regardless of
-// depth. Mostly noise: VCS, build outputs, IDE state, vendor caches.
+// depth. Mostly noise: VCS, build outputs, IDE state, vendor caches,
+// and AI-agent workspaces (which often contain full repo copies and
+// would duplicate every signal).
 var skipDirs = map[string]struct{}{
-	".git":       {},
-	".mobiai":    {},
-	".gradle":    {},
-	".idea":      {},
-	".kotlin":    {},
-	".dart_tool": {},
-	".swiftpm":   {},
-	"build":      {},
-	"out":        {},
-	"target":     {},
+	".git":         {},
+	".mobiai":      {},
+	".gradle":      {},
+	".idea":        {},
+	".kotlin":      {},
+	".dart_tool":   {},
+	".swiftpm":     {},
+	"build":        {},
+	"out":          {},
+	"target":       {},
 	"node_modules": {},
-	"Pods":       {},
-	"DerivedData": {},
-	"vendor":     {},
+	"Pods":         {},
+	"DerivedData":  {},
+	"vendor":       {},
+	".claude":      {},
+	".cursor":      {},
+	".copilot":     {},
+	".gemini":      {},
+	".codex":       {},
+	".junie":       {},
 }
 
 // interestingFiles lists the basenames whose full content we slurp into
