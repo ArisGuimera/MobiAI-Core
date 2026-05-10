@@ -134,9 +134,15 @@ Un marketplace donde la comunidad publica y descarga skills, agentes y configura
 
 Consulta [CONTRIBUTING.md](CONTRIBUTING.md) para más detalles.
 
-## Comunidad
+## 👀 ¿Quieres estar actualizado/a?
 
-Únete a la comunidad de desarrolladores mobile que comparten conocimiento y herramientas. Próximamente más información.
+Únete al [discord de la comunidad](https://bit.ly/3bmeQvm) donde tenemos un canal para hablar del proyecto (`🤖-mobiai`). 
+
+## 👨‍💻 Colaboradores
+
+<a href="https://github.com/ArisGuimera/JetpackComposePro/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=ArisGuimera/JetpackComposePro" />
+</a>
 
 ## Licencia
 
