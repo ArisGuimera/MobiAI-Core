@@ -33,7 +33,11 @@ mobiai brain save bugfix ...       # Guarda un bugfix o workaround
 mobiai brain save testing ...      # Guarda un patrón de testing reusable
 
 mobiai brain search <query>        # Busca texto libre en las memorias
+
+mobiai brain mcp                   # Arranca un server MCP que expone el Brain como tools
 ```
+
+Si tu cliente (Claude Code, Cursor, Copilot CLI, Codex, Gemini CLI) tiene MCP soportado, registralo desde [`docs/brain-mcp.md`](brain-mcp.md) y el agente invoca las operaciones del Brain directamente como tools (`mobile_context`, `mobile_search`, `mobile_save_*`, `mobile_scan`) en vez de shellear la CLI.
 
 Todos aceptan `--root <ruta>` para apuntar a un proyecto distinto del directorio actual.
 
@@ -226,10 +230,11 @@ Otras skills que podrían integrarse en el futuro: `mobiai-crashlytics` (crashes
 **Fase 2** — `save decision|bugfix|testing` + hook en `mobiai-fix-issue`. ✓
 **Fase 3** — `search` + filtros (`--section`, `--platform`, `--status`, `--area`) en `context`. ✓
 **Fase 4** — hooks de save en `mobiai-write-tests` (testing pattern), `mobiai-mobile-debugging` (bugfix sin pasar por fix-issue) y `mobiai-mobile-brainstorming` (decision tras spec aprobada). ✓
+**Fase 5** — servidor MCP (`mobiai brain mcp`) que expone las 6 operaciones como tools nativas para Claude Code, Cursor, Copilot CLI, Codex y Gemini CLI. El brain pasa a estar siempre en el toolbox del agente. Setup en [`docs/brain-mcp.md`](brain-mcp.md). ✓
 
 **Próximos pasos**:
-- **MCP tools** (`mobile_context`, `mobile_save_decision`, `mobile_search`, ...) — el agente invoca el Brain directamente como tool en vez de delegar al usuario que recuerde correr la CLI. Cambia adopción de "el agente puede usar el brain si la skill se lo indica" a "el brain está siempre en su toolbox".
-- `save integration` y `save release` (categorías de menor volumen, baja prioridad).
 - `mobiai brain review` — listar entradas `status: temporary` cuyo `review_after` ya pasó (para que workarounds temporales no se vuelvan permanentes por inercia).
+- `save integration` y `save release` (categorías de menor volumen, baja prioridad).
+- Migrar los hooks de las skills (fix-issue, write-tests, mobile-debugging, brainstorming) a invocar las tools MCP directamente cuando estén disponibles, en lugar de shellear out al binario. Hoy coexisten — la CLI es el fallback universal.
 
 **Fase futura** — migración a SQLite + FTS5 si Markdown se queda corto (>~500 entradas por proyecto). Para el rango actual (1-100 entradas) los filtros sobre Markdown bastan.
