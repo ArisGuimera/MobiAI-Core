@@ -6,7 +6,10 @@ import "strings"
 //   - Podfile
 //   - Package.swift
 //   - *.xcodeproj or *.xcworkspace directory
-//   - Info.plist file (rare on its own; mostly catches SDK-only repos)
+//
+// Info.plist on its own is intentionally NOT a trigger: it appears in
+// many non-iOS repos (vendored frameworks, code-signing artefacts) and
+// would cause false positives.
 func detectIOS(idx *scanIndex, s *Scan, types, platforms map[string]struct{}) {
 	hit := false
 

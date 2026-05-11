@@ -30,9 +30,9 @@ func NewBrainCmd() *cobra.Command {
 	return root
 }
 
-// brainCommonFlags wires up shared --root/--cwd flags on a leaf command.
-// Both flags resolve to the same value (the project root); having two
-// names lets users pick whichever reads better in their shell history.
+// brainCommonFlags wires up the shared --root flag on a leaf command.
+// When omitted, the command resolves the project root by walking up
+// from the current working directory (see brain.FindProjectRoot).
 func brainCommonFlags(c *cobra.Command) {
 	c.Flags().String("root", "", "ruta del proyecto (default: detectado desde el cwd)")
 }

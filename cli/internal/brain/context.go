@@ -37,7 +37,10 @@ func BuildContext(cfg Config, scan *Scan, p BrainPaths) string {
 	fmt.Fprintf(&b, "Type: %s\n", projectTypeLabel(cfg.ProjectType))
 	if scan != nil && cfg.ProjectType == ProjectTypeUnknown && scan.ProjectType != ProjectTypeUnknown {
 		// scan has a fresher answer than config — show both so the user
-		// notices and re-runs `brain init` if they want config refreshed.
+		// notices the drift. To refresh config, re-run `mobiai brain
+		// scan` (which auto-fills project_type/platforms when they're
+		// at defaults) or edit config.json by hand. `brain init` is
+		// idempotent and will NOT overwrite the existing config.
 		fmt.Fprintf(&b, "Type (scan): %s\n", projectTypeLabel(scan.ProjectType))
 	}
 	platforms := cfg.Platforms

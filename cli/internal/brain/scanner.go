@@ -49,21 +49,38 @@ var skipDirs = map[string]struct{}{
 // interestingFiles lists the basenames whose full content we slurp into
 // the index for downstream regex/string matching. The rest of the tree
 // is recorded by path only (presence checks, suffix checks).
+//
+// Sensitive files (Firebase configs, .env, signing material) are NOT in
+// this list — they're flagged by `detectSensitiveFiles` via path-only
+// checks so we never load their bytes. See `sensitiveBasenames` below
+// for the explicit denylist enforced in buildIndex.
 var interestingFiles = map[string]struct{}{
-	"build.gradle":         {},
-	"build.gradle.kts":     {},
-	"settings.gradle":      {},
-	"settings.gradle.kts":  {},
-	"pubspec.yaml":         {},
-	"pubspec.lock":         {},
-	"package.json":         {},
-	"metro.config.js":      {},
-	"Podfile":              {},
-	"Package.swift":        {},
-	"AndroidManifest.xml":  {},
-	"libs.versions.toml":   {},
-	"gradle.properties":    {},
-	"google-services.json": {},
+	"build.gradle":        {},
+	"build.gradle.kts":    {},
+	"settings.gradle":     {},
+	"settings.gradle.kts": {},
+	"pubspec.yaml":        {},
+	"pubspec.lock":        {},
+	"package.json":        {},
+	"metro.config.js":     {},
+	"Podfile":             {},
+	"Package.swift":       {},
+	"AndroidManifest.xml": {},
+	"libs.versions.toml":  {},
+	"gradle.properties":   {},
+}
+
+// sensitiveBasenames are file basenames the scanner refuses to read
+// regardless of context. Defense-in-depth: even if a future change adds
+// one of these to interestingFiles by mistake, buildIndex still rejects
+// it. Their *presence* is still reported via detectSensitiveFiles, just
+// without ever loading bytes into memory.
+var sensitiveBasenames = map[string]struct{}{
+	".env":                     {},
+	"google-services.json":     {},
+	"GoogleService-Info.plist": {},
+	"local.properties":         {},
+	"keystore.properties":      {},
 }
 
 // scanIndex captures everything the detectors need: opened files
@@ -72,6 +89,7 @@ type scanIndex struct {
 	root     string
 	files    map[string][]byte // relpath → content (only for interestingFiles)
 	allPaths map[string]bool   // relpath → isDir (every entry visited)
+	warnings []string          // unexpected read errors during the walk
 }
 
 func newScanIndex(root string) *scanIndex {
@@ -136,8 +154,11 @@ func (i *scanIndex) containsAny(needle string) bool {
 }
 
 // ScanProject walks the project at root, builds a scan index, runs the
-// platform detectors and returns a populated Scan. It never fails on
-// individual file read errors — those are recorded as warnings.
+// platform detectors and returns a populated Scan. The walk never aborts
+// on a per-entry error: if reading an interesting file fails, the path
+// is recorded in scan.Warnings so the user sees what was missed. Depth
+// and size limits are enforced silently (they're a scanner choice, not
+// a problem with the file itself).
 func ScanProject(root string) (*Scan, error) {
 	abs, err := filepath.Abs(root)
 	if err != nil {
@@ -153,6 +174,7 @@ func ScanProject(root string) (*Scan, error) {
 	}
 
 	s := newScan(filepath.Base(abs))
+	s.Warnings = append(s.Warnings, idx.warnings...)
 	platforms := map[string]struct{}{}
 	types := map[string]struct{}{}
 
@@ -201,6 +223,13 @@ func buildIndex(idx *scanIndex) error {
 		}
 		idx.allPaths[rel] = false
 		base := filepath.Base(path)
+		if _, ok := sensitiveBasenames[base]; ok {
+			// Hard guard: never load the bytes of files known to carry
+			// secrets, even if some future change adds them to
+			// interestingFiles. Their presence is still reported
+			// downstream by detectSensitiveFiles via the path index.
+			return nil
+		}
 		if _, ok := interestingFiles[base]; !ok {
 			return nil
 		}
@@ -210,6 +239,8 @@ func buildIndex(idx *scanIndex) error {
 		}
 		data, err := os.ReadFile(path)
 		if err != nil {
+			idx.warnings = append(idx.warnings,
+				fmt.Sprintf("no se pudo leer %s: %v", rel, err))
 			return nil
 		}
 		idx.files[rel] = data

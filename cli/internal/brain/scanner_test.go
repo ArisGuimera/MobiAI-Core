@@ -1,6 +1,7 @@
 package brain
 
 import (
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -229,6 +230,98 @@ func TestScan_SkipsAgentWorkspaceDirs(t *testing.T) {
 	}
 	if envWarnings != 1 {
 		t.Errorf(".env should be flagged exactly once, got %d (warnings=%v)", envWarnings, s.Warnings)
+	}
+}
+
+func TestScan_NeverReadsSensitiveFileContent(t *testing.T) {
+	root := t.TempDir()
+	mustWrite(t, filepath.Join(root, "settings.gradle.kts"), "")
+	// google-services.json (Firebase config) frequently contains an
+	// `api_key` value. The scanner must NEVER load this content into
+	// the index — neither in idx.files nor reachable via containsAny.
+	const secret = "AIzaSy-FAKE-FIREBASE-KEY-DO-NOT-LEAK"
+	mustWrite(t, filepath.Join(root, "composeApp", "src", "google-services.json"),
+		`{"client":[{"api_key":[{"current_key":"`+secret+`"}]}]}`)
+	mustWrite(t, filepath.Join(root, "iosApp", "GoogleService-Info.plist"),
+		`<?xml version="1.0"?>
+<plist><dict><key>API_KEY</key><string>`+secret+`</string></dict></plist>`)
+	mustWrite(t, filepath.Join(root, "local.properties"),
+		"sdk.dir=/Users/me/Android/sdk\nMAPS_API_KEY="+secret)
+	mustWrite(t, filepath.Join(root, ".env"), "API_KEY="+secret)
+
+	s, err := ScanProject(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, w := range s.Warnings {
+		if strings.Contains(w, secret) {
+			t.Errorf("warnings leaked secret: %q", w)
+		}
+	}
+	// Round-trip the scan to JSON and verify the secret never makes it
+	// into anything we'd persist on disk.
+	tmp := t.TempDir()
+	p := NewBrainPaths(tmp)
+	if err := p.EnsureDirs(); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.Save(p); err != nil {
+		t.Fatal(err)
+	}
+	persisted, err := os.ReadFile(p.ScanFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(persisted), secret) {
+		t.Errorf("scan.json persisted the secret")
+	}
+
+	// All four sensitive files should still be flagged via path-only
+	// detection (no content read involved).
+	wantWarnings := []string{
+		".env",
+		"google-services.json",
+		"GoogleService-Info.plist",
+	}
+	for _, want := range wantWarnings {
+		hit := false
+		for _, w := range s.Warnings {
+			if strings.Contains(w, want) {
+				hit = true
+				break
+			}
+		}
+		if !hit {
+			t.Errorf("expected warning mentioning %q; got: %v", want, s.Warnings)
+		}
+	}
+}
+
+func TestScan_ReportsUnreadableInterestingFile(t *testing.T) {
+	if os.Geteuid() == 0 {
+		t.Skip("running as root — chmod-based unreadable test is meaningless")
+	}
+	root := t.TempDir()
+	gradleFile := filepath.Join(root, "build.gradle.kts")
+	mustWrite(t, gradleFile, `plugins { id("com.android.application") }`)
+	if err := os.Chmod(gradleFile, 0o000); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chmod(gradleFile, 0o644) })
+
+	s, err := ScanProject(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	hit := false
+	for _, w := range s.Warnings {
+		if strings.Contains(w, "no se pudo leer") && strings.Contains(w, "build.gradle.kts") {
+			hit = true
+			break
+		}
+	}
+	if !hit {
+		t.Errorf("expected read-error warning for build.gradle.kts; got: %v", s.Warnings)
 	}
 }
 
