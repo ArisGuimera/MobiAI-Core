@@ -217,8 +217,45 @@ Once the hypothesis is verified, state:
 
 The fix itself is not proposed inside this skill. `mobiai-mobile-debugging` ends when the root cause is stated (fast path) or confirmed (gated path).
 
-- If invoked from `mobiai-fix-issue`, return control — `mobiai-fix-issue`'s Phase 4 (Propose the Fix) takes over with its own gating rules.
+- If invoked from `mobiai-fix-issue`, return control — `mobiai-fix-issue`'s Phase 4 (Propose the Fix) takes over with its own gating rules. **Skip the Brain hook below** — `mobiai-fix-issue` runs its own save proposal at the end of Phase 6 (verification). Don't double-prompt.
 - Otherwise, **invoke skill `mobiai-mobile-tdd`** to write the failing test first, then the implementation.
+
+### Optional: capture root cause in MobiAI Brain
+
+Standalone invocations only (skip when called from `mobiai-fix-issue`). After the root cause is confirmed, check whether `<repo>/.mobiai/brain/config.json` exists. If it does NOT, skip silently.
+
+If it does, judge whether the cause is worth remembering. Save when:
+
+- It's a platform gotcha that's likely to bite again (lifecycle timing, threading, build-config interaction).
+- The investigation surfaced a non-obvious causal chain that took real effort to find.
+- A workaround was identified that the project will keep using until a future cleanup.
+
+Skip when the cause is trivial (typo, obvious null, one-line bug with no broader pattern).
+
+When worth saving, **propose** the save to the user (one-line confirmation). Never invoke silently. Use `--status active` when the root cause is documented but no fix is applied yet (the entry serves as "we understood this, future agents should know"), or `--status temporary` with `--review-after` when a workaround was applied that needs revisiting.
+
+```bash
+mobiai brain save bugfix \
+  --title "<short, e.g. 'Compose recomposition loop in LazyColumn with derivedStateOf'>" \
+  --platform <android|ios|shared|kmp|flutter|react-native> \
+  --area <free-form, e.g. compose | coroutines | gradle> \
+  --status <active|temporary> \
+  --review-after <YYYY-MM-DD if temporary> \
+  --files "<file1>,<file2>" \
+  --body "### Symptom
+What the user observed.
+
+### Root Cause
+The actual cause, in plain language.
+
+### Investigation Notes
+The evidence that confirmed it — log lines, commits, behavior on different builds.
+
+### Resolution
+What was done about it (or 'documented only, no fix applied yet')."
+```
+
+The body fields are suggestions, not a rigid template. Use the structure that fits what you found.
 
 ## Red Flags — STOP and Follow Process
 

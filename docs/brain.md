@@ -207,17 +207,28 @@ mobiai brain context --section decisions,bugfixes --platform shared
 
 ## Integración con skills
 
-`mobiai-fix-issue` propone guardar el bugfix automáticamente al final de Phase 6 (verification), pero **solo si** el proyecto ya tiene un brain inicializado. Si no, el hook se salta sin ruido. Otras skills (write-tests, mobile-debugging, etc.) seguirán el mismo patrón a medida que se vayan integrando.
+Tres skills proponen guardar al final de su flujo, todas con el mismo patrón: **solo si** existe `.mobiai/brain/config.json` en el proyecto, y **siempre** pidiendo aprobación al usuario antes de invocar el save.
+
+| Skill | Cuándo propone | Tipo guardado |
+|---|---|---|
+| `mobiai-fix-issue` | Tras Phase 6 (verification), antes del PR gate | `bugfix` (status según haya fix real o workaround) |
+| `mobiai-write-tests` | Tras Step 4 (tests pasan), si el test captura un patrón no obvio | `testing` |
+| `mobiai-mobile-debugging` | Tras Phase 6 (root cause confirmada), **solo en invocación standalone** — si se invocó desde fix-issue, se salta (fix-issue ya tiene su propio hook) | `bugfix` |
+
+Si el proyecto **no** tiene brain, el hook se salta sin ruido. El agente nunca invoca `save` solo: siempre pide una línea de confirmación al usuario antes de ejecutarlo.
+
+Otras skills que podrían integrarse en el futuro: `mobiai-mobile-brainstorming` (decisiones de diseño → `save decision`), `mobiai-crashlytics` (crashes recurrentes → `save bugfix`).
 
 ## Roadmap
 
 **Fase 1** — `init`, `scan`, `context`. ✓
 **Fase 2** — `save decision|bugfix|testing` + hook en `mobiai-fix-issue`. ✓
 **Fase 3** — `search` + filtros (`--section`, `--platform`, `--status`, `--area`) en `context`. ✓
+**Fase 4** — hooks de save en `mobiai-write-tests` (testing pattern) y `mobiai-mobile-debugging` (bugfix sin pasar por fix-issue). ✓
 
 **Próximos pasos**:
-- Auto-save desde más skills (`mobiai-write-tests` → testing pattern, `mobiai-mobile-debugging` → bugfix sin pasar por fix-issue).
+- Hook en `mobiai-mobile-brainstorming` → `save decision` cuando una sesión de brainstorming termina en una decisión.
 - `save integration` y `save release` (categorías de menor volumen).
-- MCP tools (`mobile_context`, `mobile_save_decision`, `mobile_search`, ...) para que el agente llame al Brain directamente.
+- MCP tools (`mobile_context`, `mobile_save_decision`, `mobile_search`, ...) para que el agente llame al Brain directamente sin invocar la CLI.
 
 **Fase futura** — migración a SQLite + FTS5 si Markdown se queda corto (>~500 entradas por proyecto). Para el rango actual (1-100 entradas) los filtros sobre Markdown bastan.
