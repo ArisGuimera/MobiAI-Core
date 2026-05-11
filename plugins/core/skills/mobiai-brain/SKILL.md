@@ -31,7 +31,17 @@ mobiai brain save bugfix           # Append a bugfix or workaround
 mobiai brain save testing          # Append a reusable testing pattern
 
 mobiai brain search <query>        # Free-text search over memories
+
+mobiai brain mcp                   # Start an MCP server exposing the brain as tools
 ```
+
+### Prefer MCP tools when available
+
+If your client (Claude Code, Cursor, Copilot CLI, Codex, Gemini CLI) has `mobiai-brain` registered as an MCP server, you'll see tools named `mobile_context`, `mobile_search`, `mobile_scan`, `mobile_save_decision`, `mobile_save_bugfix`, `mobile_save_testing` in your toolbox. **Use those instead of shelling out to the CLI** — they return structured output (JSON for search/scan, Markdown for context) that's easier to reason about and cite.
+
+Setup instructions per client: `docs/brain-mcp.md`.
+
+When MCP isn't configured, fall back to the CLI invocations shown above — both produce the same on-disk state.
 
 ### Retrieving the right subset
 

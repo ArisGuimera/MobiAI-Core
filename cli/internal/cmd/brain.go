@@ -8,9 +8,11 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/spf13/cobra"
 
 	"github.com/ArisGuimera/MobiAI-Core/cli/internal/brain"
+	brainmcp "github.com/ArisGuimera/MobiAI-Core/cli/internal/brain/mcp"
 )
 
 // NewBrainCmd builds `mobiai brain <init|scan|context>`.
@@ -32,6 +34,7 @@ func NewBrainCmd() *cobra.Command {
 		newBrainContextCmd(),
 		newBrainSaveCmd(),
 		newBrainSearchCmd(),
+		newBrainMCPCmd(),
 	)
 	return root
 }
@@ -461,6 +464,45 @@ func readPipedStdin(in io.Reader) (string, error) {
 		return "", err
 	}
 	return strings.TrimRight(b.String(), "\n"), nil
+}
+
+func newBrainMCPCmd() *cobra.Command {
+	c := &cobra.Command{
+		Use:   "mcp",
+		Short: "Arranca un servidor MCP que expone el Brain como tools",
+		Long: "Arranca un servidor MCP (Model Context Protocol) que expone las operaciones " +
+			"del Brain (context, search, scan, save) como tools que el agente puede invocar " +
+			"directamente. Comunica por stdio — pensado para que un cliente MCP (Claude Code, " +
+			"Cursor, Copilot CLI, etc.) lo lance como subproceso. Ver docs/brain-mcp.md.",
+		RunE: runBrainMCP,
+	}
+	brainCommonFlags(c)
+	return c
+}
+
+func runBrainMCP(c *cobra.Command, _ []string) error {
+	info, err := resolveBrainRoot(c)
+	if err != nil {
+		return err
+	}
+	server, err := brainmcp.NewServer(info.Path, brainCLIVersion())
+	if err != nil {
+		return err
+	}
+	// Run blocks until the MCP client disconnects. Use cmd's context so
+	// shell signals (SIGINT, etc.) terminate the server cleanly.
+	return server.Run(c.Context(), &mcp.StdioTransport{})
+}
+
+// brainCLIVersion returns the version the CLI was built with, falling
+// back to "dev" when unset. Used to advertise the server version to
+// MCP clients. Reuses the package-level `version` populated by
+// SetVersion (see status.go).
+func brainCLIVersion() string {
+	if version == "" {
+		return "dev"
+	}
+	return version
 }
 
 // relTo returns target relative to base, falling back to the absolute
