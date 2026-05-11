@@ -176,6 +176,32 @@ Platform-specific compile and test commands (handled by `mobiai-mobile-verificat
 
 If verification fails, do not rationalize. Return to Phase 3 with the new evidence.
 
+### Optional: capture in MobiAI Brain
+
+After verification passes, check whether `<repo>/.mobiai/brain/config.json` exists. If it does NOT, skip this step silently — not every project uses Brain.
+
+If it does, **propose** saving this fix as a brain `bugfix` entry to the user. Get one-line approval before running save — never invoke it silently. Use status `temporary` (with `--review-after` ~2-3 months out) for workarounds that should be revisited; use `active` for real fixes that should stick.
+
+```bash
+mobiai brain save bugfix \
+  --title "<short description, e.g. 'FirebaseAuth iOS module renaming'>" \
+  --platform <android|ios|shared|kmp|flutter|react-native> \
+  --area <free-form, e.g. firebase_auth> \
+  --status <active|temporary> \
+  --review-after <YYYY-MM-DD if temporary> \
+  --files "<file1>,<file2>" \
+  --body "### Problem
+...
+
+### Root Cause
+...
+
+### Solution
+..."
+```
+
+The save is the same content the agent already produced for the PR description (Phase 7) — just structured for future retrieval. If the project tracks `.mobiai/brain/memories/` in git, the new entry will be staged with the rest of the fix in Phase 7.
+
 ## Phase 7: Open the PR — FINAL GATE (always)
 
 **Invoke skill `mobiai-create-pr`**. This is the non-negotiable gate for every ticket regardless of path — before pushing, the user will see the full diff plus the context below and must explicitly approve.

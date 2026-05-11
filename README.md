@@ -1,12 +1,13 @@
 # MobiAI-Core
 
-El plugin de IA para desarrolladores mobile. Skills, agentes y pipelines automatizados para Android, iOS, KMP, Flutter y React Native.
+Evoluciona tu stack móvil con Inteligencia Artificial.
 
 ## ¿Qué es MobiAI?
 
-MobiAI es un ecosistema open source que potencia tu desarrollo mobile con IA. No es solo un conjunto de skills — es una plataforma completa que crece con la comunidad:
+MobiAI es un ecosistema Open Source diseñado para llevar la Inteligencia Artificial al corazón de tu flujo de trabajo. Más que una librería de funciones, es una plataforma evolutiva que automatiza lo complejo para que tú te centres en crear.
 
 - **Skills** — Contexto experto que adapta lo que la IA ya sabe al escenario adecuado. Los skills no le enseñan a programar — le dan el contexto, las herramientas y los flujos específicos de cada plataforma para que aplique su conocimiento de forma precisa. Corregir bugs, reproducir incidencias, escribir tests, analizar crashes, crear PRs... todo siguiendo las mejores prácticas de cada plataforma.
+- **Brain** - El cerebro contextual de cada proyecto: entiende tu stack mobile, recuerda decisiones, bugfixes y patrones clave, y entrega a la IA contexto preciso y filtrado para trabajar alineada con tu arquitectura, evitando ruido y ahorrando tokens.
 - **Agentes** — Agentes especializados que ejecutan tareas complejas de forma autónoma: un agente que analiza código, otro que interactúa con el dispositivo, otro que escribe tests.
 - **Pipeline automatizado** — Un flujo completo de corrección de bugs: recibe un error o ticket desde cualquier plataforma de mensajería, reproduce el bug en un emulador, encuentra la causa raíz, aplica el fix, ejecuta tests y crea el PR. Todo sin intervención humana.
 
@@ -16,14 +17,15 @@ Compatible con **Claude Code**, **Cursor**, **Copilot CLI**, **Codex** y **Gemin
 
 | Componente | Estado |
 |------------|--------|
-| Skills (multi-plataforma) | Disponible |
+| Skills (multi-plataforma) | Estable |
+| Brain | Alpha |
 | Agentes autónomos | En desarrollo |
 | Pipeline automatizado (bot de mensajería) | Planificado |
 | Marketplace de skills comunitarios | Planificado |
 
 ## Instalación
 
-MobiAI se organiza en plugins granulares. Instalá sólo las plataformas que uses, o instalá el meta-plugin `mobile` para todo el stack.
+MobiAI se organiza en plugins granulares. Instala sólo las plataformas que uses, o instala el meta-plugin `mobile` para todo el stack.
 
 ### Claude Code
 
@@ -103,6 +105,18 @@ MobiAI incluye skills para todo el ciclo de desarrollo mobile:
 
 Consulta el [catálogo completo de skills](plugins/core/skills/using-mobiai/SKILL.md) para ver cuándo usar cada uno.
 
+## MobiAI Brain (preview)
+
+`mobiai brain` añade **memoria viva por proyecto** a la CLI: decisiones, bugfixes, workarounds e integraciones específicas de cada repo mobile, separadas del estado global de MobiAI.
+
+```bash
+mobiai brain init      # crea <repo>/.mobiai/brain/ (idempotente)
+mobiai brain scan      # detecta stack: Android/iOS/KMP/Flutter/RN + librerías
+mobiai brain context   # imprime Markdown listo para agentes
+```
+
+Detalle completo en [docs/brain.md](docs/brain.md). Los subcomandos `save` y `search` llegan en una próxima fase.
+
 ## ¿Cómo funciona?
 
 1. **Instala el plugin** — MobiAI registra sus skills en tu asistente de IA (Claude Code, Cursor, Copilot CLI, Codex o Gemini CLI)
@@ -144,6 +158,9 @@ Consulta [CONTRIBUTING.md](CONTRIBUTING.md) para más detalles.
   <img src="https://contrib.rocks/image?repo=ArisGuimera/mobiai-core" />
 </a>
 
-## Licencia
 
-MIT — ver [LICENSE](LICENSE)
+---
+
+<div align="center">
+<a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
+</div>
