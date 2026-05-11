@@ -107,6 +107,40 @@ After the spec review passes, ask the user to review the written spec before pro
 
 Wait for the user's response. Only proceed once the user approves.
 
+**Optional: capture decisions in MobiAI Brain**
+
+After the user approves the spec, check whether `<repo>/.mobiai/brain/config.json` exists. If it does NOT, skip this step silently.
+
+If it does, scan the spec for **architectural decisions worth remembering**. A decision belongs in the brain when it:
+
+- Picks a specific library, pattern or approach over alternatives (e.g. "Koin over Hilt", "MVI over MVVM", "Ktor over Retrofit").
+- Sets a project-wide convention that future code will follow (e.g. "all features expose a `Repository` interface", "errors flow as `Result<T, E>`").
+- Resolves a tradeoff that took real thought (e.g. "we accept duplicate state across screens to avoid a global store").
+
+Skip routine implementation details that are obvious from the spec itself ("the button is blue", "the screen has a back arrow"). Those don't need to live in the brain — the spec already captures them.
+
+If you find 1+ decisions worth saving, **propose** each save to the user (one-line confirmation per entry). Never invoke silently. A single brainstorming session may produce several distinct decisions — save them as separate entries so future `brain search` and filtering work cleanly:
+
+```bash
+mobiai brain save decision \
+  --title "<short decision name, e.g. 'Use Koin for DI'>" \
+  --platform <android|ios|shared|kmp|flutter|react-native> \
+  --area <free-form, e.g. dependency_injection | navigation | state_management> \
+  --status active \
+  --files "<spec_path>,<any_other_relevant_file>" \
+  --body "### Decision
+What we decided, in one sentence.
+
+### Reason
+Why this over the alternatives. What constraints made the alternatives worse.
+
+### Alternatives considered
+- <option A> — why rejected
+- <option B> — why rejected"
+```
+
+The body's `### Alternatives considered` block is the high-leverage part — it's why future agents won't re-litigate the same decision. Include it when the decision had real tradeoffs.
+
 **Implementation:**
 
 - Invoke the `mobiai-mobile-planning` skill to create a detailed implementation plan
