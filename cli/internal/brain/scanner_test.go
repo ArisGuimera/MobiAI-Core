@@ -3,6 +3,7 @@ package brain
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -298,6 +299,13 @@ func TestScan_NeverReadsSensitiveFileContent(t *testing.T) {
 }
 
 func TestScan_ReportsUnreadableInterestingFile(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		// Windows ignores Unix permission bits on regular files, so
+		// chmod 0o000 doesn't actually make the file unreadable.
+		// The behavior under test (warning on os.ReadFile error) is
+		// cross-platform; only this way of triggering the error isn't.
+		t.Skip("chmod-based unreadable file does not work on Windows")
+	}
 	if os.Geteuid() == 0 {
 		t.Skip("running as root — chmod-based unreadable test is meaningless")
 	}
