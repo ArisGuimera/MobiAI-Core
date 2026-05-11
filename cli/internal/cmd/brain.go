@@ -26,7 +26,13 @@ func NewBrainCmd() *cobra.Command {
 			"decisiones, bugfixes, patrones de testing e integraciones. " +
 			"Vive en <repo>/.mobiai/brain/ — separado del estado global de la CLI.",
 	}
-	root.AddCommand(newBrainInitCmd(), newBrainScanCmd(), newBrainContextCmd(), newBrainSaveCmd())
+	root.AddCommand(
+		newBrainInitCmd(),
+		newBrainScanCmd(),
+		newBrainContextCmd(),
+		newBrainSaveCmd(),
+		newBrainSearchCmd(),
+	)
 	return root
 }
 
@@ -204,9 +210,20 @@ func newBrainContextCmd() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "context",
 		Short: "Imprime el contexto Markdown del Brain (config + scan + memorias)",
-		RunE:  runBrainContext,
+		Long: "Imprime el contexto del Brain como Markdown. Sin flags, vuelca todo. " +
+			"Con --section, --platform, --status o --area filtra entradas de las " +
+			"memorias para que solo aparezca lo relevante (útil cuando el brain crece).",
+		RunE: runBrainContext,
 	}
 	brainCommonFlags(c)
+	c.Flags().StringSlice("section", nil,
+		"limita las secciones a renderizar (stack,rules,decisions,bugfixes,testing,integrations,releases,warnings). Repetible o coma-separado.")
+	c.Flags().String("platform", "",
+		"filtra entradas por platform (android|ios|shared|kmp|flutter|react-native)")
+	c.Flags().String("status", "",
+		"filtra entradas por status (active|temporary|deprecated)")
+	c.Flags().String("area", "",
+		"filtra entradas cuyo area contenga este string (substring)")
 	return c
 }
 
@@ -227,9 +244,102 @@ func runBrainContext(c *cobra.Command, _ []string) error {
 	if err != nil {
 		return err
 	}
-	md := brain.BuildContext(cfg, scan, paths)
+	sections, _ := c.Flags().GetStringSlice("section")
+	platform, _ := c.Flags().GetString("platform")
+	status, _ := c.Flags().GetString("status")
+	area, _ := c.Flags().GetString("area")
+	md := brain.BuildContextWith(cfg, scan, paths, brain.ContextOptions{
+		Sections: sections,
+		Filter: brain.EntryFilter{
+			Platform: platform,
+			Status:   status,
+			Area:     area,
+		},
+	})
 	fmt.Fprint(c.OutOrStdout(), md)
 	return nil
+}
+
+func newBrainSearchCmd() *cobra.Command {
+	c := &cobra.Command{
+		Use:   "search <query>",
+		Short: "Busca texto libre en las memorias del Brain",
+		Long: "Hace match case-insensitive sobre el título y el cuerpo de cada " +
+			"entrada de las memorias. Los flags --platform/--status/--area filtran " +
+			"los resultados con semántica AND.",
+		Args: cobra.MinimumNArgs(1),
+		RunE: runBrainSearch,
+	}
+	brainCommonFlags(c)
+	c.Flags().String("platform", "", "limita a entradas con este platform")
+	c.Flags().String("status", "", "limita a entradas con este status")
+	c.Flags().String("area", "", "limita a entradas cuya area contenga este string")
+	return c
+}
+
+func runBrainSearch(c *cobra.Command, args []string) error {
+	out := c.OutOrStdout()
+	info, err := resolveBrainRoot(c)
+	if err != nil {
+		return err
+	}
+	paths := brain.NewBrainPaths(info.Path)
+	if !paths.Exists() {
+		return fmt.Errorf("brain no inicializado en %s — corré `mobiai brain init` primero", info.Path)
+	}
+	query := strings.Join(args, " ")
+	platform, _ := c.Flags().GetString("platform")
+	status, _ := c.Flags().GetString("status")
+	area, _ := c.Flags().GetString("area")
+	hits, err := brain.Search(paths, query, brain.EntryFilter{
+		Platform: platform,
+		Status:   status,
+		Area:     area,
+	})
+	if err != nil {
+		return err
+	}
+	if len(hits) == 0 {
+		fmt.Fprintf(out, "Sin resultados para %q.\n", query)
+		return nil
+	}
+	fmt.Fprintf(out, "%d resultado(s) para %q:\n\n", len(hits), query)
+	for _, h := range hits {
+		// Format: `[section] title (status, platform) — snippet`
+		var meta []string
+		if s := h.Entry.Get("status"); s != "" {
+			meta = append(meta, s)
+		}
+		if p := h.Entry.Get("platform"); p != "" {
+			meta = append(meta, p)
+		}
+		suffix := ""
+		if len(meta) > 0 {
+			suffix = " (" + strings.Join(meta, ", ") + ")"
+		}
+		fmt.Fprintf(out, "[%s] %s%s\n", h.Section, h.Entry.Title, suffix)
+		if h.Snippet != "" {
+			fmt.Fprintf(out, "    %s\n", truncate(h.Snippet, 120))
+		}
+		if id := h.Entry.Get("id"); id != "" {
+			fmt.Fprintf(out, "    id: %s\n", id)
+		}
+		fmt.Fprintln(out)
+	}
+	return nil
+}
+
+// truncate cuts s at maxLen with an ellipsis, avoiding a slice on a
+// multi-byte rune boundary.
+func truncate(s string, maxLen int) string {
+	if len(s) <= maxLen {
+		return s
+	}
+	runes := []rune(s)
+	if len(runes) <= maxLen {
+		return s
+	}
+	return string(runes[:maxLen-1]) + "…"
 }
 
 func newBrainSaveCmd() *cobra.Command {

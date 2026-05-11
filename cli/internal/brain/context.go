@@ -2,6 +2,7 @@ package brain
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -26,41 +27,120 @@ func projectTypeLabel(t string) string {
 	}
 }
 
+// stackSection is the canonical name for the auto-detected stack block.
+// Not a memory section, but addressable via --section like the rest.
+const (
+	stackSection    = "stack"
+	rulesSection    = "rules"
+	warningsSection = "warnings"
+)
+
+// ContextOptions tweaks the output of BuildContext. Zero value renders
+// everything (current behavior — back-compat with the original signature
+// via BuildContext).
+type ContextOptions struct {
+	// Sections is the canonical list of sections to render, in order.
+	// Empty = render all (stack, rules, memories…, warnings).
+	Sections []string
+	// Filter is applied to every memory entry. Stack/rules/warnings
+	// ignore the filter (those aren't entry-shaped).
+	Filter EntryFilter
+}
+
 // BuildContext assembles the Markdown context document consumed by AI
-// agents. It is intentionally close to the spec layout — section names
-// and order matter because skills/agents grep for them.
+// agents with no filters or section restriction — the original entry
+// point, preserved for callers that want everything.
 func BuildContext(cfg Config, scan *Scan, p BrainPaths) string {
+	return BuildContextWith(cfg, scan, p, ContextOptions{})
+}
+
+// BuildContextWith renders the Markdown context using opts. Section
+// names and order match the spec because skills/agents grep for them.
+func BuildContextWith(cfg Config, scan *Scan, p BrainPaths, opts ContextOptions) string {
+	groups, err := ParseAllMemories(p)
+	if err != nil {
+		// Parser errors are unexpected (files are normal Markdown);
+		// fall back to an empty groups map so the document still renders.
+		groups = map[string][]MemoryEntry{}
+	}
+
+	include := includeMap(opts.Sections)
 	var b strings.Builder
 
-	fmt.Fprintf(&b, "# MobiAI Brain Context\n\n")
-	fmt.Fprintf(&b, "Project: %s\n", cfg.ProjectName)
-	fmt.Fprintf(&b, "Type: %s\n", projectTypeLabel(cfg.ProjectType))
+	writeHeader(&b, cfg, scan)
+
+	for _, section := range renderOrder() {
+		if include != nil {
+			if _, ok := include[section]; !ok {
+				continue
+			}
+		}
+		switch section {
+		case stackSection:
+			writeStackSection(&b, scan)
+		case rulesSection:
+			writeRulesSection(&b, cfg)
+		case warningsSection:
+			writeWarningsSection(&b, scan)
+		default: // memory section
+			entries := groups[section]
+			if !opts.Filter.Empty() {
+				entries = FilterEntries(entries, opts.Filter)
+			}
+			writeMemorySection(&b, section, entries, !opts.Filter.Empty())
+		}
+	}
+	return b.String()
+}
+
+// renderOrder returns the canonical section sequence for the context
+// document: stack, rules, then each memory section in MemoryFiles
+// order, then warnings.
+func renderOrder() []string {
+	out := []string{stackSection, rulesSection}
+	for _, mf := range MemoryFiles {
+		out = append(out, canonicalSection(mf.Name))
+	}
+	out = append(out, warningsSection)
+	return out
+}
+
+// includeMap returns a lookup set of requested sections, normalized to
+// lowercase trimmed. Returns nil when the request is empty (= render
+// all) so callers can short-circuit the `_, ok :=` check.
+func includeMap(sections []string) map[string]struct{} {
+	if len(sections) == 0 {
+		return nil
+	}
+	m := map[string]struct{}{}
+	for _, s := range sections {
+		key := strings.ToLower(strings.TrimSpace(s))
+		if key == "" {
+			continue
+		}
+		m[key] = struct{}{}
+	}
+	if len(m) == 0 {
+		return nil
+	}
+	return m
+}
+
+func writeHeader(b *strings.Builder, cfg Config, scan *Scan) {
+	fmt.Fprintf(b, "# MobiAI Brain Context\n\n")
+	fmt.Fprintf(b, "Project: %s\n", cfg.ProjectName)
+	fmt.Fprintf(b, "Type: %s\n", projectTypeLabel(cfg.ProjectType))
 	if scan != nil && cfg.ProjectType == ProjectTypeUnknown && scan.ProjectType != ProjectTypeUnknown {
-		// scan has a fresher answer than config — show both so the user
-		// notices the drift. To refresh config, re-run `mobiai brain
-		// scan` (which auto-fills project_type/platforms when they're
-		// at defaults) or edit config.json by hand. `brain init` is
-		// idempotent and will NOT overwrite the existing config.
-		fmt.Fprintf(&b, "Type (scan): %s\n", projectTypeLabel(scan.ProjectType))
+		fmt.Fprintf(b, "Type (scan): %s\n", projectTypeLabel(scan.ProjectType))
 	}
 	platforms := cfg.Platforms
 	if len(platforms) == 0 && scan != nil {
 		platforms = scan.Platforms
 	}
 	if len(platforms) > 0 {
-		fmt.Fprintf(&b, "Platforms: %s\n", strings.Join(platforms, ", "))
+		fmt.Fprintf(b, "Platforms: %s\n", strings.Join(platforms, ", "))
 	}
 	b.WriteString("\n")
-
-	writeStackSection(&b, scan)
-	writeRulesSection(&b, cfg)
-
-	for _, mf := range MemoryFiles {
-		writeMemorySection(&b, p, mf)
-	}
-
-	writeWarningsSection(&b, scan)
-	return b.String()
 }
 
 func writeStackSection(b *strings.Builder, scan *Scan) {
@@ -108,50 +188,78 @@ func writeRulesSection(b *strings.Builder, cfg Config) {
 	b.WriteString("\n")
 }
 
-func writeMemorySection(b *strings.Builder, p BrainPaths, mf MemoryFile) {
-	body := readMemory(p, mf.Name)
-	body = stripLeadingTitle(body)
-	body = stripHTMLComments(body)
-	body = strings.TrimSpace(body)
-
-	fmt.Fprintf(b, "%s\n\n", mf.ContextHead)
-	if body == "" {
-		b.WriteString("_No entries yet._\n\n")
+// writeMemorySection renders a memory section from parsed entries.
+// `filtered` distinguishes "no entries exist" from "filter dropped them
+// all" so the empty-state message is accurate.
+func writeMemorySection(b *strings.Builder, section string, entries []MemoryEntry, filtered bool) {
+	heading := memoryHeading(section)
+	fmt.Fprintf(b, "%s\n\n", heading)
+	if len(entries) == 0 {
+		if filtered {
+			b.WriteString("_No entries match the current filter._\n\n")
+		} else {
+			b.WriteString("_No entries yet._\n\n")
+		}
 		return
 	}
-	b.WriteString(body)
-	b.WriteString("\n\n")
+	for i, e := range entries {
+		if i > 0 {
+			b.WriteString("\n")
+		}
+		writeEntry(b, e)
+	}
+	b.WriteString("\n")
 }
 
-// stripLeadingTitle drops the first `# ...` line if the file starts with
-// one — the section heading printed by BuildContext already covers it.
-func stripLeadingTitle(content string) string {
-	trimmed := strings.TrimLeft(content, "\n")
-	if !strings.HasPrefix(trimmed, "# ") {
-		return content
+// writeEntry serializes one MemoryEntry back to its canonical Markdown
+// shape — same layout that `save` writes, so context output is
+// round-tripable through the parser.
+func writeEntry(b *strings.Builder, e MemoryEntry) {
+	fmt.Fprintf(b, "## %s\n\n", e.Title)
+	for _, k := range metaOrder(e.Meta) {
+		fmt.Fprintf(b, "- %s: %s\n", k, e.Meta[k])
 	}
-	if idx := strings.Index(trimmed, "\n"); idx >= 0 {
-		return trimmed[idx+1:]
+	body := strings.TrimSpace(e.Body)
+	if body != "" {
+		b.WriteString("\n")
+		b.WriteString(body)
+		b.WriteString("\n")
 	}
-	return ""
 }
 
-// stripHTMLComments removes every `<!-- ... -->` block from content.
-// Used to drop the init-time placeholders before printing a section
-// (they're meant for whoever opens the .md, not for the context dump).
-func stripHTMLComments(content string) string {
-	for {
-		start := strings.Index(content, "<!--")
-		if start < 0 {
-			return content
+// metaOrder returns the metadata keys in the canonical order used by
+// `save`. Unknown keys are appended sorted at the end so user-added
+// fields render deterministically.
+func metaOrder(m map[string]string) []string {
+	canonical := []string{"id", "type", "status", "platform", "area", "date", "review_after"}
+	seen := map[string]bool{}
+	out := make([]string, 0, len(m))
+	for _, k := range canonical {
+		if _, ok := m[k]; ok {
+			out = append(out, k)
+			seen[k] = true
 		}
-		rest := content[start:]
-		end := strings.Index(rest, "-->")
-		if end < 0 {
-			return content
-		}
-		content = content[:start] + content[start+end+3:]
 	}
+	extras := make([]string, 0)
+	for k := range m {
+		if !seen[k] {
+			extras = append(extras, k)
+		}
+	}
+	sort.Strings(extras)
+	out = append(out, extras...)
+	return out
+}
+
+// memoryHeading maps a canonical section name to its display heading.
+// Falls back to a Title-Case version for unknown sections.
+func memoryHeading(section string) string {
+	for _, mf := range MemoryFiles {
+		if canonicalSection(mf.Name) == section {
+			return mf.ContextHead
+		}
+	}
+	return "## " + strings.Title(section)
 }
 
 func writeWarningsSection(b *strings.Builder, scan *Scan) {
