@@ -24,14 +24,38 @@ If the project has no `.mobiai/brain/` yet and the user wants project memory, su
 ```
 mobiai brain init                  # Create .mobiai/brain/ in the project (idempotent)
 mobiai brain scan                  # Detect stack: Android / iOS / KMP / Flutter / RN + libs
-mobiai brain context               # Print Markdown context: config + scan + memories
+mobiai brain context               # Print Markdown context: config + scan + memories (filterable)
 
 mobiai brain save decision         # Append an architecture decision
 mobiai brain save bugfix           # Append a bugfix or workaround
 mobiai brain save testing          # Append a reusable testing pattern
+
+mobiai brain search <query>        # Free-text search over memories
 ```
 
-`search` is still coming in a future phase — for now use `mobiai brain context` (or grep over `.mobiai/brain/memories/*.md` directly) to retrieve.
+### Retrieving the right subset
+
+As a project's brain grows, dumping everything via `brain context` wastes tokens. Both `context` and `search` accept the same filters with AND semantics:
+
+| Flag | Notes |
+|---|---|
+| `--section` | Only on `context`. Comma-separated or repeated: `stack`, `rules`, `decisions`, `bugfixes`, `testing`, `integrations`, `releases`, `warnings`. |
+| `--platform` | `android` \| `ios` \| `shared` \| `kmp` \| `flutter` \| `react-native`. Exact match. |
+| `--status` | `active` \| `temporary` \| `deprecated`. Exact match. |
+| `--area` | Substring match against the `area:` metadata. |
+
+Examples for skills/agents:
+
+```bash
+# Before making an iOS Firebase change — pull only iOS Firebase memory.
+mobiai brain context --platform ios --area firebase
+
+# Before writing tests — pull only testing patterns.
+mobiai brain context --section testing
+
+# Quick lookup before proposing a workaround — has it been done before?
+mobiai brain search "module renaming" --platform ios
+```
 
 ### `save` flags
 

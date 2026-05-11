@@ -2,7 +2,7 @@
 
 MobiAI Brain es la **memoria viva por proyecto** del ecosistema MobiAI. Mientras las skills enseñan a la IA *cómo* trabajar, el Brain guarda el *conocimiento específico* de cada proyecto mobile: decisiones, bugfixes, workarounds, patrones de testing e integraciones.
 
-> Esta es la Fase 1 (`init` + `scan` + `context`). Los subcomandos `save` y `search` llegan en la Fase 2.
+> Comandos disponibles hoy: `init`, `scan`, `context` (con filtros), `save decision|bugfix|testing`, `search`. Próximos pasos en el [Roadmap](#roadmap).
 
 ## ¿Por qué Brain?
 
@@ -26,11 +26,13 @@ Eso no entra cómodo en CLAUDE.md (no es regla estable) ni en una skill (no es m
 ```bash
 mobiai brain init                  # Crea .mobiai/brain/ en el proyecto actual (idempotente)
 mobiai brain scan                  # Detecta stack: Android, iOS, KMP, Flutter, RN, librerías, CI/CD
-mobiai brain context               # Imprime Markdown con config + scan + memorias
+mobiai brain context               # Imprime Markdown con config + scan + memorias (acepta filtros)
 
 mobiai brain save decision ...     # Guarda una decisión de arquitectura
 mobiai brain save bugfix ...       # Guarda un bugfix o workaround
 mobiai brain save testing ...      # Guarda un patrón de testing reusable
+
+mobiai brain search <query>        # Busca texto libre en las memorias
 ```
 
 Todos aceptan `--root <ruta>` para apuntar a un proyecto distinto del directorio actual.
@@ -119,6 +121,19 @@ El tipo interno (`type:` en la entrada renderizada) se deriva del subcomando + s
 
 Cada entrada recibe un `id` estable basado en el slug del título + timestamp UTC, así dos saves con el mismo título no colisionan.
 
+### `mobiai brain search <query>`
+
+Búsqueda case-insensitive sobre el título y el cuerpo de cada entrada de las memorias. Devuelve por sección, con título, status/platform y un snippet de la primera línea que contiene la query.
+
+```bash
+mobiai brain search koin
+mobiai brain search --platform ios firebase
+mobiai brain search --status temporary
+mobiai brain search --area firebase_auth keystore
+```
+
+Acepta los mismos filtros que `context` (`--platform`, `--status`, `--area`) con semántica **AND**. La query se combina con los filtros: `--platform ios firebase` devuelve solo entradas iOS que mencionen "firebase".
+
 ### `mobiai brain context`
 
 Lee `config.json`, `scan.json` (si existe) y todas las memorias. Imprime un Markdown listo para agentes:
@@ -159,6 +174,28 @@ Platforms: android, ios, shared
 - archivo sensible detectado: .env (no leído)
 ```
 
+**Filtros disponibles**:
+
+| Flag | Notas |
+|---|---|
+| `--section` | Coma-separado o repetible. Nombres canónicos: `stack`, `rules`, `decisions`, `bugfixes`, `testing`, `integrations`, `releases`, `warnings`. |
+| `--platform` | Filtra entradas por `platform:` (exacto, case-insensitive). |
+| `--status` | Filtra por `status:` (exacto). |
+| `--area` | Filtra por `area:` (substring). |
+
+Los filtros aplican solo a entradas de memorias — `stack`, `rules` y `warnings` se incluyen/excluyen únicamente vía `--section`. Si tras filtrar una sección no quedan entradas, aparece `_No entries match the current filter._` (distinto del `_No entries yet._` para secciones genuinamente vacías).
+
+```bash
+# Solo bugfixes temporales para iOS
+mobiai brain context --section bugfixes --platform ios --status temporary
+
+# Solo el stack detectado, sin memorias
+mobiai brain context --section stack
+
+# Decisiones + bugfixes de plataforma shared
+mobiai brain context --section decisions,bugfixes --platform shared
+```
+
 ## Diferencia frente a otros conceptos
 
 | | Skills | CLAUDE.md / AGENTS.md / GEMINI.md | MobiAI Brain |
@@ -175,13 +212,12 @@ Platforms: android, ios, shared
 ## Roadmap
 
 **Fase 1** — `init`, `scan`, `context`. ✓
-**Fase 2 (este PR)** — `save decision|bugfix|testing` + hook en `mobiai-fix-issue`. ✓
+**Fase 2** — `save decision|bugfix|testing` + hook en `mobiai-fix-issue`. ✓
+**Fase 3** — `search` + filtros (`--section`, `--platform`, `--status`, `--area`) en `context`. ✓
 
 **Próximos pasos**:
+- Auto-save desde más skills (`mobiai-write-tests` → testing pattern, `mobiai-mobile-debugging` → bugfix sin pasar por fix-issue).
 - `save integration` y `save release` (categorías de menor volumen).
-- `search <query>` con grep simple sobre los `.md`.
-- Flags `--section` / `--platform` en `context`.
-- Auto-save desde más skills (`mobiai-write-tests` → testing pattern, `mobiai-mobile-debugging` → bugfix).
 - MCP tools (`mobile_context`, `mobile_save_decision`, `mobile_search`, ...) para que el agente llame al Brain directamente.
 
-**Fase futura** — migración a SQLite + FTS5 si Markdown se queda corto.
+**Fase futura** — migración a SQLite + FTS5 si Markdown se queda corto (>~500 entradas por proyecto). Para el rango actual (1-100 entradas) los filtros sobre Markdown bastan.
