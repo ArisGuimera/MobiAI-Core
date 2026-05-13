@@ -100,6 +100,7 @@ mobiai brain save bugfix ...       # Guarda un bugfix o workaround
 mobiai brain save testing ...      # Guarda un patrón de testing reusable
 
 mobiai brain search <query>        # Busca texto libre en las memorias
+mobiai brain review                # Lista entradas temporales cuyo review_after ya pasó
 
 mobiai brain mcp                   # Arranca un server MCP que expone el Brain como tools
 ```
@@ -203,6 +204,56 @@ mobiai brain search --area firebase_auth keystore
 ```
 
 Acepta los mismos filtros que `context` (`--platform`, `--status`, `--area`) con semántica **AND**. La query se combina con los filtros: `--platform ios firebase` devuelve solo entradas iOS que mencionen "firebase".
+
+### `mobiai brain review`
+
+Audita la **deuda temporal** del Brain: recorre las memorias y muestra todas las entradas con `status: temporary` cuyo `review_after` ya pasó (`review_after <= hoy`). Es el comando que cierra el ciclo de "memoria con caducidad" — sin él, los workarounds temporales se vuelven permanentes por inercia.
+
+```bash
+mobiai brain review                        # solo vencidas, exit 1 si hay
+mobiai brain review --include-no-date      # + temporales sin review_after asignado
+mobiai brain review --no-fail              # siempre exit 0 (modo informativo)
+```
+
+**Output ejemplo:**
+
+```
+⚠ 2 entrada(s) temporal(es) vencida(s):
+
+bugfixes.md
+  ⚠ Podfile composeApp en minúsculas hasta CocoaPods 1.16
+    review_after: 2026-08-15 (vencido hace 89 días)
+    platform: ios
+    id: podfile-composeapp-minusculas-20260512-094523
+
+  ⚠ Suppress Deprecation en Compose 1.7
+    review_after: 2026-10-01 (vencido hace 42 días)
+    platform: android
+    id: suppress-deprecation-compose-20260801-101200
+```
+
+**Exit codes:**
+
+| Caso | Default | Con `--no-fail` |
+|---|---|---|
+| Hay vencidas | exit 1 | exit 0 |
+| No hay vencidas | exit 0 | exit 0 |
+| Brain no inicializado / error de IO | exit 1 (mensaje en stderr) | exit 1 |
+
+El exit 1 por defecto está pensado para usarse como **gate en CI o pre-commit**: el build falla si alguien acumula workarounds temporales sin revisar. Si solo quieres informar sin bloquear, usa `--no-fail`.
+
+**Qué entra y qué no:**
+
+| `status` | `review_after` | ¿Aparece? |
+|---|---|---|
+| `temporary` | fecha pasada o hoy | **Sí** (vencida) |
+| `temporary` | fecha futura | No |
+| `temporary` | sin fecha | Solo con `--include-no-date` (sección separada) |
+| `temporary` | malformada | Se ignora silenciosamente (corregí el `.md`) |
+| `active` | cualquiera | No (no es deuda) |
+| `deprecated` | cualquiera | No (ya está cerrada) |
+
+`review` **no edita ni borra** nada — solo informa. Para bajar una entrada del listado, edita el `.md` y cambia `review_after`, el `status` a `active`/`deprecated`, o elimina el bloque.
 
 ### `mobiai brain context`
 
@@ -489,10 +540,11 @@ Probablemente estás en un subdirectorio y la detección de raíz no encuentra e
 **Fase 3** — `search` + filtros (`--section`, `--platform`, `--status`, `--area`) en `context`. ✓
 **Fase 4** — hooks de save en `mobiai-write-tests` (testing pattern), `mobiai-mobile-debugging` (bugfix sin pasar por fix-issue) y `mobiai-mobile-brainstorming` (decision tras spec aprobada). ✓
 **Fase 5** — servidor MCP (`mobiai brain mcp`) que expone las 6 operaciones como tools nativas para Claude Code, Cursor, Copilot CLI, Codex y Gemini CLI. El brain pasa a estar siempre en el toolbox del agente. Setup en [`MCP-SETUP.md`](MCP-SETUP.md). ✓
+**Fase 6** — `mobiai brain review` (CLI) + `mobile_review` (MCP tool) para auditar entradas `status: temporary` cuyo `review_after` ya pasó. Cierra el ciclo de "memoria con caducidad" — los workarounds temporales ya no se vuelven permanentes por inercia. ✓
 
 **Próximos pasos**:
 
-- **`mobiai brain review`** — listar entradas `status: temporary` cuyo `review_after` ya pasó, para que los workarounds temporales no se vuelvan permanentes por inercia. Cierra el ciclo de "memoria con caducidad" que diferencia al Brain de un CLAUDE.md más grande.
+- **`brain review --upcoming N`** — además de las vencidas, listar entradas temporales que vencen en los próximos N días (default propuesto: 30). Da margen de planning para sprints/retros sin esperar a que algo esté ya vencido. Pendiente.
 - **`save integration`** y **`save release`** (categorías de menor volumen, baja prioridad).
 - **Migrar los hooks de las skills** (fix-issue, write-tests, mobile-debugging, brainstorming) a invocar las tools MCP directamente cuando estén disponibles, en lugar de shellear out al binario. Hoy coexisten — la CLI es el fallback universal.
 

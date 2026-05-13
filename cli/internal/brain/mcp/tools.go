@@ -225,6 +225,92 @@ func formatScanSummary(s *brain.Scan) string {
 	return b.String()
 }
 
+// ReviewArgs configures mobile_review. Both fields are optional; the
+// zero value mirrors the CLI default (only overdue dated entries).
+type ReviewArgs struct {
+	IncludeNoDate bool `json:"include_no_date,omitempty" jsonschema:"also list temporary entries that have no review_after date. They land under no_date in the result. Defaults to false."`
+}
+
+// ReviewItem is the JSON-friendly view of brain.ReviewItem. Same
+// flattening philosophy as SearchHit — agents don't need to know the
+// raw entry structure.
+type ReviewItem struct {
+	Section     string `json:"section"`
+	Title       string `json:"title"`
+	ID          string `json:"id,omitempty"`
+	Platform    string `json:"platform,omitempty"`
+	Area        string `json:"area,omitempty"`
+	ReviewAfter string `json:"review_after,omitempty"`
+	DaysOverdue int    `json:"days_overdue"`
+}
+
+// ReviewResult separates overdue from no-date entries so agents can
+// reason about them independently — "we have debt that's past due" is a
+// different signal from "we have debt with no review date set".
+type ReviewResult struct {
+	Overdue []ReviewItem `json:"overdue"`
+	NoDate  []ReviewItem `json:"no_date,omitempty"`
+}
+
+func handleReview(paths brain.BrainPaths) func(context.Context, *mcp.CallToolRequest, ReviewArgs) (*mcp.CallToolResult, ReviewResult, error) {
+	return func(_ context.Context, _ *mcp.CallToolRequest, args ReviewArgs) (*mcp.CallToolResult, ReviewResult, error) {
+		if !paths.Exists() {
+			return nil, ReviewResult{}, brainNotInitialized(paths)
+		}
+		raw, err := brain.Review(paths, brain.ReviewOptions{
+			IncludeNoDate: args.IncludeNoDate,
+		})
+		if err != nil {
+			return nil, ReviewResult{}, err
+		}
+		out := ReviewResult{
+			Overdue: make([]ReviewItem, 0, len(raw)),
+		}
+		for _, it := range raw {
+			item := ReviewItem{
+				Section:     it.Section,
+				Title:       it.Entry.Title,
+				ID:          it.Entry.Get("id"),
+				Platform:    it.Entry.Get("platform"),
+				Area:        it.Entry.Get("area"),
+				ReviewAfter: it.ReviewAfter,
+				DaysOverdue: it.DaysOverdue,
+			}
+			if it.HasDate {
+				out.Overdue = append(out.Overdue, item)
+			} else {
+				out.NoDate = append(out.NoDate, item)
+			}
+		}
+		// Short text summary for MCP clients that show tool output
+		// verbatim. Structured data lives on the second return value.
+		return &mcp.CallToolResult{
+			Content: []mcp.Content{&mcp.TextContent{Text: formatReviewSummary(out)}},
+		}, out, nil
+	}
+}
+
+func formatReviewSummary(r ReviewResult) string {
+	if len(r.Overdue) == 0 && len(r.NoDate) == 0 {
+		return "✓ No hay entradas temporales vencidas."
+	}
+	var b strings.Builder
+	if len(r.Overdue) > 0 {
+		fmt.Fprintf(&b, "⚠ %d entrada(s) vencida(s):\n", len(r.Overdue))
+		for _, it := range r.Overdue {
+			fmt.Fprintf(&b, "  [%s] %s — review_after: %s (%d días)\n",
+				it.Section, it.Title, it.ReviewAfter, it.DaysOverdue)
+		}
+	}
+	if len(r.NoDate) > 0 {
+		fmt.Fprintf(&b, "\n%d sin review_after:\n", len(r.NoDate))
+		for _, it := range r.NoDate {
+			fmt.Fprintf(&b, "  [%s] %s\n", it.Section, it.Title)
+		}
+	}
+	return b.String()
+}
+
 // SaveArgs is the shared shape for the three save_* tools. Unused
 // fields per tool (e.g. ReviewAfter on decision saves) are simply
 // ignored downstream — the per-tool description tells the agent which

@@ -34,6 +34,7 @@ func NewBrainCmd() *cobra.Command {
 		newBrainContextCmd(),
 		newBrainSaveCmd(),
 		newBrainSearchCmd(),
+		newBrainReviewCmd(),
 		newBrainMCPCmd(),
 	)
 	return root
@@ -343,6 +344,143 @@ func truncate(s string, maxLen int) string {
 		return s
 	}
 	return string(runes[:maxLen-1]) + "…"
+}
+
+func newBrainReviewCmd() *cobra.Command {
+	c := &cobra.Command{
+		Use:   "review",
+		Short: "Lista entradas temporales cuyo review_after ya pasó",
+		Long: "Recorre las memorias y muestra las entradas con status: temporary " +
+			"cuyo review_after <= hoy. Pensado para evitar que workarounds temporales " +
+			"se vuelvan permanentes por inercia. Por defecto sale con exit 1 si hay " +
+			"vencidas (útil como gate en CI / pre-commit); usá --no-fail para que " +
+			"solo informe. Con --include-no-date también lista las temporary sin " +
+			"review_after asignado.",
+		RunE: runBrainReview,
+	}
+	brainCommonFlags(c)
+	c.Flags().Bool("include-no-date", false,
+		"también lista entradas temporary sin review_after (sección aparte en la salida)")
+	c.Flags().Bool("no-fail", false,
+		"siempre exit 0, incluso si hay entradas vencidas (modo solo-informativo)")
+	return c
+}
+
+func runBrainReview(c *cobra.Command, _ []string) error {
+	out := c.OutOrStdout()
+	info, err := resolveBrainRoot(c)
+	if err != nil {
+		return err
+	}
+	paths := brain.NewBrainPaths(info.Path)
+	if !paths.Exists() {
+		return fmt.Errorf("brain no inicializado en %s — corré `mobiai brain init` primero", info.Path)
+	}
+
+	includeNoDate, _ := c.Flags().GetBool("include-no-date")
+	noFail, _ := c.Flags().GetBool("no-fail")
+
+	items, err := brain.Review(paths, brain.ReviewOptions{
+		IncludeNoDate: includeNoDate,
+	})
+	if err != nil {
+		return err
+	}
+
+	overdue, noDate := splitReviewItems(items)
+
+	if len(overdue) == 0 && len(noDate) == 0 {
+		fmt.Fprintln(out, "✓ No hay entradas temporales vencidas.")
+		return nil
+	}
+
+	if len(overdue) > 0 {
+		fmt.Fprintf(out, "⚠ %d entrada(s) temporal(es) vencida(s):\n\n", len(overdue))
+		printOverdueItems(out, overdue)
+	} else {
+		fmt.Fprintln(out, "✓ No hay entradas vencidas.")
+	}
+
+	if len(noDate) > 0 {
+		fmt.Fprintf(out, "\n%d entrada(s) temporal(es) sin review_after:\n\n", len(noDate))
+		printNoDateItems(out, noDate)
+	}
+
+	// Non-zero exit when there's actually overdue debt and the caller
+	// didn't opt out. Useful as a CI gate. os.Exit is fine here — no
+	// deferred cleanup in this command. Tests should call brain.Review
+	// directly to avoid bypassing the test runner.
+	if len(overdue) > 0 && !noFail {
+		os.Exit(1)
+	}
+	return nil
+}
+
+// splitReviewItems separates dated/overdue entries from no-date ones so
+// the CLI can render them under different headings.
+func splitReviewItems(items []brain.ReviewItem) (overdue, noDate []brain.ReviewItem) {
+	for _, it := range items {
+		if it.HasDate {
+			overdue = append(overdue, it)
+		} else {
+			noDate = append(noDate, it)
+		}
+	}
+	return overdue, noDate
+}
+
+func printOverdueItems(out io.Writer, items []brain.ReviewItem) {
+	currentSection := ""
+	for _, it := range items {
+		if it.Section != currentSection {
+			fmt.Fprintf(out, "%s.md\n", it.Section)
+			currentSection = it.Section
+		}
+		fmt.Fprintf(out, "  ⚠ %s\n", it.Entry.Title)
+		fmt.Fprintf(out, "    review_after: %s (vencido hace %s)\n",
+			it.ReviewAfter, daysOverdueLabel(it.DaysOverdue))
+		if p := it.Entry.Get("platform"); p != "" {
+			fmt.Fprintf(out, "    platform: %s\n", p)
+		}
+		if a := it.Entry.Get("area"); a != "" {
+			fmt.Fprintf(out, "    area: %s\n", a)
+		}
+		if id := it.Entry.Get("id"); id != "" {
+			fmt.Fprintf(out, "    id: %s\n", id)
+		}
+		fmt.Fprintln(out)
+	}
+}
+
+func printNoDateItems(out io.Writer, items []brain.ReviewItem) {
+	currentSection := ""
+	for _, it := range items {
+		if it.Section != currentSection {
+			fmt.Fprintf(out, "%s.md\n", it.Section)
+			currentSection = it.Section
+		}
+		fmt.Fprintf(out, "  • %s\n", it.Entry.Title)
+		if p := it.Entry.Get("platform"); p != "" {
+			fmt.Fprintf(out, "    platform: %s\n", p)
+		}
+		if id := it.Entry.Get("id"); id != "" {
+			fmt.Fprintf(out, "    id: %s\n", id)
+		}
+		fmt.Fprintln(out)
+	}
+}
+
+// daysOverdueLabel renders a human-readable "N días" / "N día" / "hoy"
+// label for a non-negative number of days overdue.
+func daysOverdueLabel(days int) string {
+	switch {
+	case days == 0:
+		return "hoy"
+	case days == 1:
+		return "1 día"
+	default:
+		return fmt.Sprintf("%d días", days)
+	}
 }
 
 func newBrainSaveCmd() *cobra.Command {

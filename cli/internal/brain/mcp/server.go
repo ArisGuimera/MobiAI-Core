@@ -73,6 +73,17 @@ func registerTools(server *mcp.Server, paths brain.BrainPaths) {
 	}, handleScan(paths))
 
 	mcp.AddTool(server, &mcp.Tool{
+		Name: "mobile_review",
+		Description: "Audit temporary debt in the brain: returns every entry with " +
+			"`status: temporary` whose `review_after` date has passed. Pass " +
+			"`include_no_date: true` to also surface temporary entries that lack a " +
+			"review_after, listed separately under `no_date`. Use this at the start " +
+			"of a session to spot workarounds that should be revisited before " +
+			"proposing related changes — and to keep temporary fixes from silently " +
+			"becoming permanent.",
+	}, handleReview(paths))
+
+	mcp.AddTool(server, &mcp.Tool{
 		Name: "mobile_save_decision",
 		Description: "Save an architecture decision to the brain (decisions.md). Use for " +
 			"library/pattern choices, project-wide conventions, or tradeoffs that took " +

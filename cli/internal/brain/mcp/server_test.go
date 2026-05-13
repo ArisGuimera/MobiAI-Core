@@ -67,6 +67,7 @@ func TestServer_ListsAllTools(t *testing.T) {
 		"mobile_context":       false,
 		"mobile_search":        false,
 		"mobile_scan":          false,
+		"mobile_review":        false,
 		"mobile_save_decision": false,
 		"mobile_save_bugfix":   false,
 		"mobile_save_testing":  false,
@@ -244,6 +245,87 @@ func TestTool_SaveBugfix_TemporaryStatusMapsCorrectly(t *testing.T) {
 	}
 }
 
+func TestTool_Review_ReturnsOverdueOnly(t *testing.T) {
+	client, paths, cleanup := setupClient(t)
+	defer cleanup()
+
+	// Plant three temporary entries: one overdue, one future, one no-date.
+	mustSaveBugfix(t, paths, "Overdue workaround", "ios", "2024-01-01")
+	mustSaveBugfix(t, paths, "Future review", "android", "2099-01-01")
+	mustSaveBugfix(t, paths, "No date temp", "shared", "")
+
+	res, err := client.CallTool(context.Background(), &sdkmcp.CallToolParams{
+		Name:      "mobile_review",
+		Arguments: map[string]any{},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.IsError {
+		t.Fatalf("review failed: %v", firstTextContent(res))
+	}
+	out := decodeReviewResult(t, res)
+	if len(out.Overdue) != 1 {
+		t.Fatalf("expected 1 overdue, got %d: %+v", len(out.Overdue), out.Overdue)
+	}
+	if out.Overdue[0].Title != "Overdue workaround" {
+		t.Errorf("wrong overdue entry: %q", out.Overdue[0].Title)
+	}
+	if out.Overdue[0].DaysOverdue <= 0 {
+		t.Errorf("DaysOverdue should be positive, got %d", out.Overdue[0].DaysOverdue)
+	}
+	if len(out.NoDate) != 0 {
+		t.Errorf("no_date should be empty without include_no_date; got %+v", out.NoDate)
+	}
+}
+
+func TestTool_Review_IncludeNoDate(t *testing.T) {
+	client, paths, cleanup := setupClient(t)
+	defer cleanup()
+
+	mustSaveBugfix(t, paths, "Overdue workaround", "ios", "2024-01-01")
+	mustSaveBugfix(t, paths, "No date temp", "shared", "")
+
+	res, err := client.CallTool(context.Background(), &sdkmcp.CallToolParams{
+		Name:      "mobile_review",
+		Arguments: map[string]any{"include_no_date": true},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.IsError {
+		t.Fatalf("review failed: %v", firstTextContent(res))
+	}
+	out := decodeReviewResult(t, res)
+	if len(out.Overdue) != 1 {
+		t.Errorf("expected 1 overdue, got %d", len(out.Overdue))
+	}
+	if len(out.NoDate) != 1 || out.NoDate[0].Title != "No date temp" {
+		t.Errorf("expected 1 no_date entry; got %+v", out.NoDate)
+	}
+}
+
+func TestTool_Review_EmptyBrainSucceeds(t *testing.T) {
+	client, _, cleanup := setupClient(t)
+	defer cleanup()
+
+	res, err := client.CallTool(context.Background(), &sdkmcp.CallToolParams{
+		Name:      "mobile_review",
+		Arguments: map[string]any{},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.IsError {
+		t.Fatalf("review on empty brain should succeed: %v", firstTextContent(res))
+	}
+	out := decodeReviewResult(t, res)
+	if len(out.Overdue) != 0 || len(out.NoDate) != 0 {
+		t.Errorf("empty brain should produce no items; got overdue=%d no_date=%d",
+			len(out.Overdue), len(out.NoDate))
+	}
+}
+
 func TestTool_Scan_ReturnsStructuredSummary(t *testing.T) {
 	client, paths, cleanup := setupClient(t)
 	defer cleanup()
@@ -374,6 +456,39 @@ func seedDecision(t *testing.T, p brain.BrainPaths, title, platform string) {
 	}); err != nil {
 		t.Fatal(err)
 	}
+}
+
+// mustSaveBugfix appends a temporary bugfix entry. Empty reviewAfter
+// means "save without a review_after meta field" — used by the review
+// tests to plant a no-date entry.
+func mustSaveBugfix(t *testing.T, p brain.BrainPaths, title, platform, reviewAfter string) {
+	t.Helper()
+	if _, err := brain.AppendEntry(p, &brain.SaveEntry{
+		Type:        brain.SaveTypeBugfix,
+		Title:       title,
+		Platform:    platform,
+		Status:      "temporary",
+		ReviewAfter: reviewAfter,
+		Body:        "body of " + title,
+	}); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func decodeReviewResult(t *testing.T, res *sdkmcp.CallToolResult) ReviewResult {
+	t.Helper()
+	if res == nil || res.StructuredContent == nil {
+		t.Fatal("expected StructuredContent")
+	}
+	raw, err := json.Marshal(res.StructuredContent)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var out ReviewResult
+	if err := json.Unmarshal(raw, &out); err != nil {
+		t.Fatalf("decode structured content: %v\nraw: %s", err, raw)
+	}
+	return out
 }
 
 func seedBugfix(t *testing.T, p brain.BrainPaths, title, platform string) {

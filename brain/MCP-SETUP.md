@@ -11,6 +11,7 @@ Sin MCP, el agente solo conoce el Brain si la skill `mobiai-brain` se lo dice ‚Ä
 | `mobile_context` | `mobiai brain context` (con filtros) | Markdown completo del contexto |
 | `mobile_search` | `mobiai brain search` | JSON estructurado `{hits: [{section, title, id, status, platform, area, snippet}]}` |
 | `mobile_scan` | `mobiai brain scan` | JSON del stack detectado (project_type, platforms, libs, integraciones, ...) |
+| `mobile_review` | `mobiai brain review` | JSON `{overdue: [...], no_date: [...]}` con entradas `temporary` cuyo `review_after` ya pas√≥ |
 | `mobile_save_decision` | `mobiai brain save decision` | `{id, section}` de la entrada creada |
 | `mobile_save_bugfix` | `mobiai brain save bugfix` | `{id, section}` |
 | `mobile_save_testing` | `mobiai brain save testing` | `{id, section}` |
