@@ -37,7 +37,7 @@ mobiai brain search <query>        # Busca texto libre en las memorias
 mobiai brain mcp                   # Arranca un server MCP que expone el Brain como tools
 ```
 
-Si tu cliente (Claude Code, Cursor, Copilot CLI, Codex, Gemini CLI) tiene MCP soportado, registralo desde [`docs/brain-mcp.md`](brain-mcp.md) y el agente invoca las operaciones del Brain directamente como tools (`mobile_context`, `mobile_search`, `mobile_save_*`, `mobile_scan`) en vez de shellear la CLI.
+Si tu cliente (Claude Code, Cursor, Copilot CLI, Codex, Gemini CLI) tiene MCP soportado, registralo desde [`MCP-SETUP.md`](MCP-SETUP.md) y el agente invoca las operaciones del Brain directamente como tools (`mobile_context`, `mobile_search`, `mobile_save_*`, `mobile_scan`) en vez de shellear la CLI.
 
 Todos aceptan `--root <ruta>` para apuntar a un proyecto distinto del directorio actual.
 
@@ -230,7 +230,7 @@ Otras skills que podrían integrarse en el futuro: `mobiai-crashlytics` (crashes
 **Fase 2** — `save decision|bugfix|testing` + hook en `mobiai-fix-issue`. ✓
 **Fase 3** — `search` + filtros (`--section`, `--platform`, `--status`, `--area`) en `context`. ✓
 **Fase 4** — hooks de save en `mobiai-write-tests` (testing pattern), `mobiai-mobile-debugging` (bugfix sin pasar por fix-issue) y `mobiai-mobile-brainstorming` (decision tras spec aprobada). ✓
-**Fase 5** — servidor MCP (`mobiai brain mcp`) que expone las 6 operaciones como tools nativas para Claude Code, Cursor, Copilot CLI, Codex y Gemini CLI. El brain pasa a estar siempre en el toolbox del agente. Setup en [`docs/brain-mcp.md`](brain-mcp.md). ✓
+**Fase 5** — servidor MCP (`mobiai brain mcp`) que expone las 6 operaciones como tools nativas para Claude Code, Cursor, Copilot CLI, Codex y Gemini CLI. El brain pasa a estar siempre en el toolbox del agente. Setup en [`MCP-SETUP.md`](MCP-SETUP.md). ✓
 
 **Próximos pasos**:
 - `mobiai brain review` — listar entradas `status: temporary` cuyo `review_after` ya pasó (para que workarounds temporales no se vuelvan permanentes por inercia).

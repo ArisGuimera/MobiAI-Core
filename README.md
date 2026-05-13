@@ -115,7 +115,7 @@ mobiai brain scan      # detecta stack: Android/iOS/KMP/Flutter/RN + librerías
 mobiai brain context   # imprime Markdown listo para agentes
 ```
 
-Detalle completo en [docs/brain.md](docs/brain.md). Los subcomandos `save` y `search` llegan en una próxima fase.
+Detalle completo en [brain/README.md](brain/README.md). Los subcomandos `save` y `search` llegan en una próxima fase.
 
 ## ¿Cómo funciona?
 

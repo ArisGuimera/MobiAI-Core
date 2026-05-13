@@ -473,7 +473,7 @@ func newBrainMCPCmd() *cobra.Command {
 		Long: "Arranca un servidor MCP (Model Context Protocol) que expone las operaciones " +
 			"del Brain (context, search, scan, save) como tools que el agente puede invocar " +
 			"directamente. Comunica por stdio — pensado para que un cliente MCP (Claude Code, " +
-			"Cursor, Copilot CLI, etc.) lo lance como subproceso. Ver docs/brain-mcp.md.",
+			"Cursor, Copilot CLI, etc.) lo lance como subproceso. Ver brain/MCP-SETUP.md.",
 		RunE: runBrainMCP,
 	}
 	brainCommonFlags(c)
