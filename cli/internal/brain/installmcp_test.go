@@ -10,8 +10,11 @@ import (
 )
 
 // fakeBinary is the path we pretend mobiai lives at across these
-// tests. Using a fixed string keeps the JSON assertions readable.
-const fakeBinary = "/usr/local/bin/mobiai"
+// tests. Derived from os.TempDir() so it's absolute on every platform
+// — a literal Unix path like "/usr/local/bin/mobiai" is drive-relative
+// on Windows (filepath.Abs prepends the current drive), which breaks
+// the equality assertions about what got written to the config.
+var fakeBinary = filepath.Join(os.TempDir(), "fake-mobiai-for-tests")
 
 // makeFakeHome builds a TempDir that looks like $HOME and returns the
 // path. By default both ~/.claude and ~/.cursor exist (so install
