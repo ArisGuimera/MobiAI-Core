@@ -79,6 +79,31 @@ Use for ANY mobile technical issue:
 - Issue seems simple (simple bugs have root causes too)
 - You're in a hurry (rushing guarantees rework)
 
+## Pre-flight: check the Brain for overdue debt
+
+Standalone invocations only — **skip this section when called from `mobiai-fix-issue`**, which already runs its own pre-flight review and would otherwise double-prompt.
+
+If `<repo>/.mobiai/brain/config.json` exists, do a quick review pass before forming hypotheses. The issue you're investigating might be related to a known workaround already logged as temporary debt; checking up front prevents re-deriving an answer that's already in the brain.
+
+**Preferred — MCP tool** (when `mobiai-brain` MCP server is registered):
+
+Invoke `mobile_review` with default args. From the returned `overdue` list, focus on entries whose `platform` matches the project's platform and whose `area` overlaps with the symptoms (component, module, feature where the bug shows up). Run `mobile_scan` first if you don't already know the project's platform.
+
+**Fallback — CLI**:
+
+```bash
+mobiai brain review --no-fail
+```
+
+If 1+ overdue entries match, **mention them to the user** before Phase 1:
+
+> "Heads up — there are N overdue temporary workaround(s) in <platform>/<area> that may relate to what you're seeing: <title>. I'll proceed with the investigation; let me know if you want to look at those first."
+
+Then continue with Phase 1. Don't pause unless asked. Skip silently when:
+
+- The brain isn't initialized.
+- No overdue entries match the area / platform of the issue.
+
 ## Phase 1: Gather Evidence
 
 Before forming any opinion, collect the raw material.

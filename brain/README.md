@@ -494,7 +494,11 @@ Si algún proyecto supera ~500 entradas y la búsqueda se vuelve lenta, migrarem
 
 ## Integración con Skills
 
-Cuatro skills proponen guardar al final de su flujo, todas con el mismo patrón: **solo si** existe `.mobiai/brain/config.json` en el proyecto, y **siempre** pidiendo aprobación al usuario antes de invocar el save.
+Las mismas 4 skills tienen **dos puntos de contacto** con el Brain — uno al entrar, otro al salir.
+
+### Hook de salida: proponer `save`
+
+Las skills proponen guardar al final de su flujo, todas con el mismo patrón: **solo si** existe `.mobiai/brain/config.json` en el proyecto, y **siempre** pidiendo aprobación al usuario antes de invocar el save.
 
 | Skill | Cuándo propone | Tipo guardado |
 |---|---|---|
@@ -504,6 +508,14 @@ Cuatro skills proponen guardar al final de su flujo, todas con el mismo patrón:
 | `mobiai-mobile-brainstorming` | Tras User Review Gate (spec aprobada), una entrada por cada decisión arquitectónica no trivial del spec | `decision` |
 
 Si el proyecto **no** tiene brain, el hook se salta sin ruido. El agente nunca invoca `save` solo: siempre pide una línea de confirmación al usuario antes de ejecutarlo.
+
+### Hook de entrada: pre-flight de `review`
+
+Las mismas 4 skills, al **arrancar**, invocan `mobile_review` (CLI fallback: `mobiai brain review --no-fail`), filtran las vencidas por `platform` y `area` del trabajo en curso, y mencionan al usuario las que matchean antes de empezar:
+
+> "Heads up — there are N overdue workaround(s) in `<platform>/<area>` that may be relevant: `<title>`. I'll proceed; let me know if you want to look at those first."
+
+No pausa el flujo. El usuario decide si quiere ir a `brain promote` / `brain bump` antes o continuar y revisarlo después. `mobile-debugging` y `write-tests` skipean el pre-flight cuando se invocan anidadas desde `fix-issue` (que ya hizo el suyo) para no doble-promptear.
 
 **Doble path MCP / CLI**: cada uno de los hooks documenta dos rutas equivalentes. Si el cliente tiene `mobiai-brain` registrado como server MCP, el agente invoca la tool `mobile_save_*` directamente — más rápido, sin spawn de proceso, output estructurado. Si no, cae al `mobiai brain save ...` de siempre. Ambas terminan escribiendo exactamente la misma entrada en el `.md`.
 
@@ -588,10 +600,10 @@ Probablemente estás en un subdirectorio y la detección de raíz no encuentra e
 **Fase 6** — `mobiai brain review` (CLI) + `mobile_review` (MCP tool) para auditar entradas `status: temporary` cuyo `review_after` ya pasó. Cierra el ciclo de "memoria con caducidad" — los workarounds temporales ya no se vuelven permanentes por inercia. ✓
 **Fase 7** — `mobiai brain promote` y `mobiai brain bump` (CLI) + `mobile_promote` y `mobile_bump` (MCP tools) para cerrar el ciclo de vida de una entrada desde CLI/agente: cambiar `status` o extender `review_after` sin editar el `.md` a mano. Atomic rewrite; preserva body, files y metadata custom byte-perfect. ✓
 **Fase 8** — los 4 hooks de skills (`mobiai-fix-issue`, `mobiai-write-tests`, `mobiai-mobile-debugging`, `mobiai-mobile-brainstorming`) ahora documentan la tool MCP equivalente como ruta preferida, manteniendo el CLI como fallback explícito. Cuando el cliente tiene `mobiai-brain` registrado como server MCP, el agente invoca `mobile_save_*` directamente; si no, cae al `mobiai brain save ...` de siempre. ✓
+**Fase 9** — pre-flight automático en las 4 skills: antes de empezar el trabajo, el agente invoca `mobile_review` (o `mobiai brain review --no-fail`), filtra por platform/area del trabajo en curso, y menciona al usuario cualquier workaround vencido relevante. No pausa: el usuario decide si quiere revisarlo primero. Cierra el bucle "memoria con caducidad" al hacer la deuda **proactivamente visible** en el momento exacto en que importa. ✓
 
 **Próximos pasos**:
 
-- **Hook automático de `brain review` al inicio de skills** — proactivamente mostrar deuda relevante (filtrada por platform/area del trabajo en curso) antes de empezar `fix-issue` o `mobile-brainstorming`.
 - **`brain review --upcoming N`** — además de las vencidas, listar entradas temporales que vencen en los próximos N días (default propuesto: 30). Da margen de planning para sprints/retros sin esperar a que algo esté ya vencido. Pendiente.
 - **`save integration`** y **`save release`** (categorías de menor volumen, baja prioridad).
 

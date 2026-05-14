@@ -33,6 +33,29 @@ You MUST create a task for each of these items and complete them in order:
 7. **User reviews written spec** — ask user to review the spec file before proceeding
 8. **Transition to implementation** — invoke `mobiai-mobile-planning` skill to create implementation plan
 
+## Pre-flight: check the Brain for prior context
+
+Before exploring the idea, if `<repo>/.mobiai/brain/config.json` exists, do a quick review pass — you don't want to re-litigate decisions the team already made, or design around a workaround that's already been recognised as temporary debt.
+
+**Preferred — MCP tool** (when `mobiai-brain` MCP server is registered):
+
+Invoke `mobile_review` with default args. From the returned `overdue` list, focus on entries whose `platform` matches the project's platform and whose `area` overlaps with the feature space (DI, navigation, networking, persistence, whichever applies). Run `mobile_scan` first if you don't already know the project's platform.
+
+**Fallback — CLI**:
+
+```bash
+mobiai brain review --no-fail
+```
+
+If 1+ overdue entries match, **mention them to the user** before The Process:
+
+> "Heads up — there are N overdue workaround(s) in <platform>/<area> that touch this space: <title>. I'll continue with the brainstorm; let me know if you want to factor those in first."
+
+Then proceed to The Process. Skip silently when:
+
+- The brain isn't initialized.
+- No overdue entries match the feature's area / platform.
+
 ## The Process
 
 **Understanding the idea:**

@@ -72,6 +72,29 @@ Pre-flight: **Classify scope** — fast path or gated path (Pre-flight above)
 - User shares a bug report and wants it resolved with a PR
 - User pastes a crash, log, or description and asks for an end-to-end fix
 
+## Pre-flight: check the Brain for overdue debt
+
+Before starting, if `<repo>/.mobiai/brain/config.json` exists, do a quick review pass — you might be about to touch an area that already has a known workaround logged as temporary debt. Proposing a change that conflicts with it (or duplicates it) wastes everyone's time.
+
+**Preferred — MCP tool** (when `mobiai-brain` MCP server is registered):
+
+Invoke `mobile_review` with default args. From the returned `overdue` list, focus on entries whose `platform` matches the project's platform and whose `area` overlaps with the bug's surface (the module or feature you're about to touch). Run `mobile_scan` first if you don't already know the project's platform.
+
+**Fallback — CLI**:
+
+```bash
+mobiai brain review --no-fail
+```
+
+If 1+ overdue entries match, **mention them to the user** in plain language before Phase 1:
+
+> "Heads up — there are N overdue temporary workaround(s) in <platform>/<area> that might be related to this bug: <title>. I'll proceed with the fix; let me know if you want me to review those first."
+
+Then continue with Phase 1. Don't pause unless the user asks to. Skip silently when:
+
+- The brain isn't initialized (no `.mobiai/brain/config.json`).
+- No overdue entries match the platform / area of the bug.
+
 ## Phase 1: Understand the Bug
 
 Get the full issue details before anything else — summary, description, reproduction steps, stack traces, affected versions, attachments.

@@ -18,6 +18,31 @@ Write tests that cover a bug fix or new feature, following the project's existin
 
 **Note**: If you're implementing a new feature or fix from scratch, consider using `mobiai-mobile-tdd` instead — it enforces writing tests FIRST (Red-Green-Refactor). This skill is for adding tests to existing code.
 
+## Pre-flight: check the Brain for relevant patterns
+
+Standalone invocations only — **skip this section when called from `mobiai-fix-issue` or `mobiai-mobile-tdd`**, which run their own pre-flight or wrap this skill mid-flow.
+
+If `<repo>/.mobiai/brain/config.json` exists, do a quick review pass before designing the test cases. A known workaround in the same area might shape what's worth asserting (the test should verify the workaround still works, not assume the fix is upstream).
+
+**Preferred — MCP tool** (when `mobiai-brain` MCP server is registered):
+
+Invoke `mobile_review` with default args. Focus on entries whose `platform` matches the project's platform and whose `area` overlaps with the system under test (datastore, networking, lifecycle, etc.). Run `mobile_scan` first if you don't already know the project's platform.
+
+**Fallback — CLI**:
+
+```bash
+mobiai brain review --no-fail
+```
+
+If 1+ overdue entries match, **mention them to the user** before Step 1:
+
+> "Heads up — there are N overdue workaround(s) in <platform>/<area> that may shape what these tests need to cover: <title>. I'll proceed; let me know if you want to look at those first."
+
+Then continue with Step 1. Skip silently when:
+
+- The brain isn't initialized.
+- No overdue entries match the area / platform of the code under test.
+
 ## Workflow
 
 ### Step 1: Understand What to Test
