@@ -505,6 +505,8 @@ Cuatro skills proponen guardar al final de su flujo, todas con el mismo patrón:
 
 Si el proyecto **no** tiene brain, el hook se salta sin ruido. El agente nunca invoca `save` solo: siempre pide una línea de confirmación al usuario antes de ejecutarlo.
 
+**Doble path MCP / CLI**: cada uno de los hooks documenta dos rutas equivalentes. Si el cliente tiene `mobiai-brain` registrado como server MCP, el agente invoca la tool `mobile_save_*` directamente — más rápido, sin spawn de proceso, output estructurado. Si no, cae al `mobiai brain save ...` de siempre. Ambas terminan escribiendo exactamente la misma entrada en el `.md`.
+
 Otras skills que podrían integrarse en el futuro: `mobiai-crashlytics` (crashes recurrentes → `save bugfix`), `mobiai-mobile-planning` (planes con decisiones embebidas → `save decision`).
 
 ---
@@ -585,10 +587,10 @@ Probablemente estás en un subdirectorio y la detección de raíz no encuentra e
 **Fase 5** — servidor MCP (`mobiai brain mcp`) que expone las 6 operaciones como tools nativas para Claude Code, Cursor, Copilot CLI, Codex y Gemini CLI. El brain pasa a estar siempre en el toolbox del agente. Setup en [`MCP-SETUP.md`](MCP-SETUP.md). ✓
 **Fase 6** — `mobiai brain review` (CLI) + `mobile_review` (MCP tool) para auditar entradas `status: temporary` cuyo `review_after` ya pasó. Cierra el ciclo de "memoria con caducidad" — los workarounds temporales ya no se vuelven permanentes por inercia. ✓
 **Fase 7** — `mobiai brain promote` y `mobiai brain bump` (CLI) + `mobile_promote` y `mobile_bump` (MCP tools) para cerrar el ciclo de vida de una entrada desde CLI/agente: cambiar `status` o extender `review_after` sin editar el `.md` a mano. Atomic rewrite; preserva body, files y metadata custom byte-perfect. ✓
+**Fase 8** — los 4 hooks de skills (`mobiai-fix-issue`, `mobiai-write-tests`, `mobiai-mobile-debugging`, `mobiai-mobile-brainstorming`) ahora documentan la tool MCP equivalente como ruta preferida, manteniendo el CLI como fallback explícito. Cuando el cliente tiene `mobiai-brain` registrado como server MCP, el agente invoca `mobile_save_*` directamente; si no, cae al `mobiai brain save ...` de siempre. ✓
 
 **Próximos pasos**:
 
-- **Migrar los hooks de las skills** (fix-issue, write-tests, mobile-debugging, brainstorming) a invocar las tools MCP directamente cuando estén disponibles, en lugar de shellear out al binario. Hoy coexisten — la CLI es el fallback universal.
 - **Hook automático de `brain review` al inicio de skills** — proactivamente mostrar deuda relevante (filtrada por platform/area del trabajo en curso) antes de empezar `fix-issue` o `mobile-brainstorming`.
 - **`brain review --upcoming N`** — además de las vencidas, listar entradas temporales que vencen en los próximos N días (default propuesto: 30). Da margen de planning para sprints/retros sin esperar a que algo esté ya vencido. Pendiente.
 - **`save integration`** y **`save release`** (categorías de menor volumen, baja prioridad).

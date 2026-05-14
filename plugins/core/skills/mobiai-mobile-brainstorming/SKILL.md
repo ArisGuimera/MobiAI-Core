@@ -119,7 +119,20 @@ If it does, scan the spec for **architectural decisions worth remembering**. A d
 
 Skip routine implementation details that are obvious from the spec itself ("the button is blue", "the screen has a back arrow"). Those don't need to live in the brain — the spec already captures them.
 
-If you find 1+ decisions worth saving, **propose** each save to the user (one-line confirmation per entry). Never invoke silently. A single brainstorming session may produce several distinct decisions — save them as separate entries so future `brain search` and filtering work cleanly:
+If you find 1+ decisions worth saving, **propose** each save to the user (one-line confirmation per entry). Never invoke silently. A single brainstorming session may produce several distinct decisions — save them as separate entries so future `brain search` and filtering work cleanly.
+
+**Preferred — MCP tool** (if your client has the `mobiai-brain` MCP server registered, you'll see this tool in your toolbox):
+
+Invoke `mobile_save_decision` with:
+
+- `title`: short decision name, e.g. `"Use Koin for DI"`
+- `platform`: `android | ios | shared | kmp | flutter | react-native`
+- `area`: free-form, e.g. `"dependency_injection" | "navigation" | "state_management"`
+- `status`: `active` (decisions are active unless deprecated later via `mobile_promote`)
+- `files`: array of repo-relative paths (typically `[<spec_path>, <other_relevant_file>]`)
+- `body`: Markdown with `### Decision` / `### Reason` / `### Alternatives considered`
+
+**Fallback — CLI** (if MCP isn't configured):
 
 ```bash
 mobiai brain save decision \

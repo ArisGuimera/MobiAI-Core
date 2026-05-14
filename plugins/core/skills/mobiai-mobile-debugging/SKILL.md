@@ -232,7 +232,21 @@ If it does, judge whether the cause is worth remembering. Save when:
 
 Skip when the cause is trivial (typo, obvious null, one-line bug with no broader pattern).
 
-When worth saving, **propose** the save to the user (one-line confirmation). Never invoke silently. Use `--status active` when the root cause is documented but no fix is applied yet (the entry serves as "we understood this, future agents should know"), or `--status temporary` with `--review-after` when a workaround was applied that needs revisiting.
+When worth saving, **propose** the save to the user (one-line confirmation). Never invoke silently. Use `status: active` when the root cause is documented but no fix is applied yet (the entry serves as "we understood this, future agents should know"), or `status: temporary` with `review_after` when a workaround was applied that needs revisiting.
+
+**Preferred — MCP tool** (if your client has the `mobiai-brain` MCP server registered, you'll see this tool in your toolbox):
+
+Invoke `mobile_save_bugfix` with:
+
+- `title`: short, e.g. `"Compose recomposition loop in LazyColumn with derivedStateOf"`
+- `platform`: `android | ios | shared | kmp | flutter | react-native`
+- `area`: free-form, e.g. `"compose" | "coroutines" | "gradle"`
+- `status`: `active | temporary`
+- `review_after`: `"YYYY-MM-DD"` (only when status is temporary)
+- `files`: array of repo-relative file paths
+- `body`: Markdown with `### Symptom` / `### Root Cause` / `### Investigation Notes` / `### Resolution`
+
+**Fallback — CLI** (if MCP isn't configured):
 
 ```bash
 mobiai brain save bugfix \

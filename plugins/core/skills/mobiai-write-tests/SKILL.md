@@ -62,7 +62,19 @@ Once tests pass, check whether `<repo>/.mobiai/brain/config.json` exists. If it 
 
 If it does, decide whether this test is a **reusable pattern** worth saving as a `testing_pattern` entry. A test is worth saving when it captures a non-obvious mobile-specific gotcha — async/lifecycle timing, platform quirks, flaky-test workarounds, fixture patterns. Skip when the test is a routine assertion on business logic.
 
-When it's worth saving, **propose** the save to the user first (one-line confirmation). Never invoke silently. Suggested invocation:
+When it's worth saving, **propose** the save to the user first (one-line confirmation). Never invoke silently.
+
+**Preferred — MCP tool** (if your client has the `mobiai-brain` MCP server registered, you'll see this tool in your toolbox):
+
+Invoke `mobile_save_testing` with:
+
+- `title`: short pattern name, e.g. `"DataStore clear waits for empty emission"`
+- `platform`: `android | ios | shared | kmp | flutter | react-native`
+- `area`: free-form, e.g. `"datastore" | "coroutines" | "xctest" | "maestro"`
+- `files`: array of repo-relative paths (test + system-under-test)
+- `body`: Markdown with `### Problem` / `### Solution` / `### Example` (omit `### Example` when the language doesn't fit)
+
+**Fallback — CLI** (if MCP isn't configured):
 
 ```bash
 mobiai brain save testing \

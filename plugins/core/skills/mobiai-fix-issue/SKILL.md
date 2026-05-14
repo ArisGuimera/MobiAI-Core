@@ -180,7 +180,21 @@ If verification fails, do not rationalize. Return to Phase 3 with the new eviden
 
 After verification passes, check whether `<repo>/.mobiai/brain/config.json` exists. If it does NOT, skip this step silently — not every project uses Brain.
 
-If it does, **propose** saving this fix as a brain `bugfix` entry to the user. Get one-line approval before running save — never invoke it silently. Use status `temporary` (with `--review-after` ~2-3 months out) for workarounds that should be revisited; use `active` for real fixes that should stick.
+If it does, **propose** saving this fix as a brain `bugfix` entry to the user. Get one-line approval before running save — never invoke it silently. Use status `temporary` (with `review_after` ~2-3 months out) for workarounds that should be revisited; use `active` for real fixes that should stick.
+
+**Preferred — MCP tool** (if your client has the `mobiai-brain` MCP server registered, you'll see this tool in your toolbox):
+
+Invoke `mobile_save_bugfix` with:
+
+- `title`: short description, e.g. `"FirebaseAuth iOS module renaming"`
+- `platform`: `android | ios | shared | kmp | flutter | react-native`
+- `area`: free-form, e.g. `"firebase_auth"`
+- `status`: `active | temporary`
+- `review_after`: `"YYYY-MM-DD"` (only when status is temporary)
+- `files`: array of repo-relative file paths
+- `body`: Markdown with `### Problem` / `### Root Cause` / `### Solution`
+
+**Fallback — CLI** (if MCP isn't configured):
 
 ```bash
 mobiai brain save bugfix \
