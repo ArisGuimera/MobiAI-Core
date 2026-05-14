@@ -101,6 +101,8 @@ mobiai brain save testing ...      # Guarda un patrón de testing reusable
 
 mobiai brain search <query>        # Busca texto libre en las memorias
 mobiai brain review                # Lista entradas temporales cuyo review_after ya pasó
+mobiai brain promote <id> ...      # Cambia el status de una entrada existente
+mobiai brain bump <id> ...         # Extiende review_after de una entrada existente
 
 mobiai brain mcp                   # Arranca un server MCP que expone el Brain como tools
 ```
@@ -254,6 +256,43 @@ El exit 1 por defecto está pensado para usarse como **gate en CI o pre-commit**
 | `deprecated` | cualquiera | No (ya está cerrada) |
 
 `review` **no edita ni borra** nada — solo informa. Para bajar una entrada del listado, edita el `.md` y cambia `review_after`, el `status` a `active`/`deprecated`, o elimina el bloque.
+
+### `mobiai brain promote <id>`
+
+Cambia el `status` de una entrada existente. Pensado como flujo de cierre tras `brain review`: cuando una entrada `temporary` ya no debería seguir siéndolo, la promovés a `active` (se volvió definitiva) o `deprecated` (ya no aplica).
+
+```bash
+mobiai brain promote <id> --status active
+mobiai brain promote <id> --status deprecated
+mobiai brain promote <id> --status temporary --review-after 2027-01-01
+
+# Promover y eliminar review_after en una sola llamada
+mobiai brain promote <id> --status active --clear-review-after
+```
+
+| Flag | ¿Requerido? | Notas |
+|---|---|---|
+| `--status <s>` | sí | `active` \| `temporary` \| `deprecated` |
+| `--review-after YYYY-MM-DD` | no | También actualiza `review_after` |
+| `--clear-review-after` | no | Elimina `review_after` (incompatible con `--review-after`) |
+
+Para entradas tipo `bugfix`, el campo `type:` se recalcula automáticamente desde el nuevo `status` (`temporary` → `platform_workaround`, `active`/`deprecated` → `bug_fix`), manteniendo la invariante que `save` establece.
+
+El body, los archivos en `### Files` y cualquier metadata custom se preservan byte-perfect — `promote` solo toca los campos que le pediste.
+
+### `mobiai brain bump <id>`
+
+Extiende solo el `review_after` de una entrada, sin tocar el `status`. Útil cuando un workaround temporal sigue siendo válido y querés correr el plazo de revisión:
+
+```bash
+mobiai brain bump <id> --review-after 2027-01-01
+```
+
+| Flag | ¿Requerido? | Notas |
+|---|---|---|
+| `--review-after YYYY-MM-DD` | sí | Nueva fecha |
+
+Para cambios de `status`, usá `promote`. Para eliminar la fecha completamente, usá `promote --clear-review-after`.
 
 ### `mobiai brain context`
 
@@ -490,9 +529,13 @@ Está permitido y soportado. El parser re-lee los archivos en cada `context` / `
 - No dupliques `id:` entre entradas (rompe deduplicación).
 - Si añades metadata custom, no la garantizamos para filtros futuros.
 
-### ¿Cómo borro una entrada?
+### ¿Cómo borro o modifico una entrada?
 
-Edita el `.md` y borra el bloque del H2 correspondiente. No hay `mobiai brain delete` por diseño: las decisiones y bugfixes deberían marcarse como `status: deprecated` en lugar de borrarse, para preservar la historia. Pero si necesitas borrado real, edita el archivo.
+**Para cambiar status** (cerrar un workaround, deprecar una decisión): usa `mobiai brain promote <id> --status deprecated` (o `active`).
+
+**Para extender el plazo de revisión** de un workaround vigente: usa `mobiai brain bump <id> --review-after YYYY-MM-DD`.
+
+**Para borrado real**: edita el `.md` y borra el bloque del H2 correspondiente. No hay `mobiai brain delete` por diseño — preferimos marcar como `deprecated` para preservar la historia. Pero si de verdad necesitas eliminar la entrada (por ejemplo, datos sensibles guardados por error), edita el archivo.
 
 ### ¿Por qué el scanner no detecta mi librería X?
 
@@ -541,11 +584,13 @@ Probablemente estás en un subdirectorio y la detección de raíz no encuentra e
 **Fase 4** — hooks de save en `mobiai-write-tests` (testing pattern), `mobiai-mobile-debugging` (bugfix sin pasar por fix-issue) y `mobiai-mobile-brainstorming` (decision tras spec aprobada). ✓
 **Fase 5** — servidor MCP (`mobiai brain mcp`) que expone las 6 operaciones como tools nativas para Claude Code, Cursor, Copilot CLI, Codex y Gemini CLI. El brain pasa a estar siempre en el toolbox del agente. Setup en [`MCP-SETUP.md`](MCP-SETUP.md). ✓
 **Fase 6** — `mobiai brain review` (CLI) + `mobile_review` (MCP tool) para auditar entradas `status: temporary` cuyo `review_after` ya pasó. Cierra el ciclo de "memoria con caducidad" — los workarounds temporales ya no se vuelven permanentes por inercia. ✓
+**Fase 7** — `mobiai brain promote` y `mobiai brain bump` (CLI) + `mobile_promote` y `mobile_bump` (MCP tools) para cerrar el ciclo de vida de una entrada desde CLI/agente: cambiar `status` o extender `review_after` sin editar el `.md` a mano. Atomic rewrite; preserva body, files y metadata custom byte-perfect. ✓
 
 **Próximos pasos**:
 
+- **Migrar los hooks de las skills** (fix-issue, write-tests, mobile-debugging, brainstorming) a invocar las tools MCP directamente cuando estén disponibles, en lugar de shellear out al binario. Hoy coexisten — la CLI es el fallback universal.
+- **Hook automático de `brain review` al inicio de skills** — proactivamente mostrar deuda relevante (filtrada por platform/area del trabajo en curso) antes de empezar `fix-issue` o `mobile-brainstorming`.
 - **`brain review --upcoming N`** — además de las vencidas, listar entradas temporales que vencen en los próximos N días (default propuesto: 30). Da margen de planning para sprints/retros sin esperar a que algo esté ya vencido. Pendiente.
 - **`save integration`** y **`save release`** (categorías de menor volumen, baja prioridad).
-- **Migrar los hooks de las skills** (fix-issue, write-tests, mobile-debugging, brainstorming) a invocar las tools MCP directamente cuando estén disponibles, en lugar de shellear out al binario. Hoy coexisten — la CLI es el fallback universal.
 
 **Fase futura** — migración a SQLite + FTS5 si Markdown se queda corto (>~500 entradas por proyecto). Para el rango actual (1-100 entradas) los filtros sobre Markdown bastan.

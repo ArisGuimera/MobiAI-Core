@@ -84,6 +84,23 @@ func registerTools(server *mcp.Server, paths brain.BrainPaths) {
 	}, handleReview(paths))
 
 	mcp.AddTool(server, &mcp.Tool{
+		Name: "mobile_promote",
+		Description: "Change the status of an existing brain entry (active | temporary | " +
+			"deprecated). Use after `mobile_review` surfaces an overdue temporary entry: " +
+			"promote to `active` if the workaround became permanent, to `deprecated` if " +
+			"it no longer applies, or back to `temporary` with a new review_after. For " +
+			"bugfix entries, the type field is re-derived from the new status. Optionally " +
+			"set review_after at the same time, or clear it with `clear_review_after`.",
+	}, handlePromote(paths))
+
+	mcp.AddTool(server, &mcp.Tool{
+		Name: "mobile_bump",
+		Description: "Extend `review_after` of an existing brain entry without changing " +
+			"its status. Use when a temporary workaround is still valid but needs more " +
+			"time before the next audit. For changing status, use `mobile_promote`.",
+	}, handleBump(paths))
+
+	mcp.AddTool(server, &mcp.Tool{
 		Name: "mobile_save_decision",
 		Description: "Save an architecture decision to the brain (decisions.md). Use for " +
 			"library/pattern choices, project-wide conventions, or tradeoffs that took " +

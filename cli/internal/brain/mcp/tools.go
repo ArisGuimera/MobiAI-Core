@@ -311,6 +311,101 @@ func formatReviewSummary(r ReviewResult) string {
 	return b.String()
 }
 
+// PromoteArgs configures mobile_promote. Status is required (the whole
+// point is changing status); review_after and clear_review_after are
+// optional follow-up fields for the common case where promoting and
+// extending/clearing the review window happens in one shot.
+type PromoteArgs struct {
+	ID               string `json:"id" jsonschema:"the id of the entry to update (find via mobile_search or mobile_review)"`
+	Status           string `json:"status" jsonschema:"new status: active | temporary | deprecated"`
+	ReviewAfter      string `json:"review_after,omitempty" jsonschema:"also set review_after to this YYYY-MM-DD date (mutually exclusive with clear_review_after)"`
+	ClearReviewAfter bool   `json:"clear_review_after,omitempty" jsonschema:"remove review_after entirely (mutually exclusive with review_after)"`
+}
+
+// BumpArgs configures mobile_bump. Both fields are required — bumping
+// is just extending review_after on an existing entry without touching
+// status. For status changes, use mobile_promote.
+type BumpArgs struct {
+	ID          string `json:"id" jsonschema:"the id of the entry whose review_after to extend"`
+	ReviewAfter string `json:"review_after" jsonschema:"new review_after as YYYY-MM-DD"`
+}
+
+// UpdateResult is the JSON-friendly view of brain.UpdateResult. Same
+// flattening philosophy as SearchHit: agents see what changed without
+// reading raw entry structures.
+type UpdateResult struct {
+	Section         string `json:"section"`
+	File            string `json:"file"`
+	Title           string `json:"title"`
+	PrevStatus      string `json:"prev_status,omitempty"`
+	NewStatus       string `json:"new_status,omitempty"`
+	PrevReviewAfter string `json:"prev_review_after,omitempty"`
+	NewReviewAfter  string `json:"new_review_after,omitempty"`
+}
+
+func handlePromote(paths brain.BrainPaths) func(context.Context, *mcp.CallToolRequest, PromoteArgs) (*mcp.CallToolResult, UpdateResult, error) {
+	return func(_ context.Context, _ *mcp.CallToolRequest, args PromoteArgs) (*mcp.CallToolResult, UpdateResult, error) {
+		res, err := brain.UpdateEntry(paths, args.ID, brain.UpdateOptions{
+			Status:           args.Status,
+			ReviewAfter:      args.ReviewAfter,
+			ClearReviewAfter: args.ClearReviewAfter,
+		})
+		if err != nil {
+			return nil, UpdateResult{}, err
+		}
+		out := updateResultToJSON(res)
+		return &mcp.CallToolResult{
+			Content: []mcp.Content{&mcp.TextContent{Text: formatUpdateSummary(res)}},
+		}, out, nil
+	}
+}
+
+func handleBump(paths brain.BrainPaths) func(context.Context, *mcp.CallToolRequest, BumpArgs) (*mcp.CallToolResult, UpdateResult, error) {
+	return func(_ context.Context, _ *mcp.CallToolRequest, args BumpArgs) (*mcp.CallToolResult, UpdateResult, error) {
+		res, err := brain.UpdateEntry(paths, args.ID, brain.UpdateOptions{
+			ReviewAfter: args.ReviewAfter,
+		})
+		if err != nil {
+			return nil, UpdateResult{}, err
+		}
+		out := updateResultToJSON(res)
+		return &mcp.CallToolResult{
+			Content: []mcp.Content{&mcp.TextContent{Text: formatUpdateSummary(res)}},
+		}, out, nil
+	}
+}
+
+func updateResultToJSON(r *brain.UpdateResult) UpdateResult {
+	return UpdateResult{
+		Section:         r.Section,
+		File:            r.File,
+		Title:           r.Title,
+		PrevStatus:      r.PrevStatus,
+		NewStatus:       r.NewStatus,
+		PrevReviewAfter: r.PrevReviewAfter,
+		NewReviewAfter:  r.NewReviewAfter,
+	}
+}
+
+func formatUpdateSummary(r *brain.UpdateResult) string {
+	var b strings.Builder
+	fmt.Fprintf(&b, "✓ %s actualizada (%s)", r.Title, r.File)
+	if r.PrevStatus != r.NewStatus {
+		fmt.Fprintf(&b, "\n  status: %s → %s", r.PrevStatus, r.NewStatus)
+	}
+	if r.PrevReviewAfter != r.NewReviewAfter {
+		from, to := r.PrevReviewAfter, r.NewReviewAfter
+		if from == "" {
+			from = "(none)"
+		}
+		if to == "" {
+			to = "(none)"
+		}
+		fmt.Fprintf(&b, "\n  review_after: %s → %s", from, to)
+	}
+	return b.String()
+}
+
 // SaveArgs is the shared shape for the three save_* tools. Unused
 // fields per tool (e.g. ReviewAfter on decision saves) are simply
 // ignored downstream — the per-tool description tells the agent which

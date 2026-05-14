@@ -35,6 +35,8 @@ func NewBrainCmd() *cobra.Command {
 		newBrainSaveCmd(),
 		newBrainSearchCmd(),
 		newBrainReviewCmd(),
+		newBrainPromoteCmd(),
+		newBrainBumpCmd(),
 		newBrainMCPCmd(),
 	)
 	return root
@@ -468,6 +470,97 @@ func printNoDateItems(out io.Writer, items []brain.ReviewItem) {
 		}
 		fmt.Fprintln(out)
 	}
+}
+
+func newBrainPromoteCmd() *cobra.Command {
+	c := &cobra.Command{
+		Use:   "promote <id>",
+		Short: "Cambia el status de una entrada existente",
+		Long: "Actualiza el status: de la entrada con el id dado (active|temporary|" +
+			"deprecated). Pensado como flujo de cierre tras `brain review`: cuando ya no " +
+			"necesitás una entrada temporary, la promovés a active (se volvió definitiva) " +
+			"o deprecated (ya no aplica). Opcionalmente también actualiza review_after en " +
+			"la misma llamada, o lo elimina con --clear-review-after.",
+		Args: cobra.ExactArgs(1),
+		RunE: runBrainPromote,
+	}
+	brainCommonFlags(c)
+	c.Flags().String("status", "", "nuevo status: active|temporary|deprecated (requerido)")
+	c.Flags().String("review-after", "", "actualizar también review_after a esta fecha YYYY-MM-DD (opcional)")
+	c.Flags().Bool("clear-review-after", false, "eliminar review_after (incompatible con --review-after)")
+	_ = c.MarkFlagRequired("status")
+	return c
+}
+
+func runBrainPromote(c *cobra.Command, args []string) error {
+	id := args[0]
+	status, _ := c.Flags().GetString("status")
+	reviewAfter, _ := c.Flags().GetString("review-after")
+	clearReview, _ := c.Flags().GetBool("clear-review-after")
+	return doBrainUpdate(c, id, brain.UpdateOptions{
+		Status:           status,
+		ReviewAfter:      reviewAfter,
+		ClearReviewAfter: clearReview,
+	})
+}
+
+func newBrainBumpCmd() *cobra.Command {
+	c := &cobra.Command{
+		Use:   "bump <id>",
+		Short: "Extiende review_after de una entrada existente",
+		Long: "Actualiza review_after de la entrada con el id dado, sin tocar status. " +
+			"Útil tras `brain review` cuando una entrada temporary sigue siendo válida y " +
+			"querés extender su plazo de revisión. Para cambios de status usá `promote`.",
+		Args: cobra.ExactArgs(1),
+		RunE: runBrainBump,
+	}
+	brainCommonFlags(c)
+	c.Flags().String("review-after", "", "nueva fecha YYYY-MM-DD para review_after (requerido)")
+	_ = c.MarkFlagRequired("review-after")
+	return c
+}
+
+func runBrainBump(c *cobra.Command, args []string) error {
+	id := args[0]
+	reviewAfter, _ := c.Flags().GetString("review-after")
+	return doBrainUpdate(c, id, brain.UpdateOptions{
+		ReviewAfter: reviewAfter,
+	})
+}
+
+// doBrainUpdate is the shared backend for promote/bump. Both commands
+// are thin wrappers over UpdateEntry — the difference is which flags
+// they accept, not what happens on disk.
+func doBrainUpdate(c *cobra.Command, id string, opts brain.UpdateOptions) error {
+	out := c.OutOrStdout()
+	info, err := resolveBrainRoot(c)
+	if err != nil {
+		return err
+	}
+	paths := brain.NewBrainPaths(info.Path)
+	if !paths.Exists() {
+		return fmt.Errorf("brain no inicializado en %s — corré `mobiai brain init` primero", info.Path)
+	}
+	res, err := brain.UpdateEntry(paths, id, opts)
+	if err != nil {
+		return err
+	}
+	fmt.Fprintf(out, "✓ %s actualizada (%s)\n", res.Title, res.File)
+	if res.PrevStatus != res.NewStatus {
+		fmt.Fprintf(out, "  status: %s → %s\n", res.PrevStatus, res.NewStatus)
+	}
+	if res.PrevReviewAfter != res.NewReviewAfter {
+		from := res.PrevReviewAfter
+		if from == "" {
+			from = "(none)"
+		}
+		to := res.NewReviewAfter
+		if to == "" {
+			to = "(none)"
+		}
+		fmt.Fprintf(out, "  review_after: %s → %s\n", from, to)
+	}
+	return nil
 }
 
 // daysOverdueLabel renders a human-readable "N días" / "N día" / "hoy"

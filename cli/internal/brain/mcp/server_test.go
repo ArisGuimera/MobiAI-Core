@@ -68,6 +68,8 @@ func TestServer_ListsAllTools(t *testing.T) {
 		"mobile_search":        false,
 		"mobile_scan":          false,
 		"mobile_review":        false,
+		"mobile_promote":       false,
+		"mobile_bump":          false,
 		"mobile_save_decision": false,
 		"mobile_save_bugfix":   false,
 		"mobile_save_testing":  false,
@@ -326,6 +328,102 @@ func TestTool_Review_EmptyBrainSucceeds(t *testing.T) {
 	}
 }
 
+func TestTool_Promote_ChangesStatusAndType(t *testing.T) {
+	client, paths, cleanup := setupClient(t)
+	defer cleanup()
+
+	id, err := brain.AppendEntry(paths, &brain.SaveEntry{
+		Type:        brain.SaveTypeBugfix,
+		Title:       "WA",
+		Status:      "temporary",
+		ReviewAfter: "2026-06-01",
+		Body:        "body",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	res, err := client.CallTool(context.Background(), &sdkmcp.CallToolParams{
+		Name: "mobile_promote",
+		Arguments: map[string]any{
+			"id":                 id,
+			"status":             "active",
+			"clear_review_after": true,
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.IsError {
+		t.Fatalf("promote failed: %v", firstTextContent(res))
+	}
+	out := decodeUpdateResult(t, res)
+	if out.PrevStatus != "temporary" || out.NewStatus != "active" {
+		t.Errorf("status transition: prev=%q new=%q", out.PrevStatus, out.NewStatus)
+	}
+	if out.NewReviewAfter != "" {
+		t.Errorf("review_after should be cleared; got %q", out.NewReviewAfter)
+	}
+	// Confirm on disk that the bugfix type was re-derived.
+	data, _ := os.ReadFile(filepath.Join(paths.MemoriesDir, "bugfixes.md"))
+	if !strings.Contains(string(data), "- type: bug_fix") {
+		t.Errorf("type should flip to bug_fix:\n%s", data)
+	}
+}
+
+func TestTool_Bump_ExtendsReviewAfter(t *testing.T) {
+	client, paths, cleanup := setupClient(t)
+	defer cleanup()
+
+	id, err := brain.AppendEntry(paths, &brain.SaveEntry{
+		Type:        brain.SaveTypeBugfix,
+		Title:       "WA",
+		Status:      "temporary",
+		ReviewAfter: "2026-03-01",
+		Body:        "body",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	res, err := client.CallTool(context.Background(), &sdkmcp.CallToolParams{
+		Name: "mobile_bump",
+		Arguments: map[string]any{
+			"id":           id,
+			"review_after": "2027-01-01",
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.IsError {
+		t.Fatalf("bump failed: %v", firstTextContent(res))
+	}
+	out := decodeUpdateResult(t, res)
+	if out.PrevReviewAfter != "2026-03-01" || out.NewReviewAfter != "2027-01-01" {
+		t.Errorf("review_after transition: prev=%q new=%q", out.PrevReviewAfter, out.NewReviewAfter)
+	}
+	if out.NewStatus != out.PrevStatus {
+		t.Errorf("bump must not change status; prev=%q new=%q", out.PrevStatus, out.NewStatus)
+	}
+}
+
+func TestTool_Promote_UnknownIDFails(t *testing.T) {
+	client, _, cleanup := setupClient(t)
+	defer cleanup()
+
+	res, err := client.CallTool(context.Background(), &sdkmcp.CallToolParams{
+		Name: "mobile_promote",
+		Arguments: map[string]any{
+			"id":     "ghost-id",
+			"status": "active",
+		},
+	})
+	if err == nil && (res == nil || !res.IsError) {
+		t.Errorf("unknown id should fail; got: %+v", res)
+	}
+}
+
 func TestTool_Scan_ReturnsStructuredSummary(t *testing.T) {
 	client, paths, cleanup := setupClient(t)
 	defer cleanup()
@@ -473,6 +571,22 @@ func mustSaveBugfix(t *testing.T, p brain.BrainPaths, title, platform, reviewAft
 	}); err != nil {
 		t.Fatal(err)
 	}
+}
+
+func decodeUpdateResult(t *testing.T, res *sdkmcp.CallToolResult) UpdateResult {
+	t.Helper()
+	if res == nil || res.StructuredContent == nil {
+		t.Fatal("expected StructuredContent")
+	}
+	raw, err := json.Marshal(res.StructuredContent)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var out UpdateResult
+	if err := json.Unmarshal(raw, &out); err != nil {
+		t.Fatalf("decode structured content: %v\nraw: %s", err, raw)
+	}
+	return out
 }
 
 func decodeReviewResult(t *testing.T, res *sdkmcp.CallToolResult) ReviewResult {
