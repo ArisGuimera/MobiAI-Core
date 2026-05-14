@@ -49,7 +49,13 @@ mobiai brain search firebase
 mobiai brain context --section bugfixes --platform ios --status temporary
 ```
 
-**Recomendado:** registra el Brain como servidor MCP en tu cliente (Claude Code, Cursor, Copilot CLI, Codex o Gemini CLI) siguiendo [`MCP-SETUP.md`](MCP-SETUP.md). Así el agente invoca el Brain como tools nativas en lugar de shellear la CLI.
+**Recomendado:** registra el Brain como servidor MCP en tu cliente. Para Claude Code y Cursor es un comando:
+
+```bash
+mobiai brain install-mcp
+```
+
+Detecta los clientes presentes y registra `mobiai-brain` preservando el resto del config. Para otros clientes (Copilot CLI, Codex, Gemini CLI) seguí el registro manual en [`MCP-SETUP.md`](MCP-SETUP.md).
 
 ---
 
@@ -105,6 +111,7 @@ mobiai brain promote <id> ...      # Cambia el status de una entrada existente
 mobiai brain bump <id> ...         # Extiende review_after de una entrada existente
 
 mobiai brain mcp                   # Arranca un server MCP que expone el Brain como tools
+mobiai brain install-mcp           # Registra el server MCP en clientes IA (Claude Code, Cursor)
 ```
 
 Todos aceptan `--root <ruta>` para apuntar a un proyecto distinto del directorio actual.
@@ -601,8 +608,11 @@ Probablemente estás en un subdirectorio y la detección de raíz no encuentra e
 **Fase 7** — `mobiai brain promote` y `mobiai brain bump` (CLI) + `mobile_promote` y `mobile_bump` (MCP tools) para cerrar el ciclo de vida de una entrada desde CLI/agente: cambiar `status` o extender `review_after` sin editar el `.md` a mano. Atomic rewrite; preserva body, files y metadata custom byte-perfect. ✓
 **Fase 8** — los 4 hooks de skills (`mobiai-fix-issue`, `mobiai-write-tests`, `mobiai-mobile-debugging`, `mobiai-mobile-brainstorming`) ahora documentan la tool MCP equivalente como ruta preferida, manteniendo el CLI como fallback explícito. Cuando el cliente tiene `mobiai-brain` registrado como server MCP, el agente invoca `mobile_save_*` directamente; si no, cae al `mobiai brain save ...` de siempre. ✓
 **Fase 9** — pre-flight automático en las 4 skills: antes de empezar el trabajo, el agente invoca `mobile_review` (o `mobiai brain review --no-fail`), filtra por platform/area del trabajo en curso, y menciona al usuario cualquier workaround vencido relevante. No pausa: el usuario decide si quiere revisarlo primero. Cierra el bucle "memoria con caducidad" al hacer la deuda **proactivamente visible** en el momento exacto en que importa. ✓
+**Fase 10** — `mobiai brain install-mcp` registra el server MCP en clientes soportados (Claude Code y Cursor en v1) con un solo comando. Detecta automáticamente qué clientes tiene instalados el usuario, preserva el resto del config, es idempotente y reversible (`--uninstall`). Path absoluto al binario vía `os.Executable()` para que el cliente AI lo encuentre incluso con `$PATH` distinto al del shell. Eliminamos la fricción de tener que editar JSON a mano. ✓
 
 **Próximos pasos**:
+
+- **`install-mcp` para Copilot CLI, Codex y Gemini CLI** — el v1 cubre Claude Code y Cursor (mismo shape de JSON). Los otros tres tienen formatos distintos (Copilot/Gemini JSON con shape propia, Codex TOML) y se añaden cuando haya demanda.
 
 - **`brain review --upcoming N`** — además de las vencidas, listar entradas temporales que vencen en los próximos N días (default propuesto: 30). Da margen de planning para sprints/retros sin esperar a que algo esté ya vencido. Pendiente.
 - **`save integration`** y **`save release`** (categorías de menor volumen, baja prioridad).

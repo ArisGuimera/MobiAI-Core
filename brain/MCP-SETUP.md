@@ -20,9 +20,30 @@ Sin MCP, el agente solo conoce el Brain si la skill `mobiai-brain` se lo dice �
 
 Todas requieren un brain inicializado (`mobiai brain init`). Si no existe, la tool falla con un error claro indicando cómo arreglar.
 
-## Registro en cada cliente
+## Registro automático (recomendado)
 
-La invocación es siempre la misma — solo cambia dónde se declara el server. El binario `mobiai` tiene que estar en `$PATH` (o pasalo con ruta absoluta).
+```bash
+mobiai brain install-mcp                  # detecta clientes presentes y registra
+mobiai brain install-mcp --client claude  # registro específico
+mobiai brain install-mcp --dry-run        # previsualiza sin tocar archivos
+mobiai brain install-mcp --uninstall      # quita el registro
+```
+
+El comando:
+
+- **Detecta** clientes presentes (ahora mismo: Claude Code y Cursor) buscando `~/.claude/` y `~/.cursor/`. Si un cliente no está instalado, lo salta sin error.
+- **Preserva** el resto del archivo de config — solo añade/quita el bloque `mcpServers.mobiai-brain`.
+- **Idempotente**: re-correrlo no duplica nada.
+- **Atomic** (temp+rename): un crash a media escritura nunca deja el config corrupto.
+- **Usa el path absoluto** del binario en uso (vía `os.Executable()`) para que el cliente AI lo encuentre incluso si su `$PATH` es distinto al del shell. Override con `--binary <ruta>`.
+
+Tras correrlo, reiniciá el cliente para que cargue el server MCP. **Validá** con `mobiai brain mcp` (debería arrancar sin errores; salí con Ctrl+C — el cliente lo lanzará como subproceso después).
+
+Si tu cliente no es Claude Code ni Cursor todavía, seguí con el registro manual abajo. Vamos a ir sumando soporte (Copilot CLI, Codex, Gemini CLI) en próximas versiones.
+
+## Registro manual (fallback)
+
+Si preferís editar a mano, o tu cliente todavía no está soportado por `install-mcp`, los pasos son los mismos para todos: añadir un bloque `mcpServers` que apunta a `mobiai brain mcp`. Solo cambia dónde se declara el server. El binario `mobiai` tiene que estar en `$PATH` (o pasalo con ruta absoluta).
 
 ### Claude Code
 

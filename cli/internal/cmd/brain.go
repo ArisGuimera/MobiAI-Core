@@ -38,6 +38,7 @@ func NewBrainCmd() *cobra.Command {
 		newBrainPromoteCmd(),
 		newBrainBumpCmd(),
 		newBrainMCPCmd(),
+		newBrainInstallMCPCmd(),
 	)
 	return root
 }
@@ -723,6 +724,121 @@ func runBrainMCP(c *cobra.Command, _ []string) error {
 	// Run blocks until the MCP client disconnects. Use cmd's context so
 	// shell signals (SIGINT, etc.) terminate the server cleanly.
 	return server.Run(c.Context(), &mcp.StdioTransport{})
+}
+
+func newBrainInstallMCPCmd() *cobra.Command {
+	c := &cobra.Command{
+		Use:   "install-mcp",
+		Short: "Registra el server MCP de Brain en clientes IA (Claude Code, Cursor)",
+		Long: "Añade el server `mobiai-brain` al config de cada cliente IA soportado, " +
+			"preservando el resto del archivo. Por defecto detecta los clientes presentes " +
+			"(presencia de ~/.claude o ~/.cursor); con --client podés forzar uno solo. " +
+			"Idempotente: re-correrlo con la misma config no hace nada. Usá --dry-run " +
+			"para previsualizar sin tocar archivos, o --uninstall para quitar el registro.",
+		RunE: runBrainInstallMCP,
+	}
+	c.Flags().StringSlice("client", nil,
+		"clientes a registrar: claude|cursor (repetible o coma-separado; default: todos los detectados)")
+	c.Flags().Bool("dry-run", false, "muestra qué archivos se tocarían sin escribir nada")
+	c.Flags().Bool("uninstall", false, "elimina el registro en lugar de crearlo")
+	c.Flags().String("binary", "", "ruta al binario mobiai a registrar (default: el binario en uso)")
+	return c
+}
+
+func runBrainInstallMCP(c *cobra.Command, _ []string) error {
+	out := c.OutOrStdout()
+	rawClients, _ := c.Flags().GetStringSlice("client")
+	dryRun, _ := c.Flags().GetBool("dry-run")
+	uninstall, _ := c.Flags().GetBool("uninstall")
+	binary, _ := c.Flags().GetString("binary")
+
+	clients, err := parseMCPClients(rawClients)
+	if err != nil {
+		return err
+	}
+
+	opts := brain.InstallOptions{
+		Clients:    clients,
+		BinaryPath: binary,
+		DryRun:     dryRun,
+	}
+
+	var results []brain.InstallResult
+	if uninstall {
+		results, err = brain.UninstallMCP(opts)
+	} else {
+		results, err = brain.InstallMCP(opts)
+	}
+	if err != nil {
+		return err
+	}
+
+	printInstallResults(out, results, uninstall)
+	return nil
+}
+
+// parseMCPClients turns the raw --client flag values into typed clients.
+// Empty input means "let InstallMCP pick defaults" (all supported).
+func parseMCPClients(raw []string) ([]brain.MCPClient, error) {
+	out := make([]brain.MCPClient, 0, len(raw))
+	for _, r := range raw {
+		switch strings.ToLower(strings.TrimSpace(r)) {
+		case "claude", "claude-code", "claudecode":
+			out = append(out, brain.MCPClientClaudeCode)
+		case "cursor":
+			out = append(out, brain.MCPClientCursor)
+		case "":
+			// Skip empties from accidental ",,".
+			continue
+		default:
+			return nil, fmt.Errorf("--client %q desconocido (soportados: claude, cursor)", r)
+		}
+	}
+	return out, nil
+}
+
+// printInstallResults renders one line per client with the action
+// classification and config path. Suffixes "(dry-run)" so users
+// don't think actions were applied when they weren't.
+func printInstallResults(out io.Writer, results []brain.InstallResult, uninstall bool) {
+	anyTouched := false
+	for _, r := range results {
+		icon, label := installIconAndLabel(r.Action)
+		suffix := ""
+		if r.DryRun {
+			suffix = " (dry-run)"
+		}
+		fmt.Fprintf(out, "%s [%s] %s — %s%s\n", icon, r.Client, label, r.ConfigPath, suffix)
+		if r.Action == brain.ActionInstalled || r.Action == brain.ActionUpdated || r.Action == brain.ActionUninstalled {
+			anyTouched = true
+		}
+	}
+	if anyTouched && !results[0].DryRun {
+		fmt.Fprintln(out, "")
+		if uninstall {
+			fmt.Fprintln(out, "Listo. Reiniciá el cliente para que tome efecto.")
+		} else {
+			fmt.Fprintln(out, "Listo. Reiniciá el cliente para que cargue el server MCP.")
+		}
+	}
+}
+
+func installIconAndLabel(a brain.InstallAction) (string, string) {
+	switch a {
+	case brain.ActionInstalled:
+		return "✓", "registrado"
+	case brain.ActionUpdated:
+		return "✓", "actualizado"
+	case brain.ActionUnchanged:
+		return "=", "sin cambios (ya estaba registrado)"
+	case brain.ActionUninstalled:
+		return "✓", "eliminado"
+	case brain.ActionNotPresent:
+		return "=", "no estaba registrado"
+	case brain.ActionSkipped:
+		return "·", "saltado (cliente no instalado)"
+	}
+	return "?", string(a)
 }
 
 // brainCLIVersion returns the version the CLI was built with, falling
