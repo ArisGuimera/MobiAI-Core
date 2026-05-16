@@ -79,6 +79,31 @@ Use for ANY mobile technical issue:
 - Issue seems simple (simple bugs have root causes too)
 - You're in a hurry (rushing guarantees rework)
 
+## Pre-flight: check the Brain for overdue debt
+
+Standalone invocations only — **skip this section when called from `mobiai-fix-issue`**, which already runs its own pre-flight review and would otherwise double-prompt.
+
+If `<repo>/.mobiai/brain/config.json` exists, do a quick review pass before forming hypotheses. The issue you're investigating might be related to a known workaround already logged as temporary debt; checking up front prevents re-deriving an answer that's already in the brain.
+
+**Preferred — MCP tool** (when `mobiai-brain` MCP server is registered):
+
+Invoke `mobile_review` with default args. From the returned `overdue` list, focus on entries whose `platform` matches the project's platform and whose `area` overlaps with the symptoms (component, module, feature where the bug shows up). Run `mobile_scan` first if you don't already know the project's platform.
+
+**Fallback — CLI**:
+
+```bash
+mobiai brain review --no-fail
+```
+
+If 1+ overdue entries match, **mention them to the user** before Phase 1:
+
+> "Heads up — there are N overdue temporary workaround(s) in <platform>/<area> that may relate to what you're seeing: <title>. I'll proceed with the investigation; let me know if you want to look at those first."
+
+Then continue with Phase 1. Don't pause unless asked. Skip silently when:
+
+- The brain isn't initialized.
+- No overdue entries match the area / platform of the issue.
+
 ## Phase 1: Gather Evidence
 
 Before forming any opinion, collect the raw material.
@@ -217,8 +242,59 @@ Once the hypothesis is verified, state:
 
 The fix itself is not proposed inside this skill. `mobiai-mobile-debugging` ends when the root cause is stated (fast path) or confirmed (gated path).
 
-- If invoked from `mobiai-fix-issue`, return control — `mobiai-fix-issue`'s Phase 4 (Propose the Fix) takes over with its own gating rules.
+- If invoked from `mobiai-fix-issue`, return control — `mobiai-fix-issue`'s Phase 4 (Propose the Fix) takes over with its own gating rules. **Skip the Brain hook below** — `mobiai-fix-issue` runs its own save proposal at the end of Phase 6 (verification). Don't double-prompt.
 - Otherwise, **invoke skill `mobiai-mobile-tdd`** to write the failing test first, then the implementation.
+
+### Optional: capture root cause in MobiAI Brain
+
+Standalone invocations only (skip when called from `mobiai-fix-issue`). After the root cause is confirmed, check whether `<repo>/.mobiai/brain/config.json` exists. If it does NOT, skip silently.
+
+If it does, judge whether the cause is worth remembering. Save when:
+
+- It's a platform gotcha that's likely to bite again (lifecycle timing, threading, build-config interaction).
+- The investigation surfaced a non-obvious causal chain that took real effort to find.
+- A workaround was identified that the project will keep using until a future cleanup.
+
+Skip when the cause is trivial (typo, obvious null, one-line bug with no broader pattern).
+
+When worth saving, **propose** the save to the user (one-line confirmation). Never invoke silently. Use `status: active` when the root cause is documented but no fix is applied yet (the entry serves as "we understood this, future agents should know"), or `status: temporary` with `review_after` when a workaround was applied that needs revisiting.
+
+**Preferred — MCP tool** (if your client has the `mobiai-brain` MCP server registered, you'll see this tool in your toolbox):
+
+Invoke `mobile_save_bugfix` with:
+
+- `title`: short, e.g. `"Compose recomposition loop in LazyColumn with derivedStateOf"`
+- `platform`: `android | ios | shared | kmp | flutter | react-native`
+- `area`: free-form, e.g. `"compose" | "coroutines" | "gradle"`
+- `status`: `active | temporary`
+- `review_after`: `"YYYY-MM-DD"` (only when status is temporary)
+- `files`: array of repo-relative file paths
+- `body`: Markdown with `### Symptom` / `### Root Cause` / `### Investigation Notes` / `### Resolution`
+
+**Fallback — CLI** (if MCP isn't configured):
+
+```bash
+mobiai brain save bugfix \
+  --title "<short, e.g. 'Compose recomposition loop in LazyColumn with derivedStateOf'>" \
+  --platform <android|ios|shared|kmp|flutter|react-native> \
+  --area <free-form, e.g. compose | coroutines | gradle> \
+  --status <active|temporary> \
+  --review-after <YYYY-MM-DD if temporary> \
+  --files "<file1>,<file2>" \
+  --body "### Symptom
+What the user observed.
+
+### Root Cause
+The actual cause, in plain language.
+
+### Investigation Notes
+The evidence that confirmed it — log lines, commits, behavior on different builds.
+
+### Resolution
+What was done about it (or 'documented only, no fix applied yet')."
+```
+
+The body fields are suggestions, not a rigid template. Use the structure that fits what you found.
 
 ## Red Flags — STOP and Follow Process
 

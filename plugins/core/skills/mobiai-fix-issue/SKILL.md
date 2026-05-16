@@ -72,6 +72,29 @@ Pre-flight: **Classify scope** — fast path or gated path (Pre-flight above)
 - User shares a bug report and wants it resolved with a PR
 - User pastes a crash, log, or description and asks for an end-to-end fix
 
+## Pre-flight: check the Brain for overdue debt
+
+Before starting, if `<repo>/.mobiai/brain/config.json` exists, do a quick review pass — you might be about to touch an area that already has a known workaround logged as temporary debt. Proposing a change that conflicts with it (or duplicates it) wastes everyone's time.
+
+**Preferred — MCP tool** (when `mobiai-brain` MCP server is registered):
+
+Invoke `mobile_review` with default args. From the returned `overdue` list, focus on entries whose `platform` matches the project's platform and whose `area` overlaps with the bug's surface (the module or feature you're about to touch). Run `mobile_scan` first if you don't already know the project's platform.
+
+**Fallback — CLI**:
+
+```bash
+mobiai brain review --no-fail
+```
+
+If 1+ overdue entries match, **mention them to the user** in plain language before Phase 1:
+
+> "Heads up — there are N overdue temporary workaround(s) in <platform>/<area> that might be related to this bug: <title>. I'll proceed with the fix; let me know if you want me to review those first."
+
+Then continue with Phase 1. Don't pause unless the user asks to. Skip silently when:
+
+- The brain isn't initialized (no `.mobiai/brain/config.json`).
+- No overdue entries match the platform / area of the bug.
+
 ## Phase 1: Understand the Bug
 
 Get the full issue details before anything else — summary, description, reproduction steps, stack traces, affected versions, attachments.
@@ -175,6 +198,46 @@ Platform-specific compile and test commands (handled by `mobiai-mobile-verificat
 - **KMP**: `./gradlew compileKotlin` then `./gradlew test`
 
 If verification fails, do not rationalize. Return to Phase 3 with the new evidence.
+
+### Optional: capture in MobiAI Brain
+
+After verification passes, check whether `<repo>/.mobiai/brain/config.json` exists. If it does NOT, skip this step silently — not every project uses Brain.
+
+If it does, **propose** saving this fix as a brain `bugfix` entry to the user. Get one-line approval before running save — never invoke it silently. Use status `temporary` (with `review_after` ~2-3 months out) for workarounds that should be revisited; use `active` for real fixes that should stick.
+
+**Preferred — MCP tool** (if your client has the `mobiai-brain` MCP server registered, you'll see this tool in your toolbox):
+
+Invoke `mobile_save_bugfix` with:
+
+- `title`: short description, e.g. `"FirebaseAuth iOS module renaming"`
+- `platform`: `android | ios | shared | kmp | flutter | react-native`
+- `area`: free-form, e.g. `"firebase_auth"`
+- `status`: `active | temporary`
+- `review_after`: `"YYYY-MM-DD"` (only when status is temporary)
+- `files`: array of repo-relative file paths
+- `body`: Markdown with `### Problem` / `### Root Cause` / `### Solution`
+
+**Fallback — CLI** (if MCP isn't configured):
+
+```bash
+mobiai brain save bugfix \
+  --title "<short description, e.g. 'FirebaseAuth iOS module renaming'>" \
+  --platform <android|ios|shared|kmp|flutter|react-native> \
+  --area <free-form, e.g. firebase_auth> \
+  --status <active|temporary> \
+  --review-after <YYYY-MM-DD if temporary> \
+  --files "<file1>,<file2>" \
+  --body "### Problem
+...
+
+### Root Cause
+...
+
+### Solution
+..."
+```
+
+The save is the same content the agent already produced for the PR description (Phase 7) — just structured for future retrieval. If the project tracks `.mobiai/brain/memories/` in git, the new entry will be staged with the rest of the fix in Phase 7.
 
 ## Phase 7: Open the PR — FINAL GATE (always)
 

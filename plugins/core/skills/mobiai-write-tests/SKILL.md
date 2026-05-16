@@ -18,6 +18,31 @@ Write tests that cover a bug fix or new feature, following the project's existin
 
 **Note**: If you're implementing a new feature or fix from scratch, consider using `mobiai-mobile-tdd` instead — it enforces writing tests FIRST (Red-Green-Refactor). This skill is for adding tests to existing code.
 
+## Pre-flight: check the Brain for relevant patterns
+
+Standalone invocations only — **skip this section when called from `mobiai-fix-issue` or `mobiai-mobile-tdd`**, which run their own pre-flight or wrap this skill mid-flow.
+
+If `<repo>/.mobiai/brain/config.json` exists, do a quick review pass before designing the test cases. A known workaround in the same area might shape what's worth asserting (the test should verify the workaround still works, not assume the fix is upstream).
+
+**Preferred — MCP tool** (when `mobiai-brain` MCP server is registered):
+
+Invoke `mobile_review` with default args. Focus on entries whose `platform` matches the project's platform and whose `area` overlaps with the system under test (datastore, networking, lifecycle, etc.). Run `mobile_scan` first if you don't already know the project's platform.
+
+**Fallback — CLI**:
+
+```bash
+mobiai brain review --no-fail
+```
+
+If 1+ overdue entries match, **mention them to the user** before Step 1:
+
+> "Heads up — there are N overdue workaround(s) in <platform>/<area> that may shape what these tests need to cover: <title>. I'll proceed; let me know if you want to look at those first."
+
+Then continue with Step 1. Skip silently when:
+
+- The brain isn't initialized.
+- No overdue entries match the area / platform of the code under test.
+
 ## Workflow
 
 ### Step 1: Understand What to Test
@@ -55,6 +80,46 @@ Run the test suite to verify:
 - Existing tests still pass (no regressions from the fix)
 
 If tests fail, fix them. If existing tests fail and your fix caused the regression, fix that too.
+
+### Step 5: Capture in MobiAI Brain (if worth remembering)
+
+Once tests pass, check whether `<repo>/.mobiai/brain/config.json` exists. If it does NOT, skip this step silently — not every project uses Brain.
+
+If it does, decide whether this test is a **reusable pattern** worth saving as a `testing_pattern` entry. A test is worth saving when it captures a non-obvious mobile-specific gotcha — async/lifecycle timing, platform quirks, flaky-test workarounds, fixture patterns. Skip when the test is a routine assertion on business logic.
+
+When it's worth saving, **propose** the save to the user first (one-line confirmation). Never invoke silently.
+
+**Preferred — MCP tool** (if your client has the `mobiai-brain` MCP server registered, you'll see this tool in your toolbox):
+
+Invoke `mobile_save_testing` with:
+
+- `title`: short pattern name, e.g. `"DataStore clear waits for empty emission"`
+- `platform`: `android | ios | shared | kmp | flutter | react-native`
+- `area`: free-form, e.g. `"datastore" | "coroutines" | "xctest" | "maestro"`
+- `files`: array of repo-relative paths (test + system-under-test)
+- `body`: Markdown with `### Problem` / `### Solution` / `### Example` (omit `### Example` when the language doesn't fit)
+
+**Fallback — CLI** (if MCP isn't configured):
+
+```bash
+mobiai brain save testing \
+  --title "<short pattern name, e.g. 'DataStore clear waits for empty emission'>" \
+  --platform <android|ios|shared|kmp|flutter|react-native> \
+  --area <free-form, e.g. datastore | coroutines | xctest | maestro> \
+  --files "<test_file>,<sut_file>" \
+  --body "### Problem
+What goes wrong without this pattern (race, leak, false pass, etc.).
+
+### Solution
+The pattern itself, in one paragraph.
+
+### Example
+\`\`\`kotlin
+// minimal code snippet
+\`\`\`"
+```
+
+Skip the body's `### Example` block on languages that don't fit. The fewer placeholders, the better — concrete pattern in the user's own words beats a generic template.
 
 ## Platform Conventions
 

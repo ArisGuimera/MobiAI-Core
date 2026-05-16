@@ -33,6 +33,29 @@ You MUST create a task for each of these items and complete them in order:
 7. **User reviews written spec** — ask user to review the spec file before proceeding
 8. **Transition to implementation** — invoke `mobiai-mobile-planning` skill to create implementation plan
 
+## Pre-flight: check the Brain for prior context
+
+Before exploring the idea, if `<repo>/.mobiai/brain/config.json` exists, do a quick review pass — you don't want to re-litigate decisions the team already made, or design around a workaround that's already been recognised as temporary debt.
+
+**Preferred — MCP tool** (when `mobiai-brain` MCP server is registered):
+
+Invoke `mobile_review` with default args. From the returned `overdue` list, focus on entries whose `platform` matches the project's platform and whose `area` overlaps with the feature space (DI, navigation, networking, persistence, whichever applies). Run `mobile_scan` first if you don't already know the project's platform.
+
+**Fallback — CLI**:
+
+```bash
+mobiai brain review --no-fail
+```
+
+If 1+ overdue entries match, **mention them to the user** before The Process:
+
+> "Heads up — there are N overdue workaround(s) in <platform>/<area> that touch this space: <title>. I'll continue with the brainstorm; let me know if you want to factor those in first."
+
+Then proceed to The Process. Skip silently when:
+
+- The brain isn't initialized.
+- No overdue entries match the feature's area / platform.
+
 ## The Process
 
 **Understanding the idea:**
@@ -106,6 +129,53 @@ After the spec review passes, ask the user to review the written spec before pro
 > "Spec written and committed to `<path>`. Please review it and let me know if you want to make any changes before we start writing out the implementation plan."
 
 Wait for the user's response. Only proceed once the user approves.
+
+**Optional: capture decisions in MobiAI Brain**
+
+After the user approves the spec, check whether `<repo>/.mobiai/brain/config.json` exists. If it does NOT, skip this step silently.
+
+If it does, scan the spec for **architectural decisions worth remembering**. A decision belongs in the brain when it:
+
+- Picks a specific library, pattern or approach over alternatives (e.g. "Koin over Hilt", "MVI over MVVM", "Ktor over Retrofit").
+- Sets a project-wide convention that future code will follow (e.g. "all features expose a `Repository` interface", "errors flow as `Result<T, E>`").
+- Resolves a tradeoff that took real thought (e.g. "we accept duplicate state across screens to avoid a global store").
+
+Skip routine implementation details that are obvious from the spec itself ("the button is blue", "the screen has a back arrow"). Those don't need to live in the brain — the spec already captures them.
+
+If you find 1+ decisions worth saving, **propose** each save to the user (one-line confirmation per entry). Never invoke silently. A single brainstorming session may produce several distinct decisions — save them as separate entries so future `brain search` and filtering work cleanly.
+
+**Preferred — MCP tool** (if your client has the `mobiai-brain` MCP server registered, you'll see this tool in your toolbox):
+
+Invoke `mobile_save_decision` with:
+
+- `title`: short decision name, e.g. `"Use Koin for DI"`
+- `platform`: `android | ios | shared | kmp | flutter | react-native`
+- `area`: free-form, e.g. `"dependency_injection" | "navigation" | "state_management"`
+- `status`: `active` (decisions are active unless deprecated later via `mobile_promote`)
+- `files`: array of repo-relative paths (typically `[<spec_path>, <other_relevant_file>]`)
+- `body`: Markdown with `### Decision` / `### Reason` / `### Alternatives considered`
+
+**Fallback — CLI** (if MCP isn't configured):
+
+```bash
+mobiai brain save decision \
+  --title "<short decision name, e.g. 'Use Koin for DI'>" \
+  --platform <android|ios|shared|kmp|flutter|react-native> \
+  --area <free-form, e.g. dependency_injection | navigation | state_management> \
+  --status active \
+  --files "<spec_path>,<any_other_relevant_file>" \
+  --body "### Decision
+What we decided, in one sentence.
+
+### Reason
+Why this over the alternatives. What constraints made the alternatives worse.
+
+### Alternatives considered
+- <option A> — why rejected
+- <option B> — why rejected"
+```
+
+The body's `### Alternatives considered` block is the high-leverage part — it's why future agents won't re-litigate the same decision. Include it when the decision had real tradeoffs.
 
 **Implementation:**
 
