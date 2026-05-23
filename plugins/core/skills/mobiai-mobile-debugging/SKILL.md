@@ -104,6 +104,42 @@ Then continue with Phase 1. Don't pause unless asked. Skip silently when:
 - The brain isn't initialized.
 - No overdue entries match the area / platform of the issue.
 
+## Pre-flight: check the Graph for code structure
+
+Standalone invocations only — **skip this section when called from `mobiai-fix-issue`**, which already runs its own Graph pre-flight at Phase 1.
+
+The Graph indexes Kotlin/Swift symbols and can rank files by relevance to a symptom — useful for Phase 1 (Gather Evidence) and Phase 3 (Form a Hypothesis). Brain says "what's known about this area"; Graph says "where the affected code lives today".
+
+**If `<repo>/.mobiai/graph/index.json` exists**:
+
+```bash
+# Freshness — if "hace Xd" with X ≥ 1, suggest refresh (don't auto-run):
+mobiai graph status
+
+# Locate relevant files from the symptom (top results = where to look first):
+mobiai graph context "<one-line symptom or bug title>"
+
+# If a symbol appears in the stack trace, find its callers:
+mobiai graph callers <SymbolFromStackTrace>
+```
+
+If the index is ≥1 day old, mention it to the user before continuing:
+
+> "El índice del Graph es de hace Xd. Si querés resultados frescos, corré `mobiai graph init`."
+
+Don't run `init` autonomously — let the user decide.
+
+**If `.mobiai/graph/index.json` does not exist** and the project has `.kt` or `.swift` files:
+
+> "No veo el índice del Graph. Generalo con `mobiai graph init` y vuelvo a buscar — sin él tengo que grep a ciegas y leer más archivos de los necesarios."
+
+Don't run `init` autonomously.
+
+**Skip silently when**:
+
+- The project has no Kotlin/Swift files (Flutter-only or RN-only without native code).
+- The bug is purely in resources, config, or build files (Graph won't help).
+
 ## Phase 1: Gather Evidence
 
 Before forming any opinion, collect the raw material.

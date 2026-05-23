@@ -43,6 +43,47 @@ Then continue with Step 1. Skip silently when:
 - The brain isn't initialized.
 - No overdue entries match the area / platform of the code under test.
 
+## Pre-flight: check the Graph for code structure
+
+Standalone invocations only — **skip this section when called from `mobiai-fix-issue` or `mobiai-mobile-tdd`**, which run their own Graph pre-flight or wrap this skill mid-flow.
+
+The Graph helps locate the system under test, its callers, and nearby existing tests — useful before Step 1 (Understand What to Test) and Step 2 (Find Existing Test Patterns).
+
+**If `<repo>/.mobiai/graph/index.json` exists**:
+
+```bash
+# Freshness — if "hace Xd" with X ≥ 1, suggest refresh (don't auto-run):
+mobiai graph status
+
+# Locate the symbol being tested:
+mobiai graph search <ClassOrFunctionUnderTest>
+
+# See how it's used in the codebase (informs which test cases matter):
+mobiai graph callers <ClassOrFunctionUnderTest>
+
+# Find existing test classes nearby (informs patterns and naming):
+mobiai graph search Test --kind class --limit 20
+```
+
+The callers list reveals which call sites depend on the behavior — those are the cases worth covering. The existing-test search shows the project's actual test conventions (framework, naming, location).
+
+If the index is ≥1 day old:
+
+> "El índice del Graph es de hace Xd. Si querés resultados frescos, corré `mobiai graph init`."
+
+Don't run `init` autonomously.
+
+**If `.mobiai/graph/index.json` does not exist** and the project has `.kt` or `.swift` files:
+
+> "No veo el índice del Graph. Generalo con `mobiai graph init` y arranco — sin él tengo que descubrir las convenciones de tests grepeando."
+
+Don't run `init` autonomously.
+
+**Skip silently when**:
+
+- The project has no Kotlin/Swift files (Flutter or RN-only).
+- You're testing pure Dart / JS / TS code (Graph doesn't index those in V1).
+
 ## Workflow
 
 ### Step 1: Understand What to Test

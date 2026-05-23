@@ -16,6 +16,42 @@ Perform a mobile-specific code review, checking for common issues that static an
 - After applying a fix, to self-review before creating a PR
 - User shares a diff or PR and asks for feedback
 
+## Pre-flight: check the Graph for code structure
+
+The Graph indexes Kotlin/Swift symbols across the repo, so callers of any symbol modified in the diff can be located instantly. Used during Step 3 (Review Checklist) and Step 4 (Verify Test Coverage) to detect call sites and tests that the diff may have missed.
+
+**If `<repo>/.mobiai/graph/index.json` exists**:
+
+```bash
+# Freshness — if "hace Xd" with X ≥ 1, suggest refresh (don't auto-run):
+mobiai graph status
+
+# For each symbol modified/renamed in the diff, find callers outside the diff:
+mobiai graph callers <SymbolFromDiff>
+
+# If a symbol was renamed or removed, search for stale references:
+mobiai graph search <OldSymbolName>
+```
+
+The callers list surfaces call sites that the diff may not have updated — a common source of silent breakage when the PR is partial.
+
+If the index is ≥1 day old:
+
+> "El índice del Graph es de hace Xd. Si la rama tiene cambios recientes, considerá `mobiai graph init` antes de revisar."
+
+Don't run `init` autonomously.
+
+**If `.mobiai/graph/index.json` does not exist** and the project has `.kt` or `.swift` files:
+
+> "No veo el índice del Graph. Generalo con `mobiai graph init` para que pueda detectar callers fuera del diff."
+
+Don't run `init` autonomously.
+
+**Skip silently when**:
+
+- The project has no Kotlin/Swift files (Flutter or RN-only).
+- The diff is purely a config / resource / build-file change.
+
 ## Workflow
 
 ### Step 1: Identify the Correct Base Branch

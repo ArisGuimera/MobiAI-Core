@@ -95,6 +95,46 @@ Then continue with Phase 1. Don't pause unless the user asks to. Skip silently w
 - The brain isn't initialized (no `.mobiai/brain/config.json`).
 - No overdue entries match the platform / area of the bug.
 
+## Pre-flight: check the Graph for code structure
+
+The Graph indexes Kotlin/Swift symbols and ranks files by relevance to a symptom. Used here to acotar the surface of the bug **before** Phase 1, so the ticket reading already knows which files are central.
+
+Order: **Brain → Graph → action**. Brain provides historical context (workarounds, past fixes); Graph provides the current code map (which files implement the affected area today).
+
+**If `<repo>/.mobiai/graph/index.json` exists**:
+
+```bash
+# Freshness — if "hace Xd" with X ≥ 1, suggest refresh (don't auto-run):
+mobiai graph status
+
+# Locate relevant files from the ticket title / symptom:
+mobiai graph context "<ticket title or main symptom>"
+
+# If the ticket names a class/function, locate it:
+mobiai graph search <SymbolFromTicket>
+```
+
+The top-ranked files from `graph context` are the candidates to read in Phase 1. Don't blindly read everything — start with the top 3-5.
+
+If the index is ≥1 day old:
+
+> "El índice del Graph es de hace Xd. Si querés resultados frescos, corré `mobiai graph init`."
+
+Don't run `init` autonomously.
+
+**If `.mobiai/graph/index.json` does not exist** and the project has `.kt` or `.swift` files:
+
+> "No veo el índice del Graph. Generalo con `mobiai graph init` y arranco — sin él voy a tener que leer más archivos de los necesarios para entender el ticket."
+
+Don't run `init` autonomously.
+
+**Skip silently when**:
+
+- The project has no Kotlin/Swift files (Flutter-only or RN-only without native code).
+- The ticket is purely a config / resource / build-file change (Graph won't help).
+
+When `mobiai-mobile-debugging` runs at Phase 3, it inherits this pre-flight and skips its own Graph check to avoid duplicate prompts.
+
 ## Phase 1: Understand the Bug
 
 Get the full issue details before anything else — summary, description, reproduction steps, stack traces, affected versions, attachments.
