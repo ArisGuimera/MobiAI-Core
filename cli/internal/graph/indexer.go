@@ -13,18 +13,21 @@ import (
 // Walks do not descend into these directories. Defined as a var (not const)
 // so a future task can override or extend it.
 var defaultExcludedDirs = map[string]struct{}{
-	".git":         {},
-	".gradle":      {},
-	".idea":        {},
-	".vscode":      {},
-	".mobiai":      {},
-	"build":        {},
-	"dist":         {},
-	"out":          {},
-	"target":       {},
-	"Pods":         {},
-	"DerivedData":  {},
-	"node_modules": {},
+	".git":           {},
+	".gradle":        {},
+	".idea":          {},
+	".vscode":        {},
+	".mobiai":        {},
+	".claude":        {}, // Claude Code state: settings, agents, worktrees
+	".claude-plugin": {}, // Claude plugin metadata (this very repo uses it)
+	".worktrees":     {}, // Project-local git worktrees
+	"build":          {},
+	"dist":           {},
+	"out":            {},
+	"target":         {},
+	"Pods":           {},
+	"DerivedData":    {},
+	"node_modules":   {},
 }
 
 // Build walks root recursively, scans every .kt and .swift file with the
@@ -36,6 +39,7 @@ var defaultExcludedDirs = map[string]struct{}{
 // entirely (their subtrees are not walked):
 //
 //	.git .gradle .idea .vscode .mobiai
+//	.claude .claude-plugin .worktrees
 //	build dist out target
 //	Pods DerivedData
 //	node_modules

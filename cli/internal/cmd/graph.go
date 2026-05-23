@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -162,6 +163,8 @@ func newGraphSearchCmd() *cobra.Command {
 		RunE:  runGraphSearch,
 	}
 	graphCommonFlags(c)
+	c.Flags().Int("limit", 0, "máximo de resultados a mostrar (0 = sin límite)")
+	c.Flags().String("kind", "", "filtrar por tipo de símbolo (class, fun, object, interface, struct, enum, protocol, actor, func, extension)")
 	return c
 }
 
@@ -175,13 +178,41 @@ func runGraphSearch(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	limit, _ := c.Flags().GetInt("limit")
+	kind, _ := c.Flags().GetString("kind")
+
 	hits := graph.Search(idx, args[0])
+
+	// Filter by kind (case-insensitive) when --kind is provided. Done in the
+	// cmd layer instead of pushing it into graph.Search so the package API
+	// stays minimal — this is a UI concern.
+	if kind != "" {
+		kindLower := strings.ToLower(kind)
+		filtered := hits[:0:0]
+		for _, h := range hits {
+			if strings.ToLower(h.Symbol.Kind) == kindLower {
+				filtered = append(filtered, h)
+			}
+		}
+		hits = filtered
+	}
+
 	if len(hits) == 0 {
 		fmt.Fprintln(out, "Sin coincidencias.")
 		return nil
 	}
+
+	truncated := false
+	if limit > 0 && len(hits) > limit {
+		hits = hits[:limit]
+		truncated = true
+	}
+
 	for _, h := range hits {
 		fmt.Fprintf(out, "%s:%d %s %s\n", h.File, h.Symbol.Line, h.Symbol.Kind, h.Symbol.Name)
+	}
+	if truncated {
+		fmt.Fprintf(out, "… (mostrando %d, usá --limit 0 para ver todos)\n", limit)
 	}
 	return nil
 }

@@ -117,6 +117,40 @@ func TestGraphSearch_NoHits(t *testing.T) {
 	}
 }
 
+func TestGraphSearch_LimitFlag(t *testing.T) {
+	dir := t.TempDir()
+	// 5 different symbols all containing "Foo".
+	writeFile(t, dir, filepath.Join("app", "a.kt"), "class FooOne {}\nclass FooTwo {}\nclass FooThree {}\nclass FooFour {}\nclass FooFive {}\n")
+
+	_ = runGraph(t, []string{"init", "--root", dir})
+	out := runGraph(t, []string{"search", "Foo", "--limit", "2", "--root", dir})
+
+	// Should show exactly 2 hits plus the truncation hint.
+	hits := strings.Count(out, ".kt:")
+	if hits != 2 {
+		t.Errorf("expected 2 hits with --limit 2, got %d in: %s", hits, out)
+	}
+	if !strings.Contains(out, "mostrando 2") {
+		t.Errorf("expected truncation hint with --limit 2, got: %s", out)
+	}
+}
+
+func TestGraphSearch_KindFlag(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, dir, filepath.Join("app", "a.kt"), "class FooBar {}\nfun fooBar() {}\n")
+
+	_ = runGraph(t, []string{"init", "--root", dir})
+	out := runGraph(t, []string{"search", "foo", "--kind", "fun", "--root", dir})
+
+	// Only the function should match; the class must be filtered out.
+	if !strings.Contains(out, "fun fooBar") {
+		t.Errorf("expected 'fun fooBar' hit with --kind fun, got: %s", out)
+	}
+	if strings.Contains(out, "class FooBar") {
+		t.Errorf("did NOT expect class hit with --kind fun, got: %s", out)
+	}
+}
+
 func TestGraphCallers_FindsRefs(t *testing.T) {
 	dir := t.TempDir()
 	writeFile(t, dir, filepath.Join("app", "a.kt"), "class Foo {}\n")

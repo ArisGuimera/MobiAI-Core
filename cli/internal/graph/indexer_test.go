@@ -73,6 +73,29 @@ func TestBuild_SkipsExcludedDirs(t *testing.T) {
 	}
 }
 
+func TestBuild_SkipsClaudeAndWorktreeDirs(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, filepath.Join(dir, "app", "Real.kt"), "class Real {}\n")
+	// Real Claude Code clutter that showed up in user projects: agent
+	// worktrees nested under .claude. The whole .claude tree should be
+	// invisible to the indexer, otherwise we double-index everything.
+	writeFile(t, filepath.Join(dir, ".claude", "worktrees", "ios-v5", "src", "FakeViewModel.kt"), "class FakeViewModel {}\n")
+	writeFile(t, filepath.Join(dir, ".claude", "skills", "custom", "Notes.kt"), "class Notes {}\n")
+	writeFile(t, filepath.Join(dir, ".claude-plugin", "marketplace", "Bundle.kt"), "class Bundle {}\n")
+	writeFile(t, filepath.Join(dir, ".worktrees", "feature-x", "App.kt"), "class App {}\n")
+
+	idx, err := Build(dir)
+	if err != nil {
+		t.Fatalf("Build: %v", err)
+	}
+	if len(idx.Files) != 1 {
+		t.Fatalf("want 1 file (only app/Real.kt), got %d: %+v", len(idx.Files), idx.Files)
+	}
+	if idx.Files[0].Path != "app/Real.kt" {
+		t.Errorf("unexpected file: %q", idx.Files[0].Path)
+	}
+}
+
 func TestBuild_PathsAreRepoRelativeForwardSlashes(t *testing.T) {
 	dir := t.TempDir()
 	writeFile(t, filepath.Join(dir, "a", "b", "c", "Foo.kt"), "class Foo {}\n")
