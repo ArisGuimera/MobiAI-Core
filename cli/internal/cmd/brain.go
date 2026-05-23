@@ -13,6 +13,7 @@ import (
 
 	"github.com/ArisGuimera/MobiAI-Core/cli/internal/brain"
 	brainmcp "github.com/ArisGuimera/MobiAI-Core/cli/internal/brain/mcp"
+	"github.com/ArisGuimera/MobiAI-Core/cli/internal/branding"
 )
 
 // NewBrainCmd builds `mobiai brain <init|scan|context>`.
@@ -83,6 +84,14 @@ func newBrainInitCmd() *cobra.Command {
 
 func runBrainInit(c *cobra.Command, _ []string) error {
 	out := c.OutOrStdout()
+	// Banner first — `brain init` is the user's entry point into the
+	// Brain ecosystem, so it's the right moment to show the wordmark.
+	// Print() handles --no-color, NO_COLOR env, and TTY detection
+	// internally; we just pass the flag value.
+	flags := FlagsFromCmd(c)
+	branding.Print(out, flags.NoColor)
+	fmt.Fprintln(out, "")
+
 	info, err := resolveBrainRoot(c)
 	if err != nil {
 		return err

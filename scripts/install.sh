@@ -95,5 +95,30 @@ if [ -n "${RC}" ] && ! echo "${PATH}" | grep -q "${INSTALL_DIR}"; then
     echo "  source ${RC}"
 fi
 
+# Welcome banner — printed last so the user's eye lands on the
+# wordmark + next step together. Respect NO_COLOR per the spec
+# (https://no-color.org/) and skip ANSI when stdout isn't a tty.
 echo ""
+if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
+    BANNER_COLOR="\033[1;36m"   # bold cyan
+    TAGLINE_COLOR="\033[2;37m"  # dim white
+    RESET="\033[0m"
+else
+    BANNER_COLOR=""
+    TAGLINE_COLOR=""
+    RESET=""
+fi
+
+printf '%s' "${BANNER_COLOR}"
+cat <<'BANNER'
+███╗   ███╗  ██████╗  ██████╗  ██╗       ██████╗  ██╗
+████╗ ████║ ██╔═══██╗ ██╔══██╗ ██║      ██╔═══██╗ ██║
+██╔████╔██║ ██║   ██║ ██████╔╝ ██║      ███████║ ██║
+██║╚██╔╝██║ ██║   ██║ ██╔══██╗ ██║      ██╔══██║ ██║
+██║ ╚═╝ ██║ ╚██████╔╝ ██████╔╝ ██║      ██║  ██║ ██║
+╚═╝     ╚═╝  ╚═════╝  ╚═════╝  ╚═╝      ╚═╝  ╚═╝ ╚═╝
+BANNER
+printf '%s\n\n' "${RESET}"
+printf '%s            AI FOR MOBILE DEVELOPERS%s\n\n' "${TAGLINE_COLOR}" "${RESET}"
+
 echo "Próximo paso: mobiai --version"
