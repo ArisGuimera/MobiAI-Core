@@ -17,6 +17,24 @@ func TestRender_PlainHasNoEscapes(t *testing.T) {
 	}
 }
 
+// TestBanner_AllRowsSameWidth guards against the previous bug where the
+// "A" glyph in rows 1, 2 and 6 was actually an "O" glyph, leaving the
+// trailing "AI" misaligned. Every row of the wordmark must have the
+// same rune count so the letters stack visually in a fixed-width
+// terminal.
+func TestBanner_AllRowsSameWidth(t *testing.T) {
+	rows := strings.Split(banner, "\n")
+	if len(rows) != 6 {
+		t.Fatalf("banner should have 6 rows, got %d", len(rows))
+	}
+	want := len([]rune(rows[0]))
+	for i, row := range rows {
+		if got := len([]rune(row)); got != want {
+			t.Errorf("row %d width = %d, want %d (banner alignment broken)\n  row: %q", i+1, got, want, row)
+		}
+	}
+}
+
 func TestRender_ColorWrapsInEscapes(t *testing.T) {
 	out := Render(true)
 	if !strings.Contains(out, "\033[1;36m") {

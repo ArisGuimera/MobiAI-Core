@@ -10,15 +10,16 @@ import (
 	"strings"
 )
 
-// banner is the MOBIAI wordmark in block-style ASCII. Hand-crafted to
-// match the visual we agreed on with the team; do not regenerate from
-// figlet — the spacing was tweaked by hand.
-const banner = `███╗   ███╗  ██████╗  ██████╗  ██╗       ██████╗  ██╗
-████╗ ████║ ██╔═══██╗ ██╔══██╗ ██║      ██╔═══██╗ ██║
-██╔████╔██║ ██║   ██║ ██████╔╝ ██║      ███████║ ██║
-██║╚██╔╝██║ ██║   ██║ ██╔══██╗ ██║      ██╔══██║ ██║
-██║ ╚═╝ ██║ ╚██████╔╝ ██████╔╝ ██║      ██║  ██║ ██║
-╚═╝     ╚═╝  ╚═════╝  ╚═════╝  ╚═╝      ╚═╝  ╚═╝ ╚═╝`
+// banner is the MOBIAI wordmark in block-style ASCII (figlet "ANSI
+// Shadow"). All 6 rows are exactly 49 columns; letters M/O/B/I/A/I are
+// composed from the canonical figlet glyphs joined by a single space,
+// with a 3-space gap separating "MOBI" from "AI".
+const banner = `███╗   ███╗  ██████╗  ██████╗  ██╗    █████╗  ██╗
+████╗ ████║ ██╔═══██╗ ██╔══██╗ ██║   ██╔══██╗ ██║
+██╔████╔██║ ██║   ██║ ██████╔╝ ██║   ███████║ ██║
+██║╚██╔╝██║ ██║   ██║ ██╔══██╗ ██║   ██╔══██║ ██║
+██║ ╚═╝ ██║ ╚██████╔╝ ██████╔╝ ██║   ██║  ██║ ██║
+╚═╝     ╚═╝  ╚═════╝  ╚═════╝  ╚═╝   ╚═╝  ╚═╝ ╚═╝`
 
 // tagline appears centered-ish under the wordmark. Short and stable —
 // don't seasonally rewrite, it's part of the brand identity.
