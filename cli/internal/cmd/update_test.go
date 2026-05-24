@@ -26,7 +26,7 @@ func TestUpdate_FromLocalRoot_UpdatesMeta(t *testing.T) {
 		t.Fatalf("execute: %v", err)
 	}
 
-	if !strings.Contains(out.String(), "Catálogo actualizado") {
+	if !strings.Contains(out.String(), "Catálogo de skills actualizado") {
 		t.Errorf("output: %q", out.String())
 	}
 
@@ -136,7 +136,7 @@ func TestUpdate_GitClone_FreshCache(t *testing.T) {
 	if !strings.Contains(out.String(), "Clonando catálogo") {
 		t.Errorf("expected clone message; got: %q", out.String())
 	}
-	if !strings.Contains(out.String(), "Catálogo actualizado") {
+	if !strings.Contains(out.String(), "Catálogo de skills actualizado") {
 		t.Errorf("expected success message; got: %q", out.String())
 	}
 

@@ -84,7 +84,8 @@ func NewUpdateCmd() *cobra.Command {
 			if err := meta.Save(paths); err != nil {
 				return err
 			}
-			fmt.Fprintf(out, "Catálogo actualizado a versión %s.\n", meta.Version)
+			fmt.Fprintf(out, "Catálogo de skills actualizado a v%s.\n", meta.Version)
+			fmt.Fprintf(out, "Binario mobiai: %s.\n", version)
 			fmt.Fprintf(out, "%d packs disponibles en %s.\n", len(c.Packs), rootFlag)
 			return nil
 		},
