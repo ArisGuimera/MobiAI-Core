@@ -13,34 +13,50 @@ import (
 // version is set at build time via -ldflags "-X main.version=..."
 var version = "dev"
 
-// usageTemplate mirrors cobra's default but with Spanish labels.
-const usageTemplate = `Uso:{{if .Runnable}}
+// usageTemplate mirrors cobra's default but with Spanish labels and
+// ANSI styling. The `head`, `styleCmd` and `dim` funcs come from the
+// `branding` package and short-circuit to plain text when --no-color,
+// NO_COLOR, or a non-TTY destination is detected.
+//
+// We apply the style funcs AFTER rpad so cobra's column width calc
+// (which counts bytes) doesn't see the escape sequences. Wrapping the
+// padded string is fine visually — the escape brackets the whole token
+// including its trailing spaces.
+const usageTemplate = `{{head "Uso:"}}{{if .Runnable}}
   {{.UseLine}}{{end}}{{if .HasAvailableSubCommands}}
   {{.CommandPath}} [comando]{{end}}{{if gt (len .Aliases) 0}}
 
-Alias:
+{{head "Alias:"}}
   {{.NameAndAliases}}{{end}}{{if .HasExample}}
 
-Ejemplos:
+{{head "Ejemplos:"}}
 {{.Example}}{{end}}{{if .HasAvailableSubCommands}}
 
-Comandos disponibles:{{range .Commands}}{{if (or .IsAvailableCommand (eq .Name "help"))}}
-  {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{end}}{{if .HasAvailableLocalFlags}}
+{{head "Comandos disponibles:"}}{{range .Commands}}{{if (or .IsAvailableCommand (eq .Name "help"))}}
+  {{rpad .Name .NamePadding | styleCmd}} {{.Short}}{{end}}{{end}}{{end}}{{if .HasAvailableLocalFlags}}
 
-Flags:
+{{head "Flags:"}}
 {{.LocalFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasAvailableInheritedFlags}}
 
-Flags globales:
+{{head "Flags globales:"}}
 {{.InheritedFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasHelpSubCommands}}
 
-Temas adicionales:{{range .Commands}}{{if .IsAdditionalHelpTopicCommand}}
-  {{rpad .CommandPath .CommandPathPadding}} {{.Short}}{{end}}{{end}}{{end}}{{if .HasAvailableSubCommands}}
+{{head "Temas adicionales:"}}{{range .Commands}}{{if .IsAdditionalHelpTopicCommand}}
+  {{rpad .CommandPath .CommandPathPadding | styleCmd}} {{.Short}}{{end}}{{end}}{{end}}{{if .HasAvailableSubCommands}}
 
-Usá "{{.CommandPath}} [comando] --help" para más información sobre un comando.{{end}}
+Usá "{{styleCmd (printf "%s [comando] --help" .CommandPath)}}" para más información sobre un comando.{{end}}
 `
 
 func newRootCmd(v string) *cobra.Command {
 	cmd.SetVersion(v)
+
+	// Register cobra template funcs that style help output. They check
+	// shouldStyle() at call time (which reads the --no-color override set
+	// by PersistentPreRunE below), so help for subcommands is styled too.
+	cobra.AddTemplateFunc("head", branding.StyleHeading)
+	cobra.AddTemplateFunc("styleCmd", branding.StyleCmd)
+	cobra.AddTemplateFunc("dim", branding.StyleDim)
+
 	root := &cobra.Command{
 		Use:     "mobiai",
 		Short:   "MobiAI CLI — gestiona el ecosistema MobiAI para desarrollo móvil con IA",
