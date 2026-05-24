@@ -10,5 +10,5 @@
   "repository": "https://github.com/ArisGuimera/MobiAI-Core",
   "license": "MIT",
   "keywords": ["react-native", "javascript", "typescript", "mobile"],
-  "dependencies": ["core"]
+  "dependencies": ["core", "android", "ios"]
 }
