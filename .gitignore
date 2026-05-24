@@ -36,6 +36,9 @@ cli/dist/
 # Embedded catalog (populated by go generate before build)
 cli/internal/embedded/plugins/
 
+# Brain runtime state (creado por `mobiai brain init` al correr el CLI en el repo)
+.mobiai/
+
 # Go test binaries (created when using `go test -c -o test.exe` workaround)
 **/test.exe
 **/*.test.exe
