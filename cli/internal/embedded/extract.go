@@ -14,7 +14,7 @@ import (
 // preserving the directory structure. Existing files are overwritten.
 // dstRoot is created if missing.
 //
-// After Extract, dstRoot contains a layout identical to the source plugins/
+// After Extract, dstRoot contains a layout identical to the source skills/
 // directory: <dstRoot>/<pack>/.claude-plugin/plugin.json,
 // <dstRoot>/<pack>/skills/..., etc.
 //
@@ -32,14 +32,14 @@ func Extract(dstRoot string) error {
 		if path == "." {
 			return nil
 		}
-		// Strip the leading "plugins/" segment so dstRoot acts as the
-		// equivalent of the repo's plugins/ dir.
+		// Strip the leading "skills/" segment so dstRoot acts as the
+		// equivalent of the repo's skills/ dir.
 		rel := path
-		if rel == "plugins" {
+		if rel == "skills" {
 			return os.MkdirAll(dstRoot, 0o755)
 		}
-		if len(rel) > len("plugins/") && rel[:len("plugins/")] == "plugins/" {
-			rel = rel[len("plugins/"):]
+		if len(rel) > len("skills/") && rel[:len("skills/")] == "skills/" {
+			rel = rel[len("skills/"):]
 		}
 		target := filepath.Join(dstRoot, rel)
 		if d.IsDir() {
@@ -75,10 +75,10 @@ func isExecutable(name string, data []byte) bool {
 var ErrEmpty = errors.New("embedded plugins are empty (was `go generate` run?)")
 
 // IsEmpty reports whether the embedded FS contains any plugins. Returns
-// true on read errors (e.g., the plugins/ directory does not exist in the
+// true on read errors (e.g., the skills/ directory does not exist in the
 // embed) so callers fall back to other catalog sources rather than panicking.
 func IsEmpty() bool {
-	entries, err := Plugins.ReadDir("plugins")
+	entries, err := Plugins.ReadDir("skills")
 	if err != nil {
 		return true
 	}

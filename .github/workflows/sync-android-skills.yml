@@ -37,24 +37,24 @@ jobs:
             echo "::error::Upstream LICENSE.txt no longer references Version 2.0. Manual review required."
             exit 1
           fi
-          if ! diff -q _upstream/LICENSE.txt plugins/android/skills/google/LICENSE > /dev/null; then
+          if ! diff -q _upstream/LICENSE.txt skills/android/skills/google/LICENSE > /dev/null; then
             echo "::notice::Upstream LICENSE differs from vendored copy. Will update in the sync PR."
           fi
 
       - name: Refresh vendored LICENSE, README, and NOTICE
         run: |
           set -euo pipefail
-          cp _upstream/LICENSE.txt plugins/android/skills/google/LICENSE
-          cp _upstream/README.md plugins/android/skills/google/README.md
+          cp _upstream/LICENSE.txt skills/android/skills/google/LICENSE
+          cp _upstream/README.md skills/android/skills/google/README.md
           if [ -f _upstream/NOTICE ]; then
-            cp _upstream/NOTICE plugins/android/skills/google/NOTICE
+            cp _upstream/NOTICE skills/android/skills/google/NOTICE
           else
-            rm -f plugins/android/skills/google/NOTICE
+            rm -f skills/android/skills/google/NOTICE
           fi
 
       - name: Sync SKILL.md directories
         env:
-          VENDOR_ROOT: plugins/android/skills/google
+          VENDOR_ROOT: skills/android/skills/google
         run: |
           set -euo pipefail
 

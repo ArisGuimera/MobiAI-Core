@@ -15,9 +15,9 @@ func TestPlugins_HasMarketplaceJSON(t *testing.T) {
 		t.Fatal("embedded Plugins is empty — run `go generate ./...` before testing")
 	}
 	// The repo's marketplace.json lives at .claude-plugin/marketplace.json,
-	// outside the plugins/ tree, so the embedded FS will NOT contain it.
+	// outside the skills/ tree, so the embedded FS will NOT contain it.
 	// Instead, verify that at least one expected pack manifest is present.
-	if _, err := Plugins.ReadFile("plugins/core/.claude-plugin/plugin.json"); err != nil {
+	if _, err := Plugins.ReadFile("skills/core/.claude-plugin/plugin.json"); err != nil {
 		t.Errorf("expected core/.claude-plugin/plugin.json in embed: %v", err)
 	}
 }

@@ -1,9 +1,9 @@
 # Ensure shell scripts always have LF line endings
 *.sh text eol=lf
-plugins/core/hooks/session-start text eol=lf
+skills/core/hooks/session-start text eol=lf
 
 # Ensure the polyglot wrapper keeps LF (it's parsed by both cmd and bash)
-plugins/core/hooks/run-hook.cmd text eol=lf
+skills/core/hooks/run-hook.cmd text eol=lf
 
 # Common text files
 *.md text eol=lf

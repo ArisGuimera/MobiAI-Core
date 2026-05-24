@@ -12,12 +12,12 @@
   "license": "MIT",
   "keywords": ["mobile", "android", "ios", "flutter", "react-native", "kmp"],
   "skills": [
-    "./plugins/core/skills/",
-    "./plugins/android/skills/",
-    "./plugins/ios/skills/",
-    "./plugins/kmp/skills/",
-    "./plugins/flutter/skills/",
-    "./plugins/react-native/skills/"
+    "./skills/core/skills/",
+    "./skills/android/skills/",
+    "./skills/ios/skills/",
+    "./skills/kmp/skills/",
+    "./skills/flutter/skills/",
+    "./skills/react-native/skills/"
   ],
-  "hooks": "./plugins/core/hooks/hooks-cursor.json"
+  "hooks": "./skills/core/hooks/hooks-cursor.json"
 }

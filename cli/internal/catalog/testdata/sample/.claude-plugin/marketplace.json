@@ -11,27 +11,27 @@
   "plugins": [
     {
       "name": "core",
-      "source": "./plugins/core",
+      "source": "./skills/core",
       "description": "Internal core plugin",
       "category": "internal"
     },
     {
       "name": "android",
-      "source": "./plugins/android",
+      "source": "./skills/android",
       "description": "Android platform plugin",
       "category": "platform",
       "tags": ["android", "kotlin"]
     },
     {
       "name": "ios",
-      "source": "./plugins/ios",
+      "source": "./skills/ios",
       "description": "iOS platform plugin",
       "category": "platform",
       "tags": ["ios", "swift"]
     },
     {
       "name": "kmp",
-      "source": "./plugins/kmp",
+      "source": "./skills/kmp",
       "description": "KMP plugin (depends on android+ios)",
       "category": "platform",
       "tags": ["kmp"]

@@ -33,8 +33,8 @@ func TestCatalog_Get(t *testing.T) {
 	if kmp.Manifest.Name != "kmp" {
 		t.Errorf("Manifest.Name: got %q, want %q", kmp.Manifest.Name, "kmp")
 	}
-	if kmp.Ref.Source != "./plugins/kmp" {
-		t.Errorf("Ref.Source: got %q, want %q", kmp.Ref.Source, "./plugins/kmp")
+	if kmp.Ref.Source != "./skills/kmp" {
+		t.Errorf("Ref.Source: got %q, want %q", kmp.Ref.Source, "./skills/kmp")
 	}
 	if _, err := c.Get("does-not-exist"); err == nil {
 		t.Error("Get(does-not-exist): expected error, got nil")

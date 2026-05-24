@@ -7,7 +7,7 @@ import (
 
 func TestLoadPlugin_Core(t *testing.T) {
 	root := filepath.Join("testdata", "sample")
-	pm, err := LoadPlugin(root, "./plugins/core")
+	pm, err := LoadPlugin(root, "./skills/core")
 	if err != nil {
 		t.Fatalf("LoadPlugin: %v", err)
 	}
@@ -24,7 +24,7 @@ func TestLoadPlugin_Core(t *testing.T) {
 
 func TestLoadPlugin_AndroidWithDeps(t *testing.T) {
 	root := filepath.Join("testdata", "sample")
-	pm, err := LoadPlugin(root, "./plugins/android")
+	pm, err := LoadPlugin(root, "./skills/android")
 	if err != nil {
 		t.Fatalf("LoadPlugin: %v", err)
 	}
@@ -38,7 +38,7 @@ func TestLoadPlugin_AndroidWithDeps(t *testing.T) {
 
 func TestLoadPlugin_KMPMultipleDeps(t *testing.T) {
 	root := filepath.Join("testdata", "sample")
-	pm, err := LoadPlugin(root, "./plugins/kmp")
+	pm, err := LoadPlugin(root, "./skills/kmp")
 	if err != nil {
 		t.Fatalf("LoadPlugin: %v", err)
 	}
@@ -55,7 +55,7 @@ func TestLoadPlugin_KMPMultipleDeps(t *testing.T) {
 
 func TestLoadPlugin_MissingPluginJSON(t *testing.T) {
 	root := filepath.Join("testdata", "sample")
-	_, err := LoadPlugin(root, "./plugins/does-not-exist")
+	_, err := LoadPlugin(root, "./skills/does-not-exist")
 	if err == nil {
 		t.Fatal("expected error for missing plugin.json, got nil")
 	}

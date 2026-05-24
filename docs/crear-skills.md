@@ -35,17 +35,17 @@ Esto significa que:
 
 Primero decidí a qué plugin pertenece tu skill:
 
-- `plugins/core/skills/` — workflow cross-platform (planning, debugging, tdd, etc.)
-- `plugins/android/skills/` — Android específico
-- `plugins/ios/skills/` — iOS específico
-- `plugins/kmp/skills/` — Kotlin Multiplatform
-- `plugins/flutter/skills/` — Flutter / Dart
-- `plugins/react-native/skills/` — React Native
+- `skills/core/skills/` — workflow cross-platform (planning, debugging, tdd, etc.)
+- `skills/android/skills/` — Android específico
+- `skills/ios/skills/` — iOS específico
+- `skills/kmp/skills/` — Kotlin Multiplatform
+- `skills/flutter/skills/` — Flutter / Dart
+- `skills/react-native/skills/` — React Native
 
 Luego creá el directorio:
 
 ```
-plugins/<plugin>/skills/mi-skill/
+skills/<plugin>/skills/mi-skill/
   SKILL.md              # Requerido
   references/           # Opcional: docs detalladas
   scripts/              # Opcional: scripts de ayuda
@@ -65,13 +65,13 @@ El archivo tiene dos partes:
 **Cuerpo en Markdown** (flexible) — las instrucciones para la IA. No hay una estructura rígida obligatoria. Organízalo como tenga sentido para tu skill: puedes usar secciones como "Workflow", "Steps", secciones por plataforma, tablas de referencia, comandos exactos, árboles de decisión, etc. Lo importante es que sea claro y accionable.
 
 Mira los skills existentes como ejemplo — cada uno tiene la estructura que mejor se adapta a lo que hace:
-- [mobiai-analyze-crash](../plugins/core/skills/mobiai-analyze-crash/SKILL.md) — flujo paso a paso con decisiones
-- [mobiai-android-device](../plugins/android/skills/mobiai-android-device/SKILL.md) — referencia de comandos y patrones
-- [mobiai-fix-issue](../plugins/core/skills/mobiai-fix-issue/SKILL.md) — pipeline completo con reglas de decisión
+- [mobiai-analyze-crash](../skills/core/skills/mobiai-analyze-crash/SKILL.md) — flujo paso a paso con decisiones
+- [mobiai-android-device](../skills/android/skills/mobiai-android-device/SKILL.md) — referencia de comandos y patrones
+- [mobiai-fix-issue](../skills/core/skills/mobiai-fix-issue/SKILL.md) — pipeline completo con reglas de decisión
 
 ### 3. Agrégalo al catálogo
 
-Añade tu skill a la tabla en `plugins/core/skills/using-mobiai/SKILL.md`.
+Añade tu skill a la tabla en `skills/core/skills/using-mobiai/SKILL.md`.
 
 ### 4. Pruébalo
 

@@ -34,7 +34,7 @@ docs/roadmap-next-steps.md
 cli/dist/
 
 # Embedded catalog (populated by go generate before build)
-cli/internal/embedded/plugins/
+cli/internal/embedded/skills/
 
 # Brain runtime state (creado por `mobiai brain init` al correr el CLI en el repo)
 .mobiai/

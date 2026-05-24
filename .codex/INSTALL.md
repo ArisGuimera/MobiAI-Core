@@ -20,7 +20,7 @@ Enable MobiAI skills in Codex via native skill discovery. Clone once, create one
    ```bash
    mkdir -p ~/.agents/skills
    for plugin in core android ios kmp flutter react-native; do
-     ln -sf ~/.codex/mobiai-core/plugins/$plugin/skills ~/.agents/skills/mobiai-$plugin
+     ln -sf ~/.codex/mobiai-core/skills/$plugin/skills ~/.agents/skills/mobiai-$plugin
    done
    ```
 
@@ -28,7 +28,7 @@ Enable MobiAI skills in Codex via native skill discovery. Clone once, create one
    ```powershell
    New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.agents\skills"
    foreach ($plugin in @("core", "android", "ios", "kmp", "flutter", "react-native")) {
-     cmd /c mklink /J "$env:USERPROFILE\.agents\skills\mobiai-$plugin" "$env:USERPROFILE\.codex\mobiai-core\plugins\$plugin\skills"
+     cmd /c mklink /J "$env:USERPROFILE\.agents\skills\mobiai-$plugin" "$env:USERPROFILE\.codex\mobiai-core\skills\$plugin\skills"
    }
    ```
 

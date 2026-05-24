@@ -1,4 +1,4 @@
-// gen copies the repo-level plugins/ directory into cli/internal/embedded/plugins/
+// gen copies the repo-level skills/ directory into cli/internal/embedded/skills/
 // so that go:embed can pick it up. Runs via `go generate ./...`.
 //
 // This file is excluded from normal builds with the `ignore` build tag.
@@ -18,17 +18,17 @@ func main() {
 	// Working directory when run via `go generate` is the directory of the
 	// file containing the //go:generate directive, which is
 	// cli/internal/embedded/. Repo root is 3 levels up.
-	src, err := filepath.Abs(filepath.Join("..", "..", "..", "plugins"))
+	src, err := filepath.Abs(filepath.Join("..", "..", "..", "skills"))
 	if err != nil {
 		log.Fatal(err)
 	}
-	dst, err := filepath.Abs(filepath.Join("plugins"))
+	dst, err := filepath.Abs(filepath.Join("skills"))
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	if _, err := os.Stat(src); err != nil {
-		log.Fatalf("plugins/ source not found at %s: %v", src, err)
+		log.Fatalf("skills/ source not found at %s: %v", src, err)
 	}
 
 	if err := os.RemoveAll(dst); err != nil {

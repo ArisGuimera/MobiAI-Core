@@ -23,8 +23,8 @@ func TestLoadMarketplace_Sample(t *testing.T) {
 	if mp.Plugins[0].Name != "core" {
 		t.Errorf("Plugins[0].Name: got %q, want %q", mp.Plugins[0].Name, "core")
 	}
-	if mp.Plugins[1].Source != "./plugins/android" {
-		t.Errorf("Plugins[1].Source: got %q, want %q", mp.Plugins[1].Source, "./plugins/android")
+	if mp.Plugins[1].Source != "./skills/android" {
+		t.Errorf("Plugins[1].Source: got %q, want %q", mp.Plugins[1].Source, "./skills/android")
 	}
 	if got := mp.Plugins[1].Tags; len(got) != 2 || got[0] != "android" {
 		t.Errorf("Plugins[1].Tags: got %v, want [android kotlin]", got)

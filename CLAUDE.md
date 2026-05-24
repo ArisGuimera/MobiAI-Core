@@ -4,7 +4,7 @@ MobiAI is an AI ecosystem for mobile development: skills, specialized agents, an
 
 ## Bootstrap
 
-The full skill catalog is at `plugins/core/skills/using-mobiai/SKILL.md`. It loads automatically on session start and lists all available skills with a decision guide for when to use each one.
+The full skill catalog is at `skills/core/skills/using-mobiai/SKILL.md`. It loads automatically on session start and lists all available skills with a decision guide for when to use each one.
 
 ## Principles
 

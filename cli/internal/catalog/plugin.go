@@ -20,7 +20,7 @@ type PluginManifest struct {
 }
 
 // LoadPlugin reads <rootDir>/<source>/.claude-plugin/plugin.json.
-// source is the relative path from marketplace.json (e.g., "./plugins/core").
+// source is the relative path from marketplace.json (e.g., "./skills/core").
 func LoadPlugin(rootDir, source string) (*PluginManifest, error) {
 	path := filepath.Join(rootDir, filepath.FromSlash(source), ".claude-plugin", "plugin.json")
 	data, err := os.ReadFile(path)

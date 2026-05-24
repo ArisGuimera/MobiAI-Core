@@ -313,7 +313,7 @@ func defaultCatalogRoot() string {
 	// 4. Embedded catalog: extract to ~/.mobiai/cache/embedded/ on first use,
 	//    then return its path. The embed has no top-level marketplace.json
 	//    (it lives at .claude-plugin/marketplace.json which is outside the
-	//    plugins/ tree the embed captures). We synthesize a minimal
+	//    skills/ tree the embed captures). We synthesize a minimal
 	//    marketplace.json from plugin.json files at extract time.
 	if !embedded.IsEmpty() && err == nil {
 		paths, perr := state.NewPaths()
@@ -328,7 +328,7 @@ func defaultCatalogRoot() string {
 }
 
 // ensureEmbeddedExtracted writes the bundled catalog to embedRoot (idempotent).
-// The embedded FS only ships plugins/ — to make catalog.Load happy, we also
+// The embedded FS only ships skills/ — to make catalog.Load happy, we also
 // synthesize a .claude-plugin/marketplace.json that lists every embedded pack.
 func ensureEmbeddedExtracted(embedRoot string) error {
 	marketplaceFile := filepath.Join(embedRoot, ".claude-plugin", "marketplace.json")
@@ -336,13 +336,13 @@ func ensureEmbeddedExtracted(embedRoot string) error {
 		return nil // already extracted
 	}
 
-	pluginsDst := filepath.Join(embedRoot, "plugins")
-	if err := embedded.Extract(pluginsDst); err != nil {
+	skillsDst := filepath.Join(embedRoot, "skills")
+	if err := embedded.Extract(skillsDst); err != nil {
 		return err
 	}
 
 	// Synthesize marketplace.json by listing every plugin dir.
-	entries, err := os.ReadDir(pluginsDst)
+	entries, err := os.ReadDir(skillsDst)
 	if err != nil {
 		return err
 	}
@@ -351,7 +351,7 @@ func ensureEmbeddedExtracted(embedRoot string) error {
 		if !e.IsDir() {
 			continue
 		}
-		if _, err := os.Stat(filepath.Join(pluginsDst, e.Name(), ".claude-plugin", "plugin.json")); err == nil {
+		if _, err := os.Stat(filepath.Join(skillsDst, e.Name(), ".claude-plugin", "plugin.json")); err == nil {
 			plugins = append(plugins, e.Name())
 		}
 	}
@@ -366,7 +366,7 @@ func ensureEmbeddedExtracted(embedRoot string) error {
 		if i > 0 {
 			b.WriteString(",")
 		}
-		fmt.Fprintf(&b, `{"name":%q,"source":"./plugins/%s","description":"","category":""}`, name, name)
+		fmt.Fprintf(&b, `{"name":%q,"source":"./skills/%s","description":"","category":""}`, name, name)
 	}
 	b.WriteString("]}")
 	return os.WriteFile(marketplaceFile, []byte(b.String()), 0o644)
