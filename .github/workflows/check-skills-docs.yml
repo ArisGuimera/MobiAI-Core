@@ -1,0 +1,72 @@
+name: Check skills docs
+
+# Bloquea PRs que agreguen o modifiquen skills sin actualizar la
+# documentación. La idea es evitar que el catálogo central
+# (`skills/core/skills/using-mobiai/SKILL.md`) y el README queden
+# desincronizados respecto a las skills disponibles.
+
+on:
+  pull_request:
+    paths:
+      - 'skills/**/SKILL.md'
+      - 'skills/**/.claude-plugin/plugin.json'
+
+jobs:
+  check-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (con historia para diff)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verificar que se actualizó la documentación
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+
+          changed=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")
+
+          # Archivos de skill que cambiaron en este PR.
+          # Excluye los skills oficiales vendoreados de Google: se sincronizan
+          # automáticamente desde upstream (.github/workflows/sync-android-skills.yml),
+          # así que no son contribuciones nuestras y no requieren docs.
+          touched_skills=$(echo "$changed" \
+            | grep -E '^skills/.*/(SKILL\.md|\.claude-plugin/plugin\.json)$' \
+            | grep -v '^skills/android/skills/google/' \
+            || true)
+
+          if [ -z "$touched_skills" ]; then
+            echo "No hay cambios en skills propias — skip."
+            exit 0
+          fi
+
+          echo "Skills tocadas en este PR:"
+          echo "$touched_skills" | sed 's/^/  - /'
+          echo
+
+          # Qué archivos cuentan como "documentación de skills".
+          touched_docs=$(echo "$changed" \
+            | grep -E '^(README\.md|CONTRIBUTING\.md|docs/.+\.md|skills/core/skills/using-mobiai/SKILL\.md)$' \
+            || true)
+
+          if [ -z "$touched_docs" ]; then
+            echo "::error::Este PR agrega o modifica skills pero no toca documentación."
+            echo
+            echo "Cuando agregás o cambiás una skill, actualizá también al menos uno de:"
+            echo "  • skills/core/skills/using-mobiai/SKILL.md  (catálogo central)"
+            echo "  • README.md                                 (tabla de skills disponibles)"
+            echo "  • CONTRIBUTING.md                           (si cambiaste cómo se contribuye)"
+            echo "  • docs/*.md                                 (cualquier guía relevante)"
+            echo
+            echo "Si tu cambio es trivial (typo, refactor interno que no afecta a usuarios)"
+            echo "podés justificarlo en el PR y el reviewer puede dispensar la regla."
+            exit 1
+          fi
+
+          echo "Docs actualizadas en este PR:"
+          echo "$touched_docs" | sed 's/^/  - /'
+          echo
+          echo "✓ Skill changes acompañados por docs."

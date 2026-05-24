@@ -21,6 +21,14 @@ Consulta la [guía para crear skills](docs/crear-skills.md).
 
 **Regla crítica:** los nombres de skill deben ser únicos en TODO el catálogo. Si tu skill es platform-specific, prefijá con la plataforma (`mobiai-android-build`, `mobiai-ios-build`).
 
+**Docs obligatorias:** un workflow de CI (`check-skills-docs`) bloquea PRs que agreguen o modifiquen skills sin tocar también la documentación. Para que tu PR pase, actualizá al menos uno de:
+
+- `skills/core/skills/using-mobiai/SKILL.md` (catálogo central — lo más común al agregar una skill nueva)
+- `README.md` (tabla de skills disponibles)
+- `docs/*.md` (cualquier guía relevante)
+
+Los skills vendoreados de Google bajo `skills/android/skills/google/` están exentos: se sincronizan automáticamente desde upstream.
+
 ### 2. Mejorar Skills o Agentes existentes
 ¿Encontraste algo que podría ser mejor? Mejoras comunes:
 - Mejores comandos o instrucciones
