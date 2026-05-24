@@ -126,14 +126,29 @@ func (m Model) viewProgress() string {
 
 func (m Model) viewResult() string {
 	var b strings.Builder
+
+	// Bubble Tea reemplaza la View entera en cada render: si solo
+	// dibujáramos "✓ Listo" la lista de viewProgress desaparece y el
+	// usuario pierde la confirmación de qué se instaló. Re-renderizamos
+	// el plan completo con su marker final.
 	if len(m.installErrors) == 0 {
 		b.WriteString(checkboxStyle.Render("✓ Listo") + "\n\n")
 	} else {
 		b.WriteString(fmt.Sprintf("⚠ Terminado con %d errores\n\n", len(m.installErrors)))
-		for _, e := range m.installErrors {
-			b.WriteString(fmt.Sprintf("  ✗ %s → %s: %v\n", e.pack, e.host, e.err))
+	}
+
+	errBy := make(map[[2]string]error, len(m.installErrors))
+	for _, e := range m.installErrors {
+		errBy[[2]string{e.pack, e.host}] = e.err
+	}
+	for _, s := range m.installPlan {
+		if err, bad := errBy[[2]string{s.pack, s.host}]; bad {
+			b.WriteString(fmt.Sprintf("%s%s → %s: %v\n", removalStyle.Render("✗ "), s.pack, s.host, err))
+		} else {
+			b.WriteString(fmt.Sprintf("%s%s → %s\n", checkboxStyle.Render("✓ "), s.pack, s.host))
 		}
 	}
+
 	if m.installSaveErr != nil {
 		b.WriteString(fmt.Sprintf("\n⚠ No pude guardar installed.json: %v\n", m.installSaveErr))
 	}
