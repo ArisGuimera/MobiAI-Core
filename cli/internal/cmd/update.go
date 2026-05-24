@@ -28,6 +28,18 @@ func NewUpdateCmd() *cobra.Command {
 			out := cmd.OutOrStdout()
 			g := flagsFromAnyCmd(cmd)
 
+			// --check: solo consulta GitHub releases, escribe el cache
+			// y termina. No toca el catálogo. Pensado para correr en
+			// background desde los hooks SessionStart.
+			if check, _ := cmd.Flags().GetBool("check"); check {
+				silent, _ := cmd.Flags().GetBool("silent")
+				w := out
+				if silent {
+					w = io.Discard
+				}
+				return runUpdateCheck(w, version)
+			}
+
 			rootFlag, _ := cmd.Flags().GetString("catalog-root")
 			if rootFlag == "" {
 				rootFlag = os.Getenv("MOBIAI_CATALOG_ROOT")
@@ -79,6 +91,8 @@ func NewUpdateCmd() *cobra.Command {
 	}
 	cmd.Flags().String("catalog-root", "", "ruta a un catálogo local (override)")
 	cmd.Flags().Bool("force", false, "si el directorio cache existe sin ser un repo git, borralo y cloná de nuevo")
+	cmd.Flags().Bool("check", false, "solo consultar GitHub releases y cachear el resultado (no toca el catálogo)")
+	cmd.Flags().Bool("silent", false, "no imprime nada al salir (pensado para correr desde un hook en background)")
 	return cmd
 }
 

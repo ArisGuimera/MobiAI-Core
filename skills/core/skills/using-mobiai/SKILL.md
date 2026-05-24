@@ -77,6 +77,7 @@ Match the user's intent against the rows below. If any row matches even at 1% co
 | Creating a new MobiAI skill | `mobiai-writing-skills` |
 | User asks about code impact, call graph, callers/callees, "where is X used", semantic exploration of the codebase | `mobiai-graph` |
 | User asks about project decisions, bugfixes, workarounds, or "what did we decide last time" | `mobiai-brain` |
+| SessionStart banner avisa que hay un MobiAI update disponible, o el usuario pide actualizar MobiAI | `mobiai-update` |
 
 If the request doesn't match any row, ask the user to clarify before touching code. Do not improvise a workflow.
 

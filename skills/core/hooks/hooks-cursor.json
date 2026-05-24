@@ -4,6 +4,9 @@
     "sessionStart": [
       {
         "command": "./hooks/run-hook.cmd session-start"
+      },
+      {
+        "command": "./hooks/run-hook.cmd update-banner"
       }
     ]
   }

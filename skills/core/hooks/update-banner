@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+# MobiAI-Core — SessionStart update-availability banner
+#
+# Reads ~/.cache/mobiai/update-check.json (written by `mobiai update --check`)
+# and, when an update is available, emits a systemMessage telling the user to
+# run /mobiai-update.
+#
+# Refresh strategy: if the cache is older than 23 hours, kick off a background
+# `mobiai update --check --silent` so the next session has fresh data. The
+# current session uses whatever is already cached — we never block startup on
+# network IO.
+
+set -euo pipefail
+
+# Resolve cache file path. Mirror Go's os.UserCacheDir() conventions:
+#   - Linux: $XDG_CACHE_HOME or ~/.cache
+#   - macOS: ~/Library/Caches
+#   - Windows (via Git Bash / WSL): %LocalAppData% via $LOCALAPPDATA
+cache_root=""
+case "$(uname -s 2>/dev/null || echo unknown)" in
+  Darwin)
+    cache_root="$HOME/Library/Caches"
+    ;;
+  Linux|*BSD*)
+    cache_root="${XDG_CACHE_HOME:-$HOME/.cache}"
+    ;;
+  MINGW*|MSYS*|CYGWIN*)
+    # Git Bash / MSYS on Windows. LOCALAPPDATA is set by the env.
+    if [ -n "${LOCALAPPDATA:-}" ]; then
+      # Convert C:\Users\foo\AppData\Local to /c/Users/foo/AppData/Local
+      cache_root="$(echo "$LOCALAPPDATA" | sed -e 's|\\|/|g' -e 's|^\([A-Z]\):|/\L\1|')"
+    else
+      cache_root="$HOME/.cache"
+    fi
+    ;;
+  *)
+    cache_root="$HOME/.cache"
+    ;;
+esac
+
+cache_file="$cache_root/mobiai/update-check.json"
+refresh_sentinel="$cache_root/mobiai/last-refresh"
+
+# Fire-and-forget background refresh if the cache is stale. We don't wait on
+# this — the current session uses the existing cache (or none, on first run).
+needs_refresh=true
+if [ -f "$refresh_sentinel" ]; then
+  last="$(cat "$refresh_sentinel" 2>/dev/null || echo 0)"
+  now="$(date +%s)"
+  age="$((now - last))"
+  # 23 hours in seconds
+  if [ "$age" -lt 82800 ]; then
+    needs_refresh=false
+  fi
+fi
+if $needs_refresh; then
+  mkdir -p "$cache_root/mobiai"
+  date +%s > "$refresh_sentinel"
+  if command -v mobiai >/dev/null 2>&1; then
+    # nohup + disown so the hook returns immediately even if the network call
+    # is slow. Output suppressed; the cache is the contract.
+    (nohup mobiai update --check --silent >/dev/null 2>&1 & disown) || true
+  fi
+fi
+
+# No cache file → nothing to say (first session ever, or check never ran).
+if [ ! -f "$cache_file" ]; then
+  exit 0
+fi
+
+# Parse the cache. We avoid jq to keep the hook dependency-free; the schema is
+# tiny so a couple of greps suffice.
+update_available="$(grep -oE '"update_available"[[:space:]]*:[[:space:]]*(true|false)' "$cache_file" \
+  | head -n1 | grep -oE '(true|false)' || echo 'false')"
+if [ "$update_available" != "true" ]; then
+  exit 0
+fi
+
+installed="$(grep -oE '"installed"[[:space:]]*:[[:space:]]*"[^"]*"' "$cache_file" \
+  | head -n1 | sed -E 's/.*"installed"[[:space:]]*:[[:space:]]*"([^"]*)".*/\1/' || echo unknown)"
+latest="$(grep -oE '"latest"[[:space:]]*:[[:space:]]*"[^"]*"' "$cache_file" \
+  | head -n1 | sed -E 's/.*"latest"[[:space:]]*:[[:space:]]*"([^"]*)".*/\1/' || echo unknown)"
+
+message="MobiAI update available: ${installed} → ${latest}. Run /mobiai-update."
+
+# Output format depends on the client (same dispatch as session-start).
+if [ -n "${CURSOR_PLUGIN_ROOT:-}" ]; then
+  printf '{\n  "systemMessage": "%s"\n}\n' "$message"
+elif [ -n "${CLAUDE_PLUGIN_ROOT:-}" ] && [ -z "${COPILOT_CLI:-}" ]; then
+  printf '{\n  "hookSpecificOutput": {\n    "hookEventName": "SessionStart",\n    "additionalContext": "%s"\n  }\n}\n' "$message"
+else
+  printf '{\n  "systemMessage": "%s"\n}\n' "$message"
+fi
+
+exit 0
