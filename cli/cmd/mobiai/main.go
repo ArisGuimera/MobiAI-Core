@@ -1,14 +1,13 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 
+	"github.com/ArisGuimera/MobiAI-Core/cli/internal/branding"
 	"github.com/ArisGuimera/MobiAI-Core/cli/internal/cmd"
-	"github.com/ArisGuimera/MobiAI-Core/cli/internal/tui"
 )
 
 // version is set at build time via -ldflags "-X main.version=..."
@@ -47,21 +46,14 @@ func newRootCmd(v string) *cobra.Command {
 		Short:   "MobiAI CLI — gestiona el ecosistema MobiAI para desarrollo móvil con IA",
 		Long:    "MobiAI CLI es la herramienta unificada del ecosistema MobiAI: skills, agentes, MCPs y orquestación entre clientes para desarrollo móvil asistido por IA. Hoy gestiona skills compatibles con el standard agentskills.io en cualquier cliente compatible; próximamente sumará agentes y servidores MCP.",
 		Version: v,
-		// When called with no args, show help instead of erroring.
+		// Sin subcomando: banner + help. El selector interactivo vive en
+		// `mobiai skills init` (consistente con `mobiai brain init`).
 		Run: func(c *cobra.Command, args []string) {
 			g := cmd.FlagsFromCmd(c)
-			if g.NoTUI {
-				_ = c.Help()
-				return
-			}
-			if err := cmd.RunPicker(g); err != nil {
-				if errors.Is(err, tui.ErrNoTTY) {
-					_ = c.Help()
-					return
-				}
-				fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
-			}
+			out := c.OutOrStdout()
+			branding.Print(out, g.NoColor)
+			fmt.Fprintln(out)
+			_ = c.Help()
 		},
 	}
 	root.SetVersionTemplate("mobiai {{.Version}}\n")
@@ -105,7 +97,6 @@ func newRootCmd(v string) *cobra.Command {
 	root.AddCommand(cmd.NewStatusCmd())
 	root.AddCommand(cmd.NewDoctorCmd())
 	root.AddCommand(cmd.NewUpdateCmd())
-	root.AddCommand(cmd.NewTelemetryCmd())
 	root.AddCommand(cmd.NewBrainCmd())
 	root.AddCommand(cmd.NewGraphCmd())
 	return root

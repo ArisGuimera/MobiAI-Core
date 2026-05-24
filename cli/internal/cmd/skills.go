@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -17,6 +18,7 @@ import (
 	"github.com/ArisGuimera/MobiAI-Core/cli/internal/host"
 	"github.com/ArisGuimera/MobiAI-Core/cli/internal/resolver"
 	"github.com/ArisGuimera/MobiAI-Core/cli/internal/state"
+	"github.com/ArisGuimera/MobiAI-Core/cli/internal/tui"
 )
 
 // NewSkillsCmd builds `mobiai skills <add|remove|list>`.
@@ -81,7 +83,23 @@ func NewSkillsCmd() *cobra.Command {
 		},
 	}
 
-	root.AddCommand(addCmd, removeCmd, listCmd)
+	initCmd := &cobra.Command{
+		Use:   "init",
+		Short: "Selector interactivo para instalar/desinstalar skills",
+		Long:  "Lanza el picker TUI para elegir packs de skills y aplicar los cambios sobre los clientes detectados (Claude Code, Cursor, Codex, etc).",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			g := flagsFromAnyCmd(cmd)
+			if err := RunPicker(g); err != nil {
+				if errors.Is(err, tui.ErrNoTTY) {
+					return fmt.Errorf("este comando necesita una terminal interactiva — corré `mobiai skills add <pack>` para instalar sin TUI")
+				}
+				return err
+			}
+			return nil
+		},
+	}
+
+	root.AddCommand(addCmd, removeCmd, listCmd, initCmd)
 	return root
 }
 
