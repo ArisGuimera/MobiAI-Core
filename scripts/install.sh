@@ -100,9 +100,12 @@ fi
 # (https://no-color.org/) and skip ANSI when stdout isn't a tty.
 echo ""
 if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
-    BANNER_COLOR="\033[1;36m"   # bold cyan
-    TAGLINE_COLOR="\033[2;37m"  # dim white
-    RESET="\033[0m"
+    # POSIX sh no interpreta \033 dentro de comillas dobles; hay que materializar
+    # el byte ESC con printf para que las secuencias ANSI viajen como tales y no
+    # como cuatro caracteres literales.
+    BANNER_COLOR="$(printf '\033[1;36m')"   # bold cyan
+    TAGLINE_COLOR="$(printf '\033[2;37m')"  # dim white
+    RESET="$(printf '\033[0m')"
 else
     BANNER_COLOR=""
     TAGLINE_COLOR=""
