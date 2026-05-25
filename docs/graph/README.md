@@ -43,7 +43,7 @@ filepath.WalkDir(root)
 **Decisiones técnicas firmes**:
 
 - **Regex line-by-line, no AST**. Para 2 lenguajes y este nivel de detalle (símbolos top-level y anidados, no resolución de tipos), regex es suficiente y elimina dependencias pesadas como tree-sitter. Revisaremos cuando entre el 3er lenguaje.
-- **JSON, no SQLite**. El índice cabe holgadamente en JSON (TaykusKMP: 647 archivos, 2464 símbolos). JSON es diff-friendly, inspeccionable, y mantiene cero dependencias externas en la CLI Go.
+- **JSON, no SQLite**. El índice cabe holgadamente en JSON (proyecto KMP real medido: 647 archivos, 2464 símbolos). JSON es diff-friendly, inspeccionable, y mantiene cero dependencias externas en la CLI Go.
 - **Sin watcher**. `mobiai graph init` regenera el índice entero en milisegundos. Un watcher con `fsnotify` queda para V2 cuando se justifique.
 - **Strip comments+strings preservando líneas**. Los regex parserían falsos positivos en docstrings y literales. El strip reemplaza con espacios (no borra) — así los números de línea reportados por el indexer apuntan al lugar real en el archivo.
 - **Brace-depth stack para containers**. El símbolo más anidado gana: una `fun login()` dentro de `class LoginViewModel` registra `container = "LoginViewModel"`.
@@ -68,7 +68,7 @@ El índice es **regenerable**: si los regex evolucionan o el código cambia, bas
 
 ## Benchmark real: Graph vs grep
 
-Medido sobre **TaykusKMP** (Kotlin Multiplatform, Android + iOS).
+Medido sobre un **proyecto KMP real de producción** (Kotlin Multiplatform, Android + iOS).
 
 **Contexto del índice**:
 
@@ -83,8 +83,8 @@ Tokens estimados como `bytes / 4` (proxy estándar GPT/Claude).
 |---|---|---|---|---|---|
 | **Q1** — Lista todos los ViewModel del proyecto | `mobiai graph search ViewModel` | 0.01 s | 9446 | 2361 | — |
 |  | `rg "class \w+ViewModel"` | 0.15 s | 7426 | 1856 | **grep** (output más compacto) |
-| **Q2** — ¿Dónde se usa `TaykusScaffold`? | `mobiai graph callers TaykusScaffold` | 0.07 s | 6766 | 1691 | — |
-|  | `rg "TaykusScaffold"` | 0.01 s | 6888 | 1722 | **empate técnico** |
+| **Q2** — ¿Dónde se usa `AppScaffold`? | `mobiai graph callers AppScaffold` | 0.07 s | 6766 | 1691 | — |
+|  | `rg "AppScaffold"` | 0.01 s | 6888 | 1722 | **empate técnico** |
 | **Q3** — Contexto para fix de login + refresh token | `mobiai graph context "fix login bug refresh token"` | 0.01 s | 1021 | 255 | **graph** (6.3× menos tokens) |
 |  | `rg -l -i "login\|refresh.?token"` | 0.03 s | 6403 | 1600 | — |
 | **Q4** — ¿Existe `AuthRepository` y dónde se declara? | `mobiai graph search AuthRepository` | 0.01 s | 237 | 59 | **graph** (7.5× menos tokens) |
