@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="docs/assets/mobiai-hero.png" alt="MobiAI — Brain · Skills · Graph para Android, iOS, React Native, Flutter y KMP" width="100%">
+</div>
+
 # MobiAI-Core
 
 <div align="center">
