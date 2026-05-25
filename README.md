@@ -65,7 +65,7 @@ curl.exe -fsSL https://mobiai.dev/install.cmd -o "%TEMP%\i.cmd" && "%TEMP%\i.cmd
 iwr -useb https://mobiai.dev/install.ps1 | iex
 ```
 
-Verificá que quedó instalada:
+Verifica que ha quedado instalada:
 
 ```bash
 mobiai --version
@@ -90,7 +90,7 @@ mobiai update          # refresca el catálogo
 mobiai status          # ver qué hosts están conectados y qué packs están instalados
 ```
 
-Dentro de Claude Code también podés disparar `/mobiai-update` desde cualquier sesión — un notificador en `SessionStart` te avisa si hay catálogo nuevo.
+Dentro de Claude Code también puedes lanzar `/mobiai-update` desde cualquier sesión — un notificador en `SessionStart` te avisa si hay catálogo nuevo.
 
 ## La CLI en tres bloques
 
@@ -101,8 +101,8 @@ Instala, lista y desinstala packs de skills en los hosts detectados. Hay un meta
 ```bash
 mobiai skills init                 # selector interactivo
 mobiai skills add mobile           # instala todo el stack
-mobiai skills add android ios      # solo las plataformas que usás
-mobiai skills list                 # qué tenés instalado
+mobiai skills add android ios      # solo las plataformas que uses
+mobiai skills list                 # qué tienes instalado
 mobiai skills remove flutter       # desinstalar un pack
 ```
 
@@ -152,8 +152,8 @@ Consulta el [catálogo completo de skills](skills/core/skills/using-mobiai/SKILL
 ## ¿Cómo funciona?
 
 1. **Instala la CLI `mobiai`** — un solo binario que detecta tu asistente (Claude Code, Cursor, Copilot CLI, Codex o Gemini CLI) y registra los skills en el lugar correcto
-2. **Elegí tus packs** — `mobiai skills init` te abre el selector, o instalá lo que necesites con `mobiai skills add <pack>`
-3. **Empezá a programar** — Los skills se activan automáticamente según el contexto; opcionalmente indexá el repo con `mobiai graph init` y arrancá memoria con `mobiai brain init`
+2. **Elige tus packs** — `mobiai skills init` te abre el selector, o instala lo que necesites con `mobiai skills add <pack>`
+3. **Empieza a programar** — Los skills se activan automáticamente según el contexto; opcionalmente indexa el repo con `mobiai graph init` y arranca la memoria con `mobiai brain init`
 4. **Detección de plataforma** — MobiAI detecta tu proyecto (Android, iOS, Flutter...) y aplica el contexto adecuado
 5. **Tu proyecto, tus reglas** — Los skills respetan las convenciones de tu proyecto (`CLAUDE.md`, `GEMINI.md`, `AGENTS.md`)
 
