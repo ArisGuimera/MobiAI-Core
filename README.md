@@ -88,6 +88,44 @@ mobiai skills init # selector interactivo para elegir packs (mobile, android, io
 
 Mantener al día (`mobiai update` refresca el catálogo) y diagnóstico (`mobiai doctor`, `mobiai status`) viven dentro de la CLI — ver [cli/README.md](cli/README.md).
 
+## La CLI en tres bloques
+
+> Resumen rápido. Cada bloque tiene su propio README con el detalle completo.
+
+### 🧩 [Skills](skills/README.md) — gestionar skills
+
+Instala, lista y desinstala packs de skills en los hosts detectados. Un meta-pack `mobile` lo trae todo, o packs por plataforma.
+
+```bash
+mobiai skills init                 # selector interactivo
+mobiai skills add mobile           # instala todo el stack
+mobiai skills list                 # qué tienes instalado
+```
+
+Packs: `mobile`, `android`, `ios`, `kmp`, `flutter`, `react-native`. → [skills/README.md](skills/README.md)
+
+### 🔍 [Graph](docs/graph/README.md) — exploración semántica del código
+
+Indexa tu proyecto mobile y responde "qué archivos tocar" o "quién llama a este símbolo" sin recorrer el repo a ciegas. Los skills downstream (debugging, fix-issue, planning) hacen pre-flight de Graph cuando está disponible.
+
+```bash
+mobiai graph init                  # indexa el proyecto en .mobiai/graph/
+mobiai graph context <tarea...>    # archivos relevantes para una tarea
+```
+
+→ [docs/graph/README.md](docs/graph/README.md)
+
+### 🧠 [Brain](brain/README.md) — memoria por proyecto
+
+Memoria viva por repo: decisiones, bugfixes, workarounds e integraciones específicas, separadas del estado global de MobiAI. Se guarda en `<repo>/.mobiai/brain/`.
+
+```bash
+mobiai brain init                  # crea .mobiai/brain/ (idempotente)
+mobiai brain context               # imprime Markdown listo para agentes
+```
+
+→ [brain/README.md](brain/README.md)
+
 ## ¿Cómo funciona?
 
 1. **Instala la CLI `mobiai`** — un solo binario que detecta tu asistente (Claude Code, Cursor, Copilot CLI, Codex o Gemini CLI) y registra los skills en el lugar correcto
