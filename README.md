@@ -106,7 +106,7 @@ mobiai skills list                 # qué tienes instalado
 mobiai skills remove flutter       # desinstalar un pack
 ```
 
-Packs disponibles: `mobile` (meta), `android`, `ios`, `kmp`, `flutter`, `react-native`. Detalle del flujo, hosts soportados y troubleshooting en [cli/README.md](cli/README.md). Catálogo completo de skills en [skills/core/skills/using-mobiai/SKILL.md](skills/core/skills/using-mobiai/SKILL.md).
+Packs disponibles: `mobile` (meta), `android`, `ios`, `kmp`, `flutter`, `react-native`. Detalle de packs, dependencias y catálogo completo en [skills/README.md](skills/README.md). Flujo de la CLI, hosts soportados y troubleshooting en [cli/README.md](cli/README.md).
 
 ### `mobiai graph` — exploración semántica del código
 
@@ -120,7 +120,7 @@ mobiai graph callers <símbolo>     # referencias textuales
 mobiai graph context <tarea...>    # archivos relevantes para una tarea
 ```
 
-Visión completa, formato del índice y roadmap en [docs/graph.md](docs/graph.md).
+Visión completa, formato del índice y roadmap en [docs/graph/README.md](docs/graph/README.md).
 
 ### `mobiai brain` — memoria por proyecto
 
@@ -147,7 +147,7 @@ MobiAI incluye skills para todo el ciclo de desarrollo mobile:
 - **iOS** (en `ios`) — mobiai-ios-device, mobiai-ios-build, mobiai-ios-testing, mobiai-ios-architecture
 - **Multiplataforma** — mobiai-kmp, mobiai-flutter, mobiai-react-native (cada uno en su pack)
 
-Consulta el [catálogo completo de skills](skills/core/skills/using-mobiai/SKILL.md) para ver cuándo usar cada uno.
+Overview de packs y dependencias en [skills/README.md](skills/README.md). Catálogo en tiempo real con la guía de "cuándo usar cada uno" en [skills/core/skills/using-mobiai/SKILL.md](skills/core/skills/using-mobiai/SKILL.md).
 
 ## ¿Cómo funciona?
 
