@@ -43,7 +43,7 @@ filepath.WalkDir(root)
 **Decisiones técnicas firmes**:
 
 - **Regex line-by-line, no AST**. Para 2 lenguajes y este nivel de detalle (símbolos top-level y anidados, no resolución de tipos), regex es suficiente y elimina dependencias pesadas como tree-sitter. Revisaremos cuando entre el 3er lenguaje.
-- **JSON, no SQLite**. El índice cabe holgadamente en JSON (NeoBand: 279 archivos, 1566 símbolos, ~350 KB). JSON es diff-friendly, inspeccionable, y mantiene cero dependencias externas en la CLI Go.
+- **JSON, no SQLite**. El índice cabe holgadamente en JSON (TaykusKMP: 647 archivos, 2464 símbolos). JSON es diff-friendly, inspeccionable, y mantiene cero dependencias externas en la CLI Go.
 - **Sin watcher**. `mobiai graph init` regenera el índice entero en milisegundos. Un watcher con `fsnotify` queda para V2 cuando se justifique.
 - **Strip comments+strings preservando líneas**. Los regex parserían falsos positivos en docstrings y literales. El strip reemplaza con espacios (no borra) — así los números de línea reportados por el indexer apuntan al lugar real en el archivo.
 - **Brace-depth stack para containers**. El símbolo más anidado gana: una `fun login()` dentro de `class LoginViewModel` registra `container = "LoginViewModel"`.
@@ -68,30 +68,54 @@ El índice es **regenerable**: si los regex evolucionan o el código cambia, bas
 
 ## Benchmark real: Graph vs grep
 
-Medido sobre **NeoBand** (KMP real-world, 279 archivos Kotlin+Swift, 1566 símbolos):
+Medido sobre **TaykusKMP** (Kotlin Multiplatform, Android + iOS).
 
-| Query | Graph | grep/find tradicional | Ganador |
-|---|---|---|---|
-| **Definición de `DeviceRepository`** | 1 línea limpia · **11 ms** | Encuentra lo mismo con regex compleja `-E "(class\|interface\|object)\s+..."` · **60 ms** | Graph (UX más limpia) |
-| **Callers de `AlarmsRepository`** | 4 referencias (excluye la definición propia) · **39 ms** | 5 líneas (incluye la definición como ruido) · **22 ms** | Graph (señal sin ruido) |
-| **Context: "fix sleep detail crash"** | **10 archivos rankeados por score**: `SleepScreen.kt`(18), `BleResponseMapper.kt`(13), `DeviceDataRepository.kt`(11)… · **12 ms** | **74 archivos planos** sin ranking — incluye `BatteryStatus.kt`, `Navigation.kt`, `RecoveryScore.kt`… · **27 ms** | **Graph de calle** |
-| **Solo funciones `connect` (no clases)** | `--kind fun` filtra: 20 hits limpios · **11 ms** | Regex `(\s\|^)fun\s+connect` — 14 hits con modifiers en el output · **28 ms** | Graph (flag trivial vs regex) |
+**Contexto del índice**:
 
-**El caso decisivo es Q3**: para "fix sleep detail crash", grep da 74 archivos a leer sin pista de cuál es central. Graph da **10 rankeados**, con los 3 correctos arriba. **7× menos archivos para revisar, ordenados por relevancia.**
+- Archivos indexados: **647**
+- Símbolos: **2464** (635 Kotlin + 12 Swift)
+- Tiempo de `mobiai graph init`: **0.47 s**
+- Commit base: `dcbe040` · Fecha: 2026-05-25
 
-Donde Graph **no** gana hoy (honestidad):
+Tokens estimados como `bytes / 4` (proxy estándar GPT/Claude).
 
-- **Velocidad cruda**: ripgrep en SSD es competitivo. Graph gana en ranking y filtros estructurales, no en grepear texto plano.
-- **Búsqueda exacta por substring**: Graph hace substring + score, no regex estricta. Para `fun connectXxx exacto` la regex de grep es más precisa. `--exact` queda para V2.
-- **No reemplaza grep para texto libre** (comentarios, strings, valores). Graph solo indexa símbolos.
+| Pregunta | Herramienta | Tiempo | Bytes | Tokens ≈ | Ganador |
+|---|---|---|---|---|---|
+| **Q1** — Lista todos los ViewModel del proyecto | `mobiai graph search ViewModel` | 0.01 s | 9446 | 2361 | — |
+|  | `rg "class \w+ViewModel"` | 0.15 s | 7426 | 1856 | **grep** (output más compacto) |
+| **Q2** — ¿Dónde se usa `TaykusScaffold`? | `mobiai graph callers TaykusScaffold` | 0.07 s | 6766 | 1691 | — |
+|  | `rg "TaykusScaffold"` | 0.01 s | 6888 | 1722 | **empate técnico** |
+| **Q3** — Contexto para fix de login + refresh token | `mobiai graph context "fix login bug refresh token"` | 0.01 s | 1021 | 255 | **graph** (6.3× menos tokens) |
+|  | `rg -l -i "login\|refresh.?token"` | 0.03 s | 6403 | 1600 | — |
+| **Q4** — ¿Existe `AuthRepository` y dónde se declara? | `mobiai graph search AuthRepository` | 0.01 s | 237 | 59 | **graph** (7.5× menos tokens) |
+|  | `rg "AuthRepository"` | 0.03 s | 1762 | 440 | — |
 
-| | grep/find | Graph |
-|---|---|---|
-| Qué busca | **texto** | **símbolos** (con tipo, línea, container) |
-| Estructura | no entiende | sí (`--kind fun`, score por relevancia) |
-| Pre-procesamiento | no | strip comments+strings → menos falsos positivos |
-| Ranking | no | sí (Q3 es game-changing) |
-| Curva | regex compleja | flags simples |
+### Totales agregados
+
+```
+graph │██████████████████████░░░░░░  4366 tokens · 0.10 s
+grep  │████████████████████████████  5618 tokens · 0.22 s
+                                     ─22 % de tokens
+```
+
+- Tokens graph: **4366** · grep: **5618** → **ahorro global ≈ 22 %**
+- Tiempo total graph: **0.10 s** · grep: **0.22 s**
+
+### Lectura honesta
+
+- Graph **no** sustituye a grep en consultas de texto libre o cuando ya conoces el nombre exacto (Q1, Q2): grep es igual o mejor.
+- Graph **brilla** cuando la consulta es semántica o la herramienta tradicional escupiría mucho ruido (Q3, Q4): el ranking y el filtrado estructural recortan el output a una fracción.
+- El ahorro de tokens es **acumulativo**: cuanto más se apoye el agente en `graph context`/`graph search` para arrancar la tarea, más tokens libera para razonamiento real.
+
+### Regla mental
+
+| Caso | Herramienta |
+|---|---|
+| Buscas un **símbolo** (clase, función, repo, VM…) | `mobiai graph` |
+| Buscas **texto literal** (strings, comentarios, valores) | `rg` / `grep` |
+| Ya **conoces el archivo** | `Read` directo |
+
+Graph complementa a grep, no lo reemplaza.
 
 ## Cómo lo usa un agente IA
 
