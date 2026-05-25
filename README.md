@@ -27,14 +27,19 @@ Evoluciona tu stack móvil con Inteligencia Artificial.
 
 ## ¿Qué es MobiAI?
 
-MobiAI es un ecosistema Open Source diseñado para llevar la Inteligencia Artificial al corazón de tu flujo de trabajo. Más que una librería de funciones, es una plataforma evolutiva que automatiza lo complejo para que tú te centres en crear.
+MobiAI es un ecosistema Open Source diseñado para llevar la Inteligencia Artificial al corazón de tu flujo de trabajo mobile. Cuatro piezas que encajan entre sí — pulsa en cualquiera para ver el detalle:
 
-- **CLI `mobiai`** — Una sola herramienta para gestionar todo el stack: instalar skills, indexar tu código (Graph), mantener la memoria por proyecto (Brain) y mantener todo actualizado en cualquier asistente compatible.
-- **Skills** — Contexto experto que adapta lo que la IA ya sabe al escenario adecuado. Los skills no le enseñan a programar — le dan el contexto, las herramientas y los flujos específicos de cada plataforma para que aplique su conocimiento de forma precisa. Corregir bugs, reproducir incidencias, escribir tests, analizar crashes, crear PRs... todo siguiendo las mejores prácticas de cada plataforma.
-- **Graph** — Exploración semántica del código mobile. Indexa tu proyecto y resuelve preguntas tipo "qué archivos tocar para esta tarea" o "quién llama a este símbolo" sin recorrer el repo a ciegas.
-- **Brain** — El cerebro contextual de cada proyecto: entiende tu stack mobile, recuerda decisiones, bugfixes y patrones clave, y entrega a la IA contexto preciso y filtrado para trabajar alineada con tu arquitectura, evitando ruido y ahorrando tokens.
-- **Agentes** — Agentes especializados que ejecutan tareas complejas de forma autónoma: un agente que analiza código, otro que interactúa con el dispositivo, otro que escribe tests.
-- **Pipeline automatizado** — Un flujo completo de corrección de bugs: recibe un error o ticket desde cualquier plataforma de mensajería, reproduce el bug en un emulador, encuentra la causa raíz, aplica el fix, ejecuta tests y crea el PR. Todo sin intervención humana.
+| | | |
+|---|---|---|
+| 🛠️ **[CLI `mobiai`](cli/README.md)** | Una sola herramienta para gestionar todo el stack: instalar skills, indexar código, gestionar la memoria del proyecto y mantenerlo todo actualizado. | [Ver detalle →](cli/README.md) |
+| 🧩 **[Skills](skills/README.md)** | Contexto experto por plataforma: corregir bugs, reproducir incidencias, escribir tests, analizar crashes, crear PRs… siguiendo las prácticas de cada stack. | [Ver detalle →](skills/README.md) |
+| 🔍 **[Graph](docs/graph/README.md)** | Exploración semántica del código mobile. Resuelve "qué archivos tocar para esta tarea" o "quién llama a este símbolo" sin recorrer el repo a ciegas. | [Ver detalle →](docs/graph/README.md) |
+| 🧠 **[Brain](brain/README.md)** | Memoria viva por proyecto: decisiones, bugfixes, workarounds e integraciones específicas, separadas del estado global de MobiAI. | [Ver detalle →](brain/README.md) |
+
+Y dos piezas más en el horizonte:
+
+- **Agentes** — Agentes especializados que ejecutan tareas complejas de forma autónoma (en desarrollo).
+- **Pipeline automatizado** — Bot que recibe tickets desde tu plataforma de mensajería, reproduce el bug, aplica el fix y abre el PR (planificado).
 
 Compatible con **Claude Code**, **Cursor**, **Copilot CLI**, **Codex** y **Gemini CLI**.
 
@@ -81,73 +86,7 @@ mobiai             # banner + ayuda
 mobiai skills init # selector interactivo para elegir packs (mobile, android, ios, kmp, flutter, react-native)
 ```
 
-## Actualizar
-
-`mobiai update` refresca el catálogo de skills desde el remoto. El binario `mobiai` se actualiza re-ejecutando el script de instalación.
-
-```bash
-mobiai update          # refresca el catálogo
-mobiai status          # ver qué hosts están conectados y qué packs están instalados
-```
-
-Dentro de Claude Code también puedes lanzar `/mobiai-update` desde cualquier sesión — un notificador en `SessionStart` te avisa si hay catálogo nuevo.
-
-## La CLI en tres bloques
-
-### `mobiai skills` — gestionar skills
-
-Instala, lista y desinstala packs de skills en los hosts detectados. Hay un meta-pack `mobile` que trae todo, o packs por plataforma.
-
-```bash
-mobiai skills init                 # selector interactivo
-mobiai skills add mobile           # instala todo el stack
-mobiai skills add android ios      # solo las plataformas que uses
-mobiai skills list                 # qué tienes instalado
-mobiai skills remove flutter       # desinstalar un pack
-```
-
-Packs disponibles: `mobile` (meta), `android`, `ios`, `kmp`, `flutter`, `react-native`. Detalle de packs, dependencias y catálogo completo en [skills/README.md](skills/README.md). Flujo de la CLI, hosts soportados y troubleshooting en [cli/README.md](cli/README.md).
-
-### `mobiai graph` — exploración semántica del código
-
-Indexa tu proyecto mobile y responde preguntas tipo "qué archivos tocar para esta tarea" o "quién llama a este símbolo" sin que el agente tenga que recorrer el repo a ciegas. Los skills downstream (debugging, fix-issue, planning) hacen pre-flight de Graph automáticamente cuando está disponible.
-
-```bash
-mobiai graph init                  # indexa el proyecto en .mobiai/graph/
-mobiai graph status                # info del índice actual
-mobiai graph search <símbolo>      # buscar símbolos por nombre
-mobiai graph callers <símbolo>     # referencias textuales
-mobiai graph context <tarea...>    # archivos relevantes para una tarea
-```
-
-Visión completa, formato del índice y roadmap en [docs/graph/README.md](docs/graph/README.md).
-
-### `mobiai brain` — memoria por proyecto
-
-Memoria viva por repo: decisiones, bugfixes, workarounds e integraciones específicas, separadas del estado global de MobiAI. Se guarda en `<repo>/.mobiai/brain/`.
-
-```bash
-mobiai brain init                  # crea .mobiai/brain/ (idempotente)
-mobiai brain scan                  # detecta stack: Android/iOS/KMP/Flutter/RN + librerías
-mobiai brain context               # imprime Markdown listo para agentes
-mobiai brain search <query>        # busca texto libre en memorias
-mobiai brain review                # entradas temporales que toca revisar
-```
-
-Detalle completo, formato de las memorias y workflow de save en [brain/README.md](brain/README.md).
-
-## Skills disponibles
-
-MobiAI incluye skills para todo el ciclo de desarrollo mobile:
-
-- **Flujo de trabajo** (en `core`, auto-instalado con cualquier plataforma) — mobiai-fix-issue, mobiai-reproduce-bug, mobiai-analyze-crash, mobiai-crashlytics, mobiai-write-tests, mobiai-review-code, mobiai-create-pr
-- **Proceso** (en `core`) — mobiai-mobile-brainstorming, mobiai-mobile-debugging, mobiai-mobile-tdd, mobiai-mobile-planning, mobiai-mobile-verification, mobiai-mobile-executing-plans, mobiai-mobile-parallel-agents, mobiai-mobile-executing-plans-with-subagents, mobiai-mobile-worktrees, mobiai-mobile-finishing-branch, mobiai-writing-skills
-- **CLI / ecosistema** (en `core`) — mobiai-graph, mobiai-brain, mobiai-update, using-mobiai
-- **Android** (en `android`) — `mobiai-android-device`, `mobiai-android-build`, `mobiai-android-testing`, `mobiai-android-architecture`, más los [skills oficiales de Android mantenidos por Google](https://github.com/android/skills) (Apache 2.0, vendoreados en `skills/android/skills/google/` con auto-sync semanal). Ver [NOTICE.md](NOTICE.md).
-- **iOS** (en `ios`) — mobiai-ios-device, mobiai-ios-build, mobiai-ios-testing, mobiai-ios-architecture
-- **Multiplataforma** — mobiai-kmp, mobiai-flutter, mobiai-react-native (cada uno en su pack)
-
-Overview de packs y dependencias en [skills/README.md](skills/README.md). Catálogo en tiempo real con la guía de "cuándo usar cada uno" en [skills/core/skills/using-mobiai/SKILL.md](skills/core/skills/using-mobiai/SKILL.md).
+Mantener al día (`mobiai update` refresca el catálogo) y diagnóstico (`mobiai doctor`, `mobiai status`) viven dentro de la CLI — ver [cli/README.md](cli/README.md).
 
 ## ¿Cómo funciona?
 
