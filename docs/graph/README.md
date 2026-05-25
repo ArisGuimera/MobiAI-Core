@@ -101,22 +101,6 @@ grep  │███████████████████████�
 - Tokens graph: **4366** · grep: **5618** → **ahorro global ≈ 22 %**
 - Tiempo total graph: **0.10 s** · grep: **0.22 s**
 
-### Lectura honesta
-
-- Graph **no** sustituye a grep en consultas de texto libre o cuando ya conoces el nombre exacto (Q1, Q2): grep es igual o mejor.
-- Graph **brilla** cuando la consulta es semántica o la herramienta tradicional escupiría mucho ruido (Q3, Q4): el ranking y el filtrado estructural recortan el output a una fracción.
-- El ahorro de tokens es **acumulativo**: cuanto más se apoye el agente en `graph context`/`graph search` para arrancar la tarea, más tokens libera para razonamiento real.
-
-### Regla mental
-
-| Caso | Herramienta |
-|---|---|
-| Buscas un **símbolo** (clase, función, repo, VM…) | `mobiai graph` |
-| Buscas **texto literal** (strings, comentarios, valores) | `rg` / `grep` |
-| Ya **conoces el archivo** | `Read` directo |
-
-Graph complementa a grep, no lo reemplaza.
-
 ## Cómo lo usa un agente IA
 
 Graph existe para que los agentes IA arranquen una tarea **sabiendo dónde mirar**, en lugar de adivinar con grep.
