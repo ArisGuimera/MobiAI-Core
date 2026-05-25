@@ -149,23 +149,25 @@ mobiai graph callers <SímboloAfectado>
 
 El pre-flight se hace **una vez al inicio de la conversación**, no por cada subcomando. Los resultados quedan en el contexto del agente para reusar.
 
-### Caso típico: "arregla el crash de SleepDetail"
+### Caso típico: "arregla el bug de login + refresh token"
 
-Sin Graph: el agente hace `find . -iname "*sleep*"`, lee 20+ archivos, mucho irrelevante.
+Sin Graph: el agente hace `rg -l -i "login|refresh.?token"` y recibe **6403 bytes** (~1600 tokens) de paths planos sin pista de cuál es central — incluye tests, fakes, repositorios, viewmodels y pantallas mezclados.
 
 Con Graph:
 
 ```
-$ mobiai graph context "fix sleep detail crash"
-SleepScreen.kt           (score 18)
-BleResponseMapper.kt     (score 13)
-DeviceDataRepository.kt  (score 11)
-SleepContract.kt         (score 11)
-RawSleepPhaseSummary.kt  (score 7)
+$ mobiai graph context "fix login bug refresh token"
+LoginScreenTest.kt          (score 10)
+UserPreferencesManager.kt   (score 4)
+UserRepositoryImpl.kt       (score 4)
+UserApiClient.kt            (score 4)
+UserRepository.kt           (score 4)
+LoginScreen.kt              (score 4)
+LoginViewModel.kt           (score 4)
 …
 ```
 
-El agente lee los top-3, encuentra la raíz, propone el fix. **Menos tokens, más señal.**
+**1021 bytes (~255 tokens)** rankeados por score: el agente lee la pantalla, el ViewModel y el repositorio que tocan el token y propone el fix. **6.3× menos tokens, todos relevantes.**
 
 ## Lenguajes soportados
 
