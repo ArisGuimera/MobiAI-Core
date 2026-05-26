@@ -112,6 +112,7 @@ Skills que definen *cómo* abordar el trabajo:
 
 - `mobiai-android-device` — `adb`, screenshots, logcat, UI automation
 - `mobiai-android-build` — Gradle, flavors, variants, troubleshooting
+- `mobiai-android-github-actions` — workflows reutilizables de GitHub Actions para `unitTest` y `androidTest`
 - `mobiai-android-testing` — frameworks de testing en Android
 - `mobiai-android-architecture` — estructura de proyectos Android
 - Más los [skills oficiales mantenidos por Google](https://github.com/android/skills) (Apache 2.0, vendorizados con sync semanal). Ver [../NOTICE.md](../NOTICE.md).

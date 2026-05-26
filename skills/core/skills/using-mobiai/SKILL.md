@@ -55,6 +55,7 @@ Match the user's intent against the rows below. If any row matches even at 1% co
 | User wants to commit, push, or open a PR (says "mergear", "push", "subir", "dale PR", "shipeá", "commit", "merge") | `mobiai-create-pr` |
 | Interact with Android device/emulator (adb, screenshots, logcat) | `mobiai-android-device` |
 | Build an Android project (Gradle, flavors, variants) | `mobiai-android-build` |
+| Create, update, or review GitHub Actions workflows for Android unit tests or instrumented tests | `mobiai-android-github-actions` |
 | Interact with iOS Simulator (simctl) | `mobiai-ios-device` |
 | Build an iOS project (xcodebuild, schemes) | `mobiai-ios-build` |
 | Working on a Kotlin Multiplatform project | `mobiai-kmp` |
