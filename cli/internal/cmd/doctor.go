@@ -11,18 +11,18 @@ import (
 func NewDoctorCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "doctor",
-		Short: "Diagnóstico exhaustivo del CLI, hosts y catálogo",
+		Short: "Thorough diagnostics for CLI, hosts and catalog",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			out := cmd.OutOrStdout()
-			fmt.Fprintf(out, "MobiAI %s — diagnóstico\n\n", version)
+			fmt.Fprintf(out, "MobiAI %s — diagnostics\n\n", version)
 
-			fmt.Fprintln(out, "Hosts soportados:")
+			fmt.Fprintln(out, "Supported hosts:")
 			g := flagsFromAnyCmd(cmd)
 			r := newRegistry(g)
 			for _, a := range r.Adapters() {
 				det := a.Detect()
 				marker := "-"
-				note := "no detectado"
+				note := "not detected"
 				if det.Found {
 					marker = "✓"
 					note = "OK"
@@ -39,12 +39,12 @@ func NewDoctorCmd() *cobra.Command {
 				return err
 			}
 			meta, _ := state.LoadMeta(paths)
-			fmt.Fprintln(out, "Catálogo:")
+			fmt.Fprintln(out, "Catalog:")
 			if meta.LastSync.IsZero() {
-				fmt.Fprintln(out, "  (nunca se sincronizó)")
+				fmt.Fprintln(out, "  (never synced)")
 			} else {
-				fmt.Fprintf(out, "  Última sincronización: %s\n", meta.LastSync.Format("2006-01-02 15:04:05"))
-				fmt.Fprintf(out, "  Versión: %s\n", meta.Version)
+				fmt.Fprintf(out, "  Last sync: %s\n", meta.LastSync.Format("2006-01-02 15:04:05"))
+				fmt.Fprintf(out, "  Version:   %s\n", meta.Version)
 			}
 			fmt.Fprintln(out)
 
@@ -60,7 +60,7 @@ func NewDoctorCmd() *cobra.Command {
 				}
 			}
 			if !anyDrift {
-				fmt.Fprintln(out, "  ✓ sin drift detectado (Verify es stub en esta versión)")
+				fmt.Fprintln(out, "  ✓ no drift detected (Verify is a stub in this version)")
 			}
 			return nil
 		},

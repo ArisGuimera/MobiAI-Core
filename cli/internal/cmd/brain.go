@@ -24,10 +24,10 @@ import (
 func NewBrainCmd() *cobra.Command {
 	root := &cobra.Command{
 		Use:   "brain",
-		Short: "Memoria por proyecto para agentes mobile",
-		Long: "MobiAI Brain guarda contexto vivo por proyecto: stack detectado, " +
-			"decisiones, bugfixes, patrones de testing e integraciones. " +
-			"Vive en <repo>/.mobiai/brain/ — separado del estado global de la CLI.",
+		Short: "Per-project memory for mobile agents",
+		Long: "MobiAI Brain stores living per-project context: detected stack, " +
+			"decisions, bugfixes, testing patterns and integrations. " +
+			"Lives at <repo>/.mobiai/brain/ — separate from the CLI's global state.",
 	}
 	root.AddCommand(
 		newBrainInitCmd(),
@@ -48,7 +48,7 @@ func NewBrainCmd() *cobra.Command {
 // When omitted, the command resolves the project root by walking up
 // from the current working directory (see brain.FindProjectRoot).
 func brainCommonFlags(c *cobra.Command) {
-	c.Flags().String("root", "", "ruta del proyecto (default: detectado desde el cwd)")
+	c.Flags().String("root", "", "project path (default: detected from cwd)")
 }
 
 // resolveBrainRoot returns the project root for a brain command. It
@@ -58,10 +58,10 @@ func resolveBrainRoot(c *cobra.Command) (brain.RootInfo, error) {
 	if explicit, _ := c.Flags().GetString("root"); explicit != "" {
 		abs, err := filepath.Abs(explicit)
 		if err != nil {
-			return brain.RootInfo{}, fmt.Errorf("absolutizar --root: %w", err)
+			return brain.RootInfo{}, fmt.Errorf("resolve --root: %w", err)
 		}
 		if info, err := os.Stat(abs); err != nil || !info.IsDir() {
-			return brain.RootInfo{}, fmt.Errorf("--root no es un directorio: %s", abs)
+			return brain.RootInfo{}, fmt.Errorf("--root is not a directory: %s", abs)
 		}
 		return brain.RootInfo{Path: abs, Source: brain.RootSourceCwd}, nil
 	}
@@ -75,7 +75,7 @@ func resolveBrainRoot(c *cobra.Command) (brain.RootInfo, error) {
 func newBrainInitCmd() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "init",
-		Short: "Inicializa .mobiai/brain en el proyecto actual",
+		Short: "Initialize .mobiai/brain in the current project",
 		RunE:  runBrainInit,
 	}
 	brainCommonFlags(c)
@@ -97,9 +97,9 @@ func runBrainInit(c *cobra.Command, _ []string) error {
 		return err
 	}
 	if info.Warning != "" {
-		fmt.Fprintf(out, "⚠ %s (usando %s)\n", info.Warning, info.Path)
+		fmt.Fprintf(out, "⚠ %s (using %s)\n", info.Warning, info.Path)
 	} else {
-		fmt.Fprintf(out, "Proyecto detectado: %s\n", info.Path)
+		fmt.Fprintf(out, "Detected project: %s\n", info.Path)
 	}
 
 	paths := brain.NewBrainPaths(info.Path)
@@ -124,24 +124,24 @@ func runBrainInit(c *cobra.Command, _ []string) error {
 	}
 
 	if createdConfig {
-		fmt.Fprintf(out, "✓ creado %s\n", relTo(info.Path, paths.ConfigFile))
+		fmt.Fprintf(out, "✓ created %s\n", relTo(info.Path, paths.ConfigFile))
 	} else {
-		fmt.Fprintf(out, "= %s ya existe (no se sobrescribe)\n", relTo(info.Path, paths.ConfigFile))
+		fmt.Fprintf(out, "= %s already exists (not overwritten)\n", relTo(info.Path, paths.ConfigFile))
 	}
 	if len(createdMemories) > 0 {
-		fmt.Fprintf(out, "✓ memorias inicializadas: %s\n", strings.Join(createdMemories, ", "))
+		fmt.Fprintf(out, "✓ memories initialized: %s\n", strings.Join(createdMemories, ", "))
 	} else {
-		fmt.Fprintln(out, "= memorias ya existentes (no se sobrescriben)")
+		fmt.Fprintln(out, "= memories already exist (not overwritten)")
 	}
 	fmt.Fprintln(out, "")
-	fmt.Fprintln(out, "Siguiente paso: `mobiai brain scan` para detectar el stack.")
+	fmt.Fprintln(out, "Next step: `mobiai brain scan` to detect the stack.")
 	return nil
 }
 
 func newBrainScanCmd() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "scan",
-		Short: "Escanea el proyecto y detecta el stack mobile",
+		Short: "Scan the project and detect the mobile stack",
 		RunE:  runBrainScan,
 	}
 	brainCommonFlags(c)
@@ -156,10 +156,10 @@ func runBrainScan(c *cobra.Command, _ []string) error {
 	}
 	paths := brain.NewBrainPaths(info.Path)
 	if !paths.Exists() {
-		return fmt.Errorf("no encontré .mobiai/brain/config.json en %s. Corré `mobiai brain init` primero", info.Path)
+		return fmt.Errorf("could not find .mobiai/brain/config.json in %s. Run `mobiai brain init` first", info.Path)
 	}
 
-	fmt.Fprintf(out, "Escaneando %s ...\n", info.Path)
+	fmt.Fprintf(out, "Scanning %s ...\n", info.Path)
 	scan, err := brain.ScanProject(info.Path)
 	if err != nil {
 		return err
@@ -170,7 +170,7 @@ func runBrainScan(c *cobra.Command, _ []string) error {
 	// without forcing the user to edit the file by hand.
 	cfg, err := brain.LoadConfig(paths)
 	if err != nil {
-		return fmt.Errorf("leer config.json: %w", err)
+		return fmt.Errorf("read config.json: %w", err)
 	}
 	if cfg.ProjectType == brain.ProjectTypeUnknown {
 		cfg.ProjectType = scan.ProjectType
@@ -186,7 +186,7 @@ func runBrainScan(c *cobra.Command, _ []string) error {
 	}
 
 	printScanSummary(out, scan)
-	fmt.Fprintf(out, "✓ scan guardado en %s\n", relTo(info.Path, paths.ScanFile))
+	fmt.Fprintf(out, "✓ scan saved to %s\n", relTo(info.Path, paths.ScanFile))
 	return nil
 }
 
@@ -194,10 +194,10 @@ func printScanSummary(out io.Writer, s *brain.Scan) {
 	w := func(format string, args ...interface{}) {
 		fmt.Fprintf(out, format, args...)
 	}
-	w("\nResumen:\n")
-	w("  Tipo:        %s\n", s.ProjectType)
+	w("\nSummary:\n")
+	w("  Type:        %s\n", s.ProjectType)
 	if len(s.Platforms) > 0 {
-		w("  Plataformas: %s\n", strings.Join(s.Platforms, ", "))
+		w("  Platforms:   %s\n", strings.Join(s.Platforms, ", "))
 	}
 	for _, row := range []struct {
 		label string
@@ -225,21 +225,21 @@ func printScanSummary(out io.Writer, s *brain.Scan) {
 func newBrainContextCmd() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "context",
-		Short: "Imprime el contexto Markdown del Brain (config + scan + memorias)",
-		Long: "Imprime el contexto del Brain como Markdown. Sin flags, vuelca todo. " +
-			"Con --section, --platform, --status o --area filtra entradas de las " +
-			"memorias para que solo aparezca lo relevante (útil cuando el brain crece).",
+		Short: "Print the Brain's Markdown context (config + scan + memories)",
+		Long: "Prints the Brain context as Markdown. Without flags, dumps everything. " +
+			"With --section, --platform, --status or --area, filters memory entries so " +
+			"only what's relevant appears (useful as the brain grows).",
 		RunE: runBrainContext,
 	}
 	brainCommonFlags(c)
 	c.Flags().StringSlice("section", nil,
-		"limita las secciones a renderizar (stack,rules,decisions,bugfixes,testing,integrations,releases,warnings). Repetible o coma-separado.")
+		"limit sections to render (stack,rules,decisions,bugfixes,testing,integrations,releases,warnings). Repeatable or comma-separated.")
 	c.Flags().String("platform", "",
-		"filtra entradas por platform (android|ios|shared|kmp|flutter|react-native)")
+		"filter entries by platform (android|ios|shared|kmp|flutter|react-native)")
 	c.Flags().String("status", "",
-		"filtra entradas por status (active|temporary|deprecated)")
+		"filter entries by status (active|temporary|deprecated)")
 	c.Flags().String("area", "",
-		"filtra entradas cuyo area contenga este string (substring)")
+		"filter entries whose area contains this string (substring)")
 	return c
 }
 
@@ -250,7 +250,7 @@ func runBrainContext(c *cobra.Command, _ []string) error {
 	}
 	paths := brain.NewBrainPaths(info.Path)
 	if !paths.Exists() {
-		return fmt.Errorf("no encontré .mobiai/brain/config.json en %s. Corré `mobiai brain init` primero", info.Path)
+		return fmt.Errorf("could not find .mobiai/brain/config.json in %s. Run `mobiai brain init` first", info.Path)
 	}
 	cfg, err := brain.LoadConfig(paths)
 	if err != nil {
@@ -279,17 +279,17 @@ func runBrainContext(c *cobra.Command, _ []string) error {
 func newBrainSearchCmd() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "search <query>",
-		Short: "Busca texto libre en las memorias del Brain",
-		Long: "Hace match case-insensitive sobre el título y el cuerpo de cada " +
-			"entrada de las memorias. Los flags --platform/--status/--area filtran " +
-			"los resultados con semántica AND.",
+		Short: "Free-text search across Brain memories",
+		Long: "Performs a case-insensitive match against the title and body of each " +
+			"memory entry. The --platform/--status/--area flags filter results with " +
+			"AND semantics.",
 		Args: cobra.MinimumNArgs(1),
 		RunE: runBrainSearch,
 	}
 	brainCommonFlags(c)
-	c.Flags().String("platform", "", "limita a entradas con este platform")
-	c.Flags().String("status", "", "limita a entradas con este status")
-	c.Flags().String("area", "", "limita a entradas cuya area contenga este string")
+	c.Flags().String("platform", "", "limit to entries with this platform")
+	c.Flags().String("status", "", "limit to entries with this status")
+	c.Flags().String("area", "", "limit to entries whose area contains this string")
 	return c
 }
 
@@ -301,7 +301,7 @@ func runBrainSearch(c *cobra.Command, args []string) error {
 	}
 	paths := brain.NewBrainPaths(info.Path)
 	if !paths.Exists() {
-		return fmt.Errorf("brain no inicializado en %s — corré `mobiai brain init` primero", info.Path)
+		return fmt.Errorf("brain not initialized in %s — run `mobiai brain init` first", info.Path)
 	}
 	query := strings.Join(args, " ")
 	platform, _ := c.Flags().GetString("platform")
@@ -316,10 +316,10 @@ func runBrainSearch(c *cobra.Command, args []string) error {
 		return err
 	}
 	if len(hits) == 0 {
-		fmt.Fprintf(out, "Sin resultados para %q.\n", query)
+		fmt.Fprintf(out, "No results for %q.\n", query)
 		return nil
 	}
-	fmt.Fprintf(out, "%d resultado(s) para %q:\n\n", len(hits), query)
+	fmt.Fprintf(out, "%d result(s) for %q:\n\n", len(hits), query)
 	for _, h := range hits {
 		// Format: `[section] title (status, platform) — snippet`
 		var meta []string
@@ -361,20 +361,20 @@ func truncate(s string, maxLen int) string {
 func newBrainReviewCmd() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "review",
-		Short: "Lista entradas temporales cuyo review_after ya pasó",
-		Long: "Recorre las memorias y muestra las entradas con status: temporary " +
-			"cuyo review_after <= hoy. Pensado para evitar que workarounds temporales " +
-			"se vuelvan permanentes por inercia. Por defecto sale con exit 1 si hay " +
-			"vencidas (útil como gate en CI / pre-commit); usá --no-fail para que " +
-			"solo informe. Con --include-no-date también lista las temporary sin " +
-			"review_after asignado.",
+		Short: "List temporary entries whose review_after has passed",
+		Long: "Walks the memories and shows entries with status: temporary " +
+			"whose review_after <= today. Designed to keep temporary workarounds " +
+			"from drifting into permanence by inertia. By default exits with " +
+			"status 1 if there are overdue entries (useful as a CI / pre-commit " +
+			"gate); pass --no-fail to only report. With --include-no-date it " +
+			"also lists temporary entries without a review_after assigned.",
 		RunE: runBrainReview,
 	}
 	brainCommonFlags(c)
 	c.Flags().Bool("include-no-date", false,
-		"también lista entradas temporary sin review_after (sección aparte en la salida)")
+		"also list temporary entries without review_after (printed under a separate heading)")
 	c.Flags().Bool("no-fail", false,
-		"siempre exit 0, incluso si hay entradas vencidas (modo solo-informativo)")
+		"always exit 0, even if there are overdue entries (informational mode)")
 	return c
 }
 
@@ -386,7 +386,7 @@ func runBrainReview(c *cobra.Command, _ []string) error {
 	}
 	paths := brain.NewBrainPaths(info.Path)
 	if !paths.Exists() {
-		return fmt.Errorf("brain no inicializado en %s — corré `mobiai brain init` primero", info.Path)
+		return fmt.Errorf("brain not initialized in %s — run `mobiai brain init` first", info.Path)
 	}
 
 	includeNoDate, _ := c.Flags().GetBool("include-no-date")
@@ -402,19 +402,19 @@ func runBrainReview(c *cobra.Command, _ []string) error {
 	overdue, noDate := splitReviewItems(items)
 
 	if len(overdue) == 0 && len(noDate) == 0 {
-		fmt.Fprintln(out, "✓ No hay entradas temporales vencidas.")
+		fmt.Fprintln(out, "✓ No overdue temporary entries.")
 		return nil
 	}
 
 	if len(overdue) > 0 {
-		fmt.Fprintf(out, "⚠ %d entrada(s) temporal(es) vencida(s):\n\n", len(overdue))
+		fmt.Fprintf(out, "⚠ %d overdue temporary entry(ies):\n\n", len(overdue))
 		printOverdueItems(out, overdue)
 	} else {
-		fmt.Fprintln(out, "✓ No hay entradas vencidas.")
+		fmt.Fprintln(out, "✓ No overdue entries.")
 	}
 
 	if len(noDate) > 0 {
-		fmt.Fprintf(out, "\n%d entrada(s) temporal(es) sin review_after:\n\n", len(noDate))
+		fmt.Fprintf(out, "\n%d temporary entry(ies) without review_after:\n\n", len(noDate))
 		printNoDateItems(out, noDate)
 	}
 
@@ -449,7 +449,7 @@ func printOverdueItems(out io.Writer, items []brain.ReviewItem) {
 			currentSection = it.Section
 		}
 		fmt.Fprintf(out, "  ⚠ %s\n", it.Entry.Title)
-		fmt.Fprintf(out, "    review_after: %s (vencido hace %s)\n",
+		fmt.Fprintf(out, "    review_after: %s (overdue by %s)\n",
 			it.ReviewAfter, daysOverdueLabel(it.DaysOverdue))
 		if p := it.Entry.Get("platform"); p != "" {
 			fmt.Fprintf(out, "    platform: %s\n", p)
@@ -485,19 +485,19 @@ func printNoDateItems(out io.Writer, items []brain.ReviewItem) {
 func newBrainPromoteCmd() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "promote <id>",
-		Short: "Cambia el status de una entrada existente",
-		Long: "Actualiza el status: de la entrada con el id dado (active|temporary|" +
-			"deprecated). Pensado como flujo de cierre tras `brain review`: cuando ya no " +
-			"necesitás una entrada temporary, la promovés a active (se volvió definitiva) " +
-			"o deprecated (ya no aplica). Opcionalmente también actualiza review_after en " +
-			"la misma llamada, o lo elimina con --clear-review-after.",
+		Short: "Change the status of an existing entry",
+		Long: "Updates the status: of the entry with the given id (active|temporary|" +
+			"deprecated). Designed as the wrap-up flow after `brain review`: once you no " +
+			"longer need a temporary entry, promote it to active (it became permanent) " +
+			"or deprecated (no longer applies). Optionally also updates review_after in " +
+			"the same call, or removes it with --clear-review-after.",
 		Args: cobra.ExactArgs(1),
 		RunE: runBrainPromote,
 	}
 	brainCommonFlags(c)
-	c.Flags().String("status", "", "nuevo status: active|temporary|deprecated (requerido)")
-	c.Flags().String("review-after", "", "actualizar también review_after a esta fecha YYYY-MM-DD (opcional)")
-	c.Flags().Bool("clear-review-after", false, "eliminar review_after (incompatible con --review-after)")
+	c.Flags().String("status", "", "new status: active|temporary|deprecated (required)")
+	c.Flags().String("review-after", "", "also update review_after to this YYYY-MM-DD date (optional)")
+	c.Flags().Bool("clear-review-after", false, "remove review_after (incompatible with --review-after)")
 	_ = c.MarkFlagRequired("status")
 	return c
 }
@@ -517,15 +517,15 @@ func runBrainPromote(c *cobra.Command, args []string) error {
 func newBrainBumpCmd() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "bump <id>",
-		Short: "Extiende review_after de una entrada existente",
-		Long: "Actualiza review_after de la entrada con el id dado, sin tocar status. " +
-			"Útil tras `brain review` cuando una entrada temporary sigue siendo válida y " +
-			"querés extender su plazo de revisión. Para cambios de status usá `promote`.",
+		Short: "Extend the review_after of an existing entry",
+		Long: "Updates review_after of the entry with the given id, without touching status. " +
+			"Useful after `brain review` when a temporary entry is still valid and you " +
+			"want to extend its review deadline. For status changes use `promote`.",
 		Args: cobra.ExactArgs(1),
 		RunE: runBrainBump,
 	}
 	brainCommonFlags(c)
-	c.Flags().String("review-after", "", "nueva fecha YYYY-MM-DD para review_after (requerido)")
+	c.Flags().String("review-after", "", "new YYYY-MM-DD date for review_after (required)")
 	_ = c.MarkFlagRequired("review-after")
 	return c
 }
@@ -549,13 +549,13 @@ func doBrainUpdate(c *cobra.Command, id string, opts brain.UpdateOptions) error 
 	}
 	paths := brain.NewBrainPaths(info.Path)
 	if !paths.Exists() {
-		return fmt.Errorf("brain no inicializado en %s — corré `mobiai brain init` primero", info.Path)
+		return fmt.Errorf("brain not initialized in %s — run `mobiai brain init` first", info.Path)
 	}
 	res, err := brain.UpdateEntry(paths, id, opts)
 	if err != nil {
 		return err
 	}
-	fmt.Fprintf(out, "✓ %s actualizada (%s)\n", res.Title, res.File)
+	fmt.Fprintf(out, "✓ %s updated (%s)\n", res.Title, res.File)
 	if res.PrevStatus != res.NewStatus {
 		fmt.Fprintf(out, "  status: %s → %s\n", res.PrevStatus, res.NewStatus)
 	}
@@ -573,34 +573,34 @@ func doBrainUpdate(c *cobra.Command, id string, opts brain.UpdateOptions) error 
 	return nil
 }
 
-// daysOverdueLabel renders a human-readable "N días" / "N día" / "hoy"
+// daysOverdueLabel renders a human-readable "N days" / "1 day" / "today"
 // label for a non-negative number of days overdue.
 func daysOverdueLabel(days int) string {
 	switch {
 	case days == 0:
-		return "hoy"
+		return "today"
 	case days == 1:
-		return "1 día"
+		return "1 day"
 	default:
-		return fmt.Sprintf("%d días", days)
+		return fmt.Sprintf("%d days", days)
 	}
 }
 
 func newBrainSaveCmd() *cobra.Command {
 	root := &cobra.Command{
 		Use:   "save",
-		Short: "Guardar una entrada en las memorias del Brain",
-		Long: "Añade una entrada estructurada al archivo de memoria correspondiente. " +
-			"Requiere que el Brain esté inicializado en el proyecto " +
-			"(corré `mobiai brain init` primero).",
+		Short: "Save an entry into the Brain's memories",
+		Long: "Appends a structured entry to the matching memory file. " +
+			"Requires the Brain to be initialized in the project " +
+			"(run `mobiai brain init` first).",
 	}
 	root.AddCommand(
 		newBrainSaveSubCmd(brain.SaveTypeDecision, "decision",
-			"Guardar una decisión de arquitectura"),
+			"Save an architecture decision"),
 		newBrainSaveSubCmd(brain.SaveTypeBugfix, "bugfix",
-			"Guardar un bugfix o workaround"),
+			"Save a bugfix or workaround"),
 		newBrainSaveSubCmd(brain.SaveTypeTesting, "testing",
-			"Guardar un patrón de testing reusable"),
+			"Save a reusable testing pattern"),
 	)
 	return root
 }
@@ -614,13 +614,13 @@ func newBrainSaveSubCmd(saveType brain.SaveType, use, short string) *cobra.Comma
 		},
 	}
 	brainCommonFlags(c)
-	c.Flags().String("title", "", "título corto de la entrada (requerido)")
-	c.Flags().String("platform", "", "android|ios|shared|kmp|flutter|react-native (opcional)")
-	c.Flags().String("area", "", "área del proyecto (libre, opcional)")
+	c.Flags().String("title", "", "short entry title (required)")
+	c.Flags().String("platform", "", "android|ios|shared|kmp|flutter|react-native (optional)")
+	c.Flags().String("area", "", "project area (free-form, optional)")
 	c.Flags().String("status", "active", "active|temporary|deprecated")
-	c.Flags().String("review-after", "", "fecha YYYY-MM-DD para revisar (opcional)")
-	c.Flags().String("body", "", "cuerpo Markdown (si se omite, se lee de stdin)")
-	c.Flags().StringSlice("files", nil, "archivos relacionados, separados por coma (opcional)")
+	c.Flags().String("review-after", "", "YYYY-MM-DD date to review (optional)")
+	c.Flags().String("body", "", "Markdown body (if omitted, read from stdin)")
+	c.Flags().StringSlice("files", nil, "related files, comma-separated (optional)")
 	_ = c.MarkFlagRequired("title")
 	return c
 }
@@ -633,7 +633,7 @@ func runBrainSave(c *cobra.Command, saveType brain.SaveType) error {
 	}
 	paths := brain.NewBrainPaths(info.Path)
 	if !paths.Exists() {
-		return fmt.Errorf("brain no inicializado en %s — corré `mobiai brain init` primero", info.Path)
+		return fmt.Errorf("brain not initialized in %s — run `mobiai brain init` first", info.Path)
 	}
 
 	title, _ := c.Flags().GetString("title")
@@ -649,7 +649,7 @@ func runBrainSave(c *cobra.Command, saveType brain.SaveType) error {
 		// without struggling with shell-escaping a flag value.
 		piped, err := readPipedStdin(c.InOrStdin())
 		if err != nil {
-			return fmt.Errorf("leer body desde stdin: %w", err)
+			return fmt.Errorf("read body from stdin: %w", err)
 		}
 		body = piped
 	}
@@ -675,7 +675,7 @@ func runBrainSave(c *cobra.Command, saveType brain.SaveType) error {
 		brain.SaveTypeTesting:  "testing.md",
 	}[saveType]
 	rel := filepath.Join(".mobiai", "brain", "memories", fileBase)
-	fmt.Fprintf(out, "✓ guardado en %s\n  id: %s\n", rel, id)
+	fmt.Fprintf(out, "✓ saved to %s\n  id: %s\n", rel, id)
 	return nil
 }
 
@@ -710,11 +710,11 @@ func readPipedStdin(in io.Reader) (string, error) {
 func newBrainMCPCmd() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "mcp",
-		Short: "Arranca un servidor MCP que expone el Brain como tools",
-		Long: "Arranca un servidor MCP (Model Context Protocol) que expone las operaciones " +
-			"del Brain (context, search, scan, save) como tools que el agente puede invocar " +
-			"directamente. Comunica por stdio — pensado para que un cliente MCP (Claude Code, " +
-			"Cursor, Copilot CLI, etc.) lo lance como subproceso. Ver brain/MCP-SETUP.md.",
+		Short: "Start an MCP server that exposes the Brain as tools",
+		Long: "Starts an MCP (Model Context Protocol) server that exposes the Brain's " +
+			"operations (context, search, scan, save) as tools the agent can invoke " +
+			"directly. Communicates over stdio — designed for an MCP client (Claude Code, " +
+			"Cursor, Copilot CLI, etc.) to launch it as a subprocess. See brain/MCP-SETUP.md.",
 		RunE: runBrainMCP,
 	}
 	brainCommonFlags(c)
@@ -738,19 +738,19 @@ func runBrainMCP(c *cobra.Command, _ []string) error {
 func newBrainInstallMCPCmd() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "install-mcp",
-		Short: "Registra el server MCP de Brain en clientes IA (Claude Code, Cursor)",
-		Long: "Añade el server `mobiai-brain` al config de cada cliente IA soportado, " +
-			"preservando el resto del archivo. Por defecto detecta los clientes presentes " +
-			"(presencia de ~/.claude o ~/.cursor); con --client podés forzar uno solo. " +
-			"Idempotente: re-correrlo con la misma config no hace nada. Usá --dry-run " +
-			"para previsualizar sin tocar archivos, o --uninstall para quitar el registro.",
+		Short: "Register the Brain MCP server in AI clients (Claude Code, Cursor)",
+		Long: "Adds the `mobiai-brain` server to each supported AI client's config, " +
+			"preserving the rest of the file. By default detects which clients are present " +
+			"(presence of ~/.claude or ~/.cursor); use --client to force a single one. " +
+			"Idempotent: re-running it with the same config is a no-op. Use --dry-run " +
+			"to preview without touching files, or --uninstall to remove the registration.",
 		RunE: runBrainInstallMCP,
 	}
 	c.Flags().StringSlice("client", nil,
-		"clientes a registrar: claude|cursor (repetible o coma-separado; default: todos los detectados)")
-	c.Flags().Bool("dry-run", false, "muestra qué archivos se tocarían sin escribir nada")
-	c.Flags().Bool("uninstall", false, "elimina el registro en lugar de crearlo")
-	c.Flags().String("binary", "", "ruta al binario mobiai a registrar (default: el binario en uso)")
+		"clients to register: claude|cursor (repeatable or comma-separated; default: all detected)")
+	c.Flags().Bool("dry-run", false, "show which files would be touched without writing anything")
+	c.Flags().Bool("uninstall", false, "remove the registration instead of creating it")
+	c.Flags().String("binary", "", "path to the mobiai binary to register (default: the binary in use)")
 	return c
 }
 
@@ -800,7 +800,7 @@ func parseMCPClients(raw []string) ([]brain.MCPClient, error) {
 			// Skip empties from accidental ",,".
 			continue
 		default:
-			return nil, fmt.Errorf("--client %q desconocido (soportados: claude, cursor)", r)
+			return nil, fmt.Errorf("--client %q unknown (supported: claude, cursor)", r)
 		}
 	}
 	return out, nil
@@ -825,9 +825,9 @@ func printInstallResults(out io.Writer, results []brain.InstallResult, uninstall
 	if anyTouched && !results[0].DryRun {
 		fmt.Fprintln(out, "")
 		if uninstall {
-			fmt.Fprintln(out, "Listo. Reiniciá el cliente para que tome efecto.")
+			fmt.Fprintln(out, "Done. Restart the client for changes to take effect.")
 		} else {
-			fmt.Fprintln(out, "Listo. Reiniciá el cliente para que cargue el server MCP.")
+			fmt.Fprintln(out, "Done. Restart the client so it loads the MCP server.")
 		}
 	}
 }
@@ -835,17 +835,17 @@ func printInstallResults(out io.Writer, results []brain.InstallResult, uninstall
 func installIconAndLabel(a brain.InstallAction) (string, string) {
 	switch a {
 	case brain.ActionInstalled:
-		return "✓", "registrado"
+		return "✓", "registered"
 	case brain.ActionUpdated:
-		return "✓", "actualizado"
+		return "✓", "updated"
 	case brain.ActionUnchanged:
-		return "=", "sin cambios (ya estaba registrado)"
+		return "=", "unchanged (already registered)"
 	case brain.ActionUninstalled:
-		return "✓", "eliminado"
+		return "✓", "removed"
 	case brain.ActionNotPresent:
-		return "=", "no estaba registrado"
+		return "=", "was not registered"
 	case brain.ActionSkipped:
-		return "·", "saltado (cliente no instalado)"
+		return "·", "skipped (client not installed)"
 	}
 	return "?", string(a)
 }

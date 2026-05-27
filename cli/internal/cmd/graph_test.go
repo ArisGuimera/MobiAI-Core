@@ -48,8 +48,8 @@ func TestGraphInit_CreatesIndex(t *testing.T) {
 	if err := cmd.Execute(); err != nil {
 		t.Fatalf("execute failed: %v\n%s", err, out.String())
 	}
-	if !strings.Contains(out.String(), "Índice generado") {
-		t.Errorf("expected 'Índice generado' in output, got: %s", out.String())
+	if !strings.Contains(out.String(), "Index generated") {
+		t.Errorf("expected 'Index generated' in output, got: %s", out.String())
 	}
 	if _, err := os.Stat(filepath.Join(dir, ".mobiai", "graph", "index.json")); err != nil {
 		t.Errorf("index.json not created: %v", err)
@@ -82,8 +82,8 @@ func TestGraphStatus_WithIndex(t *testing.T) {
 	_ = runGraph(t, []string{"init", "--root", dir})
 	out := runGraph(t, []string{"status", "--root", dir})
 
-	if !strings.Contains(out, "Archivos:") {
-		t.Errorf("expected 'Archivos:' in status output, got: %s", out)
+	if !strings.Contains(out, "Files:") {
+		t.Errorf("expected 'Files:' in status output, got: %s", out)
 	}
 	if !strings.Contains(out, "1") {
 		t.Errorf("expected file count '1' in status output, got: %s", out)
@@ -112,8 +112,8 @@ func TestGraphSearch_NoHits(t *testing.T) {
 	_ = runGraph(t, []string{"init", "--root", dir})
 	out := runGraph(t, []string{"search", "Nonexistent", "--root", dir})
 
-	if !strings.Contains(out, "Sin coincidencias.") {
-		t.Errorf("expected 'Sin coincidencias.' message, got: %s", out)
+	if !strings.Contains(out, "No matches.") {
+		t.Errorf("expected 'No matches.' message, got: %s", out)
 	}
 }
 
@@ -130,7 +130,7 @@ func TestGraphSearch_LimitFlag(t *testing.T) {
 	if hits != 2 {
 		t.Errorf("expected 2 hits with --limit 2, got %d in: %s", hits, out)
 	}
-	if !strings.Contains(out, "mostrando 2") {
+	if !strings.Contains(out, "showing 2") {
 		t.Errorf("expected truncation hint with --limit 2, got: %s", out)
 	}
 }

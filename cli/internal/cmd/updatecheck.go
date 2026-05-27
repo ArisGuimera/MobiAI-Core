@@ -124,9 +124,9 @@ func runUpdateCheck(out io.Writer, installedVersion string) error {
 	}
 
 	if available {
-		fmt.Fprintf(out, "MobiAI %s → %s disponible. Corré /mobiai-update.\n", installedVersion, latest)
+		fmt.Fprintf(out, "MobiAI %s → %s available. Run /mobiai-update.\n", installedVersion, latest)
 	} else if out != io.Discard {
-		fmt.Fprintf(out, "MobiAI %s está al día (último release: %s).\n", installedVersion, latest)
+		fmt.Fprintf(out, "MobiAI %s is up to date (latest release: %s).\n", installedVersion, latest)
 	}
 	return nil
 }

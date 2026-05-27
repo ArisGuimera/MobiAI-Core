@@ -17,12 +17,12 @@ type GlobalFlags struct {
 
 // AddPersistentFlags attaches the global flags to the root command.
 func AddPersistentFlags(root *cobra.Command) {
-	root.PersistentFlags().StringSliceP("host", "", nil, "fuerza adapters específicos (default: todos los detectados)")
-	root.PersistentFlags().BoolP("yes", "y", false, "asume sí en confirmaciones (CI-friendly)")
-	root.PersistentFlags().BoolP("verbose", "V", false, "más output (hoy sólo afecta a 'mobiai update')")
-	root.PersistentFlags().Bool("no-color", false, "deshabilita colores ANSI en el help")
-	root.PersistentFlags().String("catalog-root", "", "ruta a un catálogo local (override de ~/.mobiai/cache/catalog)")
-	root.PersistentFlags().Bool("include-experimental", false, "incluir adapters tier-3 (paths especulativos) en la auto-detección")
+	root.PersistentFlags().StringSliceP("host", "", nil, "force specific adapters (default: all detected)")
+	root.PersistentFlags().BoolP("yes", "y", false, "assume yes on confirmations (CI-friendly)")
+	root.PersistentFlags().BoolP("verbose", "V", false, "more output (currently only affects 'mobiai update')")
+	root.PersistentFlags().Bool("no-color", false, "disable ANSI colors in help output")
+	root.PersistentFlags().String("catalog-root", "", "path to a local catalog (overrides ~/.mobiai/cache/catalog)")
+	root.PersistentFlags().Bool("include-experimental", false, "include tier-3 adapters (speculative paths) in auto-detection")
 }
 
 // FlagsFromCmd extracts the global flags from a cobra command's flag set.

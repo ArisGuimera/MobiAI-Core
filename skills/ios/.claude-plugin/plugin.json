@@ -1,6 +1,6 @@
 {
   "name": "ios",
-  "description": "MobiAI para iOS — skills de simulator, build, testing, architecture",
+  "description": "MobiAI for iOS — simulator, build, testing, and architecture skills",
   "version": "2.2.0",
   "author": {
     "name": "Matias Rosenstein",

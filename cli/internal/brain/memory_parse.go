@@ -44,7 +44,7 @@ func ParseMemoryFile(path string) ([]MemoryEntry, error) {
 		if os.IsNotExist(err) {
 			return nil, nil
 		}
-		return nil, fmt.Errorf("abrir %s: %w", path, err)
+		return nil, fmt.Errorf("open %s: %w", path, err)
 	}
 	defer f.Close()
 
@@ -105,7 +105,7 @@ func ParseMemoryFile(path string) ([]MemoryEntry, error) {
 		body.WriteString("\n")
 	}
 	if err := scanner.Err(); err != nil {
-		return nil, fmt.Errorf("leer %s: %w", path, err)
+		return nil, fmt.Errorf("read %s: %w", path, err)
 	}
 	flush()
 	return entries, nil

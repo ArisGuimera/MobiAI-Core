@@ -26,7 +26,7 @@ func TestUpdate_FromLocalRoot_UpdatesMeta(t *testing.T) {
 		t.Fatalf("execute: %v", err)
 	}
 
-	if !strings.Contains(out.String(), "Catálogo de skills actualizado") {
+	if !strings.Contains(out.String(), "Skills catalog updated") {
 		t.Errorf("output: %q", out.String())
 	}
 
@@ -133,10 +133,10 @@ func TestUpdate_GitClone_FreshCache(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(cacheRoot, ".claude-plugin", "marketplace.json")); err != nil {
 		t.Errorf("expected marketplace.json in cloned cache: %v", err)
 	}
-	if !strings.Contains(out.String(), "Clonando catálogo") {
+	if !strings.Contains(out.String(), "Cloning catalog") {
 		t.Errorf("expected clone message; got: %q", out.String())
 	}
-	if !strings.Contains(out.String(), "Catálogo de skills actualizado") {
+	if !strings.Contains(out.String(), "Skills catalog updated") {
 		t.Errorf("expected success message; got: %q", out.String())
 	}
 
@@ -175,7 +175,7 @@ func TestUpdate_GitPull_ExistingCache(t *testing.T) {
 		t.Fatalf("second execute: %v", err)
 	}
 
-	if !strings.Contains(out2.String(), "Sincronizando catálogo (git pull)") {
+	if !strings.Contains(out2.String(), "Syncing catalog (git pull)") {
 		t.Errorf("expected pull message on 2nd run; got: %q", out2.String())
 	}
 }

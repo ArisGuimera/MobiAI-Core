@@ -42,7 +42,7 @@ func NewBrainPaths(projectRoot string) BrainPaths {
 // EnsureDirs creates Dir and MemoriesDir if they do not exist.
 func (p BrainPaths) EnsureDirs() error {
 	if err := os.MkdirAll(p.MemoriesDir, 0o755); err != nil {
-		return fmt.Errorf("crear %s: %w", p.MemoriesDir, err)
+		return fmt.Errorf("create %s: %w", p.MemoriesDir, err)
 	}
 	return nil
 }
@@ -92,11 +92,11 @@ type RootInfo struct {
 // If nothing matches, returns start (absolutized) with a warning.
 func FindProjectRoot(start string) (RootInfo, error) {
 	if start == "" {
-		return RootInfo{}, fmt.Errorf("ruta de inicio vacía")
+		return RootInfo{}, fmt.Errorf("empty start path")
 	}
 	abs, err := filepath.Abs(start)
 	if err != nil {
-		return RootInfo{}, fmt.Errorf("absolutizar %s: %w", start, err)
+		return RootInfo{}, fmt.Errorf("absolutize %s: %w", start, err)
 	}
 	dir := abs
 	for {
@@ -112,7 +112,7 @@ func FindProjectRoot(start string) (RootInfo, error) {
 	return RootInfo{
 		Path:    abs,
 		Source:  RootSourceCwd,
-		Warning: "no encontré marcador de proyecto, uso el directorio actual",
+		Warning: "no project marker found, using the current directory",
 	}, nil
 }
 

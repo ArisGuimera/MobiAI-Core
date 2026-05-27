@@ -74,7 +74,7 @@ func (s *Scan) Save(p BrainPaths) error {
 	}
 	s.UpdatedAt = now
 	if err := os.MkdirAll(p.Dir, 0o755); err != nil {
-		return fmt.Errorf("crear %s: %w", p.Dir, err)
+		return fmt.Errorf("create %s: %w", p.Dir, err)
 	}
 	return writeJSONAtomic(p.ScanFile, s)
 }

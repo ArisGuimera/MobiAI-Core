@@ -17,19 +17,19 @@ import (
 func NewCatalogCmd() *cobra.Command {
 	root := &cobra.Command{
 		Use:    "catalog",
-		Short:  "Inspeccionar el catálogo (debug)",
-		Long:   "Subcomando oculto para smoke tests del catálogo/resolver. No es para usuarios finales.",
+		Short:  "Inspect the catalog (debug)",
+		Long:   "Hidden subcommand for catalog/resolver smoke tests. Not intended for end users.",
 		Hidden: true,
 	}
 
 	var rootFlag string
 	addRootFlag := func(c *cobra.Command) {
-		c.Flags().StringVar(&rootFlag, "root", ".", "Ruta a la raíz del catálogo (el directorio que contiene .claude-plugin/marketplace.json)")
+		c.Flags().StringVar(&rootFlag, "root", ".", "Path to the catalog root (directory containing .claude-plugin/marketplace.json)")
 	}
 
 	listCmd := &cobra.Command{
 		Use:   "list",
-		Short: "Lista los packs del catálogo",
+		Short: "List the packs in the catalog",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			root := rootFlag
 			if root == "" || root == "." {
@@ -42,10 +42,10 @@ func NewCatalogCmd() *cobra.Command {
 				return err
 			}
 			out := cmd.OutOrStdout()
-			fmt.Fprintf(out, "Catálogo: %s (versión %s)\n", c.Marketplace.Name, c.Marketplace.Metadata.Version)
+			fmt.Fprintf(out, "Catalog: %s (version %s)\n", c.Marketplace.Name, c.Marketplace.Metadata.Version)
 			fmt.Fprintf(out, "Packs (%d):\n", len(c.Packs))
 			for _, p := range c.Packs {
-				deps := "ninguna"
+				deps := "none"
 				if len(p.Manifest.Dependencies) > 0 {
 					deps = strings.Join(p.Manifest.Dependencies, ", ")
 				}
@@ -58,7 +58,7 @@ func NewCatalogCmd() *cobra.Command {
 
 	resolveCmd := &cobra.Command{
 		Use:   "resolve <pack>...",
-		Short: "Resuelve el orden de instalación para los packs dados",
+		Short: "Resolve the install order for the given packs",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			root := rootFlag
@@ -76,7 +76,7 @@ func NewCatalogCmd() *cobra.Command {
 				return err
 			}
 			out := cmd.OutOrStdout()
-			fmt.Fprintf(out, "Orden de instalación:\n")
+			fmt.Fprintf(out, "Install order:\n")
 			for i, name := range order {
 				fmt.Fprintf(out, "  %d. %s\n", i+1, name)
 			}

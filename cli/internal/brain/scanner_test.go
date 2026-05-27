@@ -323,7 +323,7 @@ func TestScan_ReportsUnreadableInterestingFile(t *testing.T) {
 	}
 	hit := false
 	for _, w := range s.Warnings {
-		if strings.Contains(w, "no se pudo leer") && strings.Contains(w, "build.gradle.kts") {
+		if strings.Contains(w, "could not read") && strings.Contains(w, "build.gradle.kts") {
 			hit = true
 			break
 		}

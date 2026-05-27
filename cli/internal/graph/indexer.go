@@ -49,17 +49,17 @@ func Build(root string) (*Index, error) {
 	info, err := os.Stat(root)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nil, fmt.Errorf("el directorio %s no existe", root)
+			return nil, fmt.Errorf("directory %s does not exist", root)
 		}
 		return nil, fmt.Errorf("stat %s: %w", root, err)
 	}
 	if !info.IsDir() {
-		return nil, fmt.Errorf("%s no es un directorio", root)
+		return nil, fmt.Errorf("%s is not a directory", root)
 	}
 
 	absRoot, err := filepath.Abs(root)
 	if err != nil {
-		return nil, fmt.Errorf("resolver ruta absoluta de %s: %w", root, err)
+		return nil, fmt.Errorf("resolve absolute path of %s: %w", root, err)
 	}
 
 	idx := &Index{
@@ -99,13 +99,13 @@ func Build(root string) (*Index, error) {
 
 		relPath, err := filepath.Rel(absRoot, path)
 		if err != nil {
-			return fmt.Errorf("ruta relativa de %s: %w", path, err)
+			return fmt.Errorf("relative path of %s: %w", path, err)
 		}
 		relPath = filepath.ToSlash(relPath)
 
 		content, err := os.ReadFile(path)
 		if err != nil {
-			return fmt.Errorf("leer %s: %w", relPath, err)
+			return fmt.Errorf("read %s: %w", relPath, err)
 		}
 
 		var fi FileIndex

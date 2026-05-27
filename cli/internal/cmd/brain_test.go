@@ -13,7 +13,7 @@ func TestBrainInit_CreatesStructure(t *testing.T) {
 	root := setupKMPProject(t)
 
 	out := runBrain(t, []string{"init", "--root", root})
-	if !strings.Contains(out, "Proyecto detectado") {
+	if !strings.Contains(out, "Detected project") {
 		t.Errorf("expected detection message, got: %s", out)
 	}
 	if !strings.Contains(out, "config.json") {
@@ -35,7 +35,7 @@ func TestBrainInit_CreatesStructure(t *testing.T) {
 
 	// Re-running init must be idempotent: don't overwrite, and don't error.
 	out2 := runBrain(t, []string{"init", "--root", root})
-	if !strings.Contains(out2, "ya existe") {
+	if !strings.Contains(out2, "already exists") {
 		t.Errorf("second init should mention existing files, got: %s", out2)
 	}
 }
@@ -45,7 +45,7 @@ func TestBrainScan_WritesScanJSON(t *testing.T) {
 	_ = runBrain(t, []string{"init", "--root", root})
 
 	out := runBrain(t, []string{"scan", "--root", root})
-	if !strings.Contains(out, "scan guardado") {
+	if !strings.Contains(out, "scan saved") {
 		t.Errorf("expected scan-saved message, got: %s", out)
 	}
 
