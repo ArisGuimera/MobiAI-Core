@@ -96,6 +96,39 @@ func TestSkillsRemove_RemovesInstalledPack(t *testing.T) {
 	}
 }
 
+func TestWithFirebenderHost_AppendsProjectFirebender(t *testing.T) {
+	root := t.TempDir()
+	oldWD, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(root); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := os.Chdir(oldWD); err != nil {
+			t.Fatalf("restore cwd: %v", err)
+		}
+	})
+
+	hosts, err := withFirebenderHost(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(hosts) != 1 || hosts[0].ID() != "firebender" {
+		t.Fatalf("hosts: got %#v, want only firebender", hosts)
+	}
+	// Resolve symlinks on the base tmp dir (macOS /var -> /private/var).
+	resolvedRoot, err := filepath.EvalSymlinks(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := filepath.Join(resolvedRoot, ".firebender", "skills")
+	if got := hosts[0].SkillsDir(); got != want {
+		t.Fatalf("SkillsDir: got %q, want %q", got, want)
+	}
+}
+
 func TestSkillsList_PrintsTable(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)

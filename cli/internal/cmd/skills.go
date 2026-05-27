@@ -407,3 +407,16 @@ func selectHosts(g GlobalFlags) ([]host.HostAdapter, error) {
 func detectHosts(g GlobalFlags) []host.HostAdapter {
 	return newRegistry(g).Detect()
 }
+
+func withFirebenderHost(hosts []host.HostAdapter) ([]host.HostAdapter, error) {
+	for _, h := range hosts {
+		if h.ID() == "firebender" {
+			return hosts, nil
+		}
+	}
+	firebender, err := newRegistry(GlobalFlags{}).Get("firebender")
+	if err != nil {
+		return nil, err
+	}
+	return append(hosts, firebender), nil
+}
