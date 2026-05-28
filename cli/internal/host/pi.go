@@ -7,7 +7,7 @@ func newPi() HostAdapter {
 		id:         "pi",
 		name:       "pi",
 		homepage:   "https://pi.ai",
-		homeSubdir: ".pi",
+		homeSubdir: ".agents",
 		caps:       Caps{Skills: true},
 	}
 }
