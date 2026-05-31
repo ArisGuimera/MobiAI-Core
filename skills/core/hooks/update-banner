@@ -3,7 +3,7 @@
 #
 # Reads ~/.cache/mobiai/update-check.json (written by `mobiai update --check`)
 # and, when an update is available, emits a systemMessage telling the user to
-# run /mobiai-update.
+# run `mobiai update` (which refreshes the catalog and self-updates the binary).
 #
 # Refresh strategy: if the cache is older than 23 hours, kick off a background
 # `mobiai update --check --silent` so the next session has fresh data. The
@@ -81,7 +81,7 @@ installed="$(grep -oE '"installed"[[:space:]]*:[[:space:]]*"[^"]*"' "$cache_file
 latest="$(grep -oE '"latest"[[:space:]]*:[[:space:]]*"[^"]*"' "$cache_file" \
   | head -n1 | sed -E 's/.*"latest"[[:space:]]*:[[:space:]]*"([^"]*)".*/\1/' || echo unknown)"
 
-message="MobiAI update available: ${installed} → ${latest}. Run /mobiai-update."
+message="MobiAI update available: ${installed} → ${latest}. Run: mobiai update"
 
 # Output format depends on the client (same dispatch as session-start).
 if [ -n "${CURSOR_PLUGIN_ROOT:-}" ]; then

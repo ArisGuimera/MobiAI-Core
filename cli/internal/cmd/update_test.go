@@ -115,6 +115,37 @@ func mustRun(t *testing.T, dir, name string, args ...string) {
 	}
 }
 
+func TestUpdate_SkipBinary_DoesNotSelfUpdate(t *testing.T) {
+	// Stamp a non-dev version so the self-update path would normally engage;
+	// --skip-binary must short-circuit it (no network, just the skip notice).
+	prev := version
+	SetVersion("0.0.1")
+	t.Cleanup(func() { SetVersion(prev) })
+
+	tmp := t.TempDir()
+	t.Setenv("MOBIAI_HOME", filepath.Join(tmp, ".mobiai"))
+	root := filepath.Join("..", "catalog", "testdata", "sample")
+
+	cmd := NewUpdateCmd()
+	var out bytes.Buffer
+	cmd.SetOut(&out)
+	cmd.SetErr(&out)
+	cmd.SetArgs([]string{"--catalog-root", root, "--skip-binary"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("execute: %v", err)
+	}
+
+	got := out.String()
+	if !strings.Contains(got, "--skip-binary") {
+		t.Errorf("expected skip-binary notice; got: %q", got)
+	}
+	// It must not have attempted a download / self-update. "downloading" and
+	// the "→" arrow appear only on the self-update path.
+	if strings.Contains(got, "downloading") || strings.Contains(got, "→") {
+		t.Errorf("--skip-binary should not self-update; got: %q", got)
+	}
+}
+
 func TestUpdate_GitClone_FreshCache(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("MOBIAI_HOME", filepath.Join(tmp, ".mobiai"))

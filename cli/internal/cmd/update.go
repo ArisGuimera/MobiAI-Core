@@ -85,8 +85,17 @@ func NewUpdateCmd() *cobra.Command {
 				return err
 			}
 			fmt.Fprintf(out, "Skills catalog updated to v%s.\n", meta.Version)
-			fmt.Fprintf(out, "mobiai binary: %s.\n", version)
 			fmt.Fprintf(out, "%d packs available at %s.\n", len(c.Packs), rootFlag)
+
+			// Catalog is refreshed; now update the binary itself if a newer
+			// release exists. A binary-update failure is non-fatal: the
+			// catalog sync above already succeeded, so we warn and exit 0.
+			if skip, _ := cmd.Flags().GetBool("skip-binary"); skip {
+				fmt.Fprintf(out, "mobiai binary: %s (--skip-binary, did not check for an update).\n", version)
+			} else if err := selfUpdateBinary(out, version); err != nil {
+				fmt.Fprintf(out, "Warning: the catalog was updated, but the binary could not be updated: %v\n", err)
+				fmt.Fprintf(out, "Retry `mobiai update` later, or reinstall with the install script: https://mobiai.dev\n")
+			}
 			return nil
 		},
 	}
@@ -94,6 +103,7 @@ func NewUpdateCmd() *cobra.Command {
 	cmd.Flags().Bool("force", false, "if the cache dir exists but is not a git repo, delete it and re-clone")
 	cmd.Flags().Bool("check", false, "only query GitHub releases and cache the result (does not touch the catalog)")
 	cmd.Flags().Bool("silent", false, "print nothing on exit (intended for running from a background hook)")
+	cmd.Flags().Bool("skip-binary", false, "do not update the mobiai binary, only refresh the catalog")
 	return cmd
 }
 

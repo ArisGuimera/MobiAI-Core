@@ -53,48 +53,10 @@ func runUpdateCheck(out io.Writer, installedVersion string) error {
 		url = defaultUpdateCheckURL
 	}
 
-	client := &http.Client{Timeout: 10 * time.Second}
-	req, err := http.NewRequest("GET", url, nil)
+	latest, latestURL, err := latestRelease(url)
 	if err != nil {
-		return fmt.Errorf("build request: %w", err)
+		return err
 	}
-	req.Header.Set("Accept", "application/vnd.github+json")
-	req.Header.Set("User-Agent", "mobiai-cli")
-	resp, err := client.Do(req)
-	if err != nil {
-		return fmt.Errorf("fetch GitHub releases: %w", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		return fmt.Errorf("GitHub releases API returned %d", resp.StatusCode)
-	}
-
-	var releases []struct {
-		TagName string `json:"tag_name"`
-		HTMLURL string `json:"html_url"`
-		Draft   bool   `json:"draft"`
-		Prerelease bool `json:"prerelease"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&releases); err != nil {
-		return fmt.Errorf("parse releases JSON: %w", err)
-	}
-
-	var latestTag, latestURL string
-	for _, r := range releases {
-		if r.Draft || r.Prerelease {
-			continue
-		}
-		if !strings.HasPrefix(r.TagName, "cli-v") {
-			continue
-		}
-		latestTag = r.TagName
-		latestURL = r.HTMLURL
-		break // releases come newest first per GitHub docs
-	}
-	if latestTag == "" {
-		return fmt.Errorf("no cli-v* release found in the last 20 entries")
-	}
-	latest := strings.TrimPrefix(latestTag, "cli-v")
 
 	available := false
 	if installedVersion != "" && installedVersion != "dev" {
@@ -124,11 +86,54 @@ func runUpdateCheck(out io.Writer, installedVersion string) error {
 	}
 
 	if available {
-		fmt.Fprintf(out, "MobiAI %s → %s available. Run /mobiai-update.\n", installedVersion, latest)
+		fmt.Fprintf(out, "MobiAI %s → %s available. Run: mobiai update\n", installedVersion, latest)
 	} else if out != io.Discard {
 		fmt.Fprintf(out, "MobiAI %s is up to date (latest release: %s).\n", installedVersion, latest)
 	}
 	return nil
+}
+
+// latestRelease fetches the GitHub releases list at url and returns the
+// version and HTML URL of the newest non-draft, non-prerelease `cli-v*`
+// release. Releases come newest-first per GitHub docs, so the first match
+// wins. Shared by the SessionStart update-check and the binary self-update.
+func latestRelease(url string) (version, htmlURL string, err error) {
+	client := &http.Client{Timeout: 10 * time.Second}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return "", "", fmt.Errorf("build request: %w", err)
+	}
+	req.Header.Set("Accept", "application/vnd.github+json")
+	req.Header.Set("User-Agent", "mobiai-cli")
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", "", fmt.Errorf("fetch GitHub releases: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		return "", "", fmt.Errorf("GitHub releases API returned %d", resp.StatusCode)
+	}
+
+	var releases []struct {
+		TagName    string `json:"tag_name"`
+		HTMLURL    string `json:"html_url"`
+		Draft      bool   `json:"draft"`
+		Prerelease bool   `json:"prerelease"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&releases); err != nil {
+		return "", "", fmt.Errorf("parse releases JSON: %w", err)
+	}
+
+	for _, r := range releases {
+		if r.Draft || r.Prerelease {
+			continue
+		}
+		if !strings.HasPrefix(r.TagName, "cli-v") {
+			continue
+		}
+		return strings.TrimPrefix(r.TagName, "cli-v"), r.HTMLURL, nil
+	}
+	return "", "", fmt.Errorf("no cli-v* release found in the last 20 entries")
 }
 
 // semverLess reports whether a < b using a tolerant dotted-number compare.

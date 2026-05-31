@@ -88,7 +88,7 @@ mobiai             # banner + help
 mobiai skills init # interactive selector to pick packs (mobile, android, ios, kmp, flutter, react-native)
 ```
 
-Keeping things up to date (`mobiai update` refreshes the catalog) and diagnostics (`mobiai doctor`, `mobiai status`) live inside the CLI — see [cli/README.md](cli/README.md).
+Keeping things up to date (`mobiai update` refreshes the catalog and self-updates the binary) and diagnostics (`mobiai doctor`, `mobiai status`) live inside the CLI — see [cli/README.md](cli/README.md).
 
 ## The CLI in three blocks
 
