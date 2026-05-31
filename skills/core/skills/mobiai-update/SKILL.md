@@ -8,7 +8,7 @@ compatibility: [claude-code, cursor, copilot, codex, gemini]
 ## Objetivo
 
 Actualizar el binario `mobiai` instalado en el sistema del usuario. La vía
-canónica es `mobiai update`: desde la v0.2.1 refresca el catálogo de skills **y**
+canónica es `mobiai update`: desde la v0.2.2 refresca el catálogo de skills **y**
 se auto-actualiza el binario (descarga el asset de la plataforma desde GitHub
 Releases, verifica su checksum SHA256, y reemplaza `~/.mobiai/bin/mobiai` con el
 truco rename-then-write — funciona incluso en Windows con el `.exe` en uso). El
@@ -46,8 +46,8 @@ binario. Vas a ver algo como:
 ```
 Skills catalog updated to vX.Y.Z.
 N packs available at ...
-mobiai binary 0.2.0 → 0.2.1: downloading mobiai-0.2.1-<os>-<arch>...
-mobiai binary updated to 0.2.1. Restart your terminal (or re-run mobiai) to use the new version.
+mobiai binary 0.2.2 → 0.2.3: downloading mobiai-0.2.3-<os>-<arch>...
+mobiai binary updated to 0.2.3. Restart your terminal (or re-run mobiai) to use the new version.
 ```
 
 Si solo querés refrescar el catálogo sin tocar el binario: `mobiai update --skip-binary`.
@@ -116,7 +116,7 @@ o parcial — reintentá más tarde, o usá el install script como fallback.
 Pasá la versión manualmente:
 
 ```bash
-MOBIAI_VERSION=0.2.1 curl -fsSL https://raw.githubusercontent.com/ArisGuimera/MobiAI-Core/main/scripts/install.sh | sh
+MOBIAI_VERSION=0.2.2 curl -fsSL https://raw.githubusercontent.com/ArisGuimera/MobiAI-Core/main/scripts/install.sh | sh
 ```
 
 ## Notas
