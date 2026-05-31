@@ -393,7 +393,7 @@ func TestUpdateEntry_BrainNotInitialized(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error when brain missing")
 	}
-	if !strings.Contains(err.Error(), "no inicializado") {
+	if !strings.Contains(err.Error(), "not initialized") {
 		t.Errorf("error should mention not initialized: %v", err)
 	}
 }

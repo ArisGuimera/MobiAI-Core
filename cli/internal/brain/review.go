@@ -59,7 +59,7 @@ func Review(p BrainPaths, opts ReviewOptions) ([]ReviewItem, error) {
 
 	groups, err := ParseAllMemories(p)
 	if err != nil {
-		return nil, fmt.Errorf("parsear memorias: %w", err)
+		return nil, fmt.Errorf("parse memories: %w", err)
 	}
 
 	var items []ReviewItem

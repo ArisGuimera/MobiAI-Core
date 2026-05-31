@@ -55,7 +55,7 @@ var MemoryFiles = []MemoryFile{
 // many times). Returns the list of files actually created.
 func EnsureMemoryFiles(p BrainPaths) ([]string, error) {
 	if err := os.MkdirAll(p.MemoriesDir, 0o755); err != nil {
-		return nil, fmt.Errorf("crear %s: %w", p.MemoriesDir, err)
+		return nil, fmt.Errorf("create %s: %w", p.MemoriesDir, err)
 	}
 	var created []string
 	for _, mf := range MemoryFiles {
@@ -66,7 +66,7 @@ func EnsureMemoryFiles(p BrainPaths) ([]string, error) {
 			return created, fmt.Errorf("stat %s: %w", path, err)
 		}
 		if err := os.WriteFile(path, []byte(mf.Template), 0o644); err != nil {
-			return created, fmt.Errorf("escribir %s: %w", path, err)
+			return created, fmt.Errorf("write %s: %w", path, err)
 		}
 		created = append(created, mf.Name)
 	}

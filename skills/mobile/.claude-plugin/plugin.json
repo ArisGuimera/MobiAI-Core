@@ -1,6 +1,6 @@
 {
   "name": "mobile",
-  "description": "MobiAI para mobile completo — instala core + android + ios + kmp + flutter + react-native",
+  "description": "MobiAI for full mobile — installs core + android + ios + kmp + flutter + react-native",
   "version": "2.0.0",
   "author": {
     "name": "Matias Rosenstein",

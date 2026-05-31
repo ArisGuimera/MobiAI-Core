@@ -275,7 +275,7 @@ func (m Model) runInstallStep(idx int) tea.Cmd {
 			}
 		}
 		if hostAdapter == nil {
-			return installStepDoneMsg{pack: step.pack, host: step.host, kind: step.kind, err: fmt.Errorf("host %q no encontrado", step.host)}
+			return installStepDoneMsg{pack: step.pack, host: step.host, kind: step.kind, err: fmt.Errorf("host %q not found", step.host)}
 		}
 		pack, err := c.Get(step.pack)
 		if err != nil {
@@ -391,7 +391,7 @@ func (m Model) toggleAt(i int) Model {
 func (m Model) View() string {
 	switch m.mode {
 	case ModeNoHosts:
-		return "No detecté ningún cliente de IA.\nInstalá Claude Code, Cursor, Gemini CLI o Codex y volvé a correr `mobiai`.\n"
+		return "No AI client detected.\nInstall Claude Code, Cursor, Gemini CLI or Codex and run `mobiai` again.\n"
 	case ModePicker:
 		return m.viewPicker()
 	case ModeConfirm:

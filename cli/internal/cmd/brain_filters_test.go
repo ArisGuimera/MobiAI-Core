@@ -154,7 +154,7 @@ func TestBrainSearch_FilterANDsWithQuery(t *testing.T) {
 func TestBrainSearch_NoResultsMessage(t *testing.T) {
 	root := brainWithEntries(t)
 	out := runBrain(t, []string{"search", "--root", root, "kubernetes"})
-	if !strings.Contains(out, "Sin resultados") {
+	if !strings.Contains(out, "No results") {
 		t.Errorf("expected no-results message:\n%s", out)
 	}
 }

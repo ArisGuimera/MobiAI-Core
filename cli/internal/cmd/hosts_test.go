@@ -27,8 +27,8 @@ func TestHostsList_PrintsAdapters(t *testing.T) {
 			t.Errorf("output should contain %q; got: %q", n, got)
 		}
 	}
-	if !strings.Contains(got, "no detectado") {
-		t.Errorf("expected 'no detectado'; got: %q", got)
+	if !strings.Contains(got, "not detected") {
+		t.Errorf("expected 'not detected'; got: %q", got)
 	}
 }
 

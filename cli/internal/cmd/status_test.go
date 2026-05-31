@@ -34,7 +34,7 @@ func TestStatus_PrintsHostsAndInstalled(t *testing.T) {
 	}
 	// Status muestra solo los detectados — nada de "X de Y soportados"
 	// ni listado completo con "-" markers.
-	for _, unwanted := range []string{"de 36 soportados", "de 9 soportados", "  - "} {
+	for _, unwanted := range []string{"of 36 supported", "of 9 supported", "  - "} {
 		if strings.Contains(got, unwanted) {
 			t.Errorf("status should NOT contain %q; got: %q", unwanted, got)
 		}
@@ -55,7 +55,7 @@ func TestStatus_NoHostsDetected_ShowsHint(t *testing.T) {
 		t.Fatal(err)
 	}
 	got := out.String()
-	if !strings.Contains(got, "ninguno detectado") {
+	if !strings.Contains(got, "none detected") {
 		t.Errorf("status should hint when no hosts detected; got: %q", got)
 	}
 }

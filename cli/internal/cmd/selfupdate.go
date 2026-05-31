@@ -48,9 +48,9 @@ func selfUpdateBinary(out io.Writer, currentVersion string) error {
 	// selfReplace is the one line we can't exercise in tests (it resolves the
 	// real running executable). Everything above is covered via httptest.
 	if err := selfReplace(bin); err != nil {
-		return fmt.Errorf("instalar binario nuevo: %w", err)
+		return fmt.Errorf("install new binary: %w", err)
 	}
-	fmt.Fprintf(out, "Binario mobiai actualizado a %s. Reiniciá la terminal (o volvé a correr mobiai) para usar la nueva versión.\n", latest)
+	fmt.Fprintf(out, "mobiai binary updated to %s. Restart your terminal (or re-run mobiai) to use the new version.\n", latest)
 	return nil
 }
 
@@ -71,10 +71,10 @@ func fetchUpdateBinary(out io.Writer, currentVersion string) (bin []byte, latest
 	}
 	latest, _, err = latestRelease(checkURL)
 	if err != nil {
-		return nil, "", fmt.Errorf("consultar releases: %w", err)
+		return nil, "", fmt.Errorf("query releases: %w", err)
 	}
 	if !semverLess(currentVersion, latest) {
-		fmt.Fprintf(out, "Binario mobiai %s: al día.\n", currentVersion)
+		fmt.Fprintf(out, "mobiai binary %s: up to date.\n", currentVersion)
 		return nil, "", nil
 	}
 
@@ -83,12 +83,12 @@ func fetchUpdateBinary(out io.Writer, currentVersion string) (bin []byte, latest
 		base = defaultInstallBase
 	}
 	archive := assetName(latest, runtime.GOOS, runtime.GOARCH)
-	fmt.Fprintf(out, "Binario mobiai %s → %s: descargando %s...\n", currentVersion, latest, archive)
+	fmt.Fprintf(out, "mobiai binary %s → %s: downloading %s...\n", currentVersion, latest, archive)
 
 	archiveURL := fmt.Sprintf("%s/download/cli-v%s/%s", base, latest, archive)
 	data, err := downloadBytes(archiveURL)
 	if err != nil {
-		return nil, "", fmt.Errorf("descargar %s: %w", archive, err)
+		return nil, "", fmt.Errorf("download %s: %w", archive, err)
 	}
 
 	sumsURL := fmt.Sprintf("%s/download/cli-v%s/checksums.txt", base, latest)
@@ -132,7 +132,7 @@ func downloadBytes(url string) ([]byte, error) {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("HTTP %d en %s", resp.StatusCode, url)
+		return nil, fmt.Errorf("HTTP %d at %s", resp.StatusCode, url)
 	}
 	return io.ReadAll(resp.Body)
 }
@@ -144,7 +144,7 @@ func downloadBytes(url string) ([]byte, error) {
 func verifyChecksum(data []byte, filename, sumsURL string) error {
 	sums, err := downloadBytes(sumsURL)
 	if err != nil {
-		return fmt.Errorf("descargar checksums.txt: %w", err)
+		return fmt.Errorf("download checksums.txt: %w", err)
 	}
 	var want string
 	for _, line := range strings.Split(string(sums), "\n") {
@@ -155,12 +155,12 @@ func verifyChecksum(data []byte, filename, sumsURL string) error {
 		}
 	}
 	if want == "" {
-		return fmt.Errorf("no encontré checksum para %s en checksums.txt", filename)
+		return fmt.Errorf("no checksum found for %s in checksums.txt", filename)
 	}
 	sum := sha256.Sum256(data)
 	got := hex.EncodeToString(sum[:])
 	if !strings.EqualFold(got, want) {
-		return fmt.Errorf("checksum no coincide para %s (esperado %s, obtenido %s) — abortando para no instalar un binario corrupto", filename, want, got)
+		return fmt.Errorf("checksum mismatch for %s (expected %s, got %s) — aborting to avoid installing a corrupt binary", filename, want, got)
 	}
 	return nil
 }
@@ -173,24 +173,24 @@ func extractBinary(archive []byte, archiveName string) ([]byte, error) {
 	if strings.HasSuffix(archiveName, ".zip") {
 		zr, err := zip.NewReader(bytes.NewReader(archive), int64(len(archive)))
 		if err != nil {
-			return nil, fmt.Errorf("abrir zip: %w", err)
+			return nil, fmt.Errorf("open zip: %w", err)
 		}
 		for _, f := range zr.File {
 			if isBinaryEntry(f.Name) {
 				rc, err := f.Open()
 				if err != nil {
-					return nil, fmt.Errorf("leer %s del zip: %w", f.Name, err)
+					return nil, fmt.Errorf("read %s from zip: %w", f.Name, err)
 				}
 				defer rc.Close()
 				return io.ReadAll(rc)
 			}
 		}
-		return nil, fmt.Errorf("no encontré mobiai.exe dentro de %s", archiveName)
+		return nil, fmt.Errorf("mobiai.exe not found inside %s", archiveName)
 	}
 
 	gz, err := gzip.NewReader(bytes.NewReader(archive))
 	if err != nil {
-		return nil, fmt.Errorf("abrir gzip: %w", err)
+		return nil, fmt.Errorf("open gzip: %w", err)
 	}
 	defer gz.Close()
 	tr := tar.NewReader(gz)
@@ -200,13 +200,13 @@ func extractBinary(archive []byte, archiveName string) ([]byte, error) {
 			break
 		}
 		if err != nil {
-			return nil, fmt.Errorf("leer tar: %w", err)
+			return nil, fmt.Errorf("read tar: %w", err)
 		}
 		if isBinaryEntry(hdr.Name) {
 			return io.ReadAll(tr)
 		}
 	}
-	return nil, fmt.Errorf("no encontré mobiai dentro de %s", archiveName)
+	return nil, fmt.Errorf("mobiai not found inside %s", archiveName)
 }
 
 // isBinaryEntry reports whether an archive entry is the mobiai binary.
@@ -224,7 +224,7 @@ func isBinaryEntry(name string) bool {
 func selfReplace(newBin []byte) error {
 	exe, err := os.Executable()
 	if err != nil {
-		return fmt.Errorf("resolver ejecutable: %w", err)
+		return fmt.Errorf("resolve executable: %w", err)
 	}
 	if resolved, err := filepath.EvalSymlinks(exe); err == nil {
 		exe = resolved
@@ -249,7 +249,7 @@ func selfReplace(newBin []byte) error {
 func applyTo(targetPath string, newBin []byte) error {
 	tmp := targetPath + ".new"
 	if err := os.WriteFile(tmp, newBin, 0o755); err != nil {
-		return fmt.Errorf("escribir %s: %w", tmp, err)
+		return fmt.Errorf("write %s: %w", tmp, err)
 	}
 
 	old := targetPath + ".old"
@@ -257,12 +257,12 @@ func applyTo(targetPath string, newBin []byte) error {
 
 	if err := os.Rename(targetPath, old); err != nil {
 		_ = os.Remove(tmp)
-		return fmt.Errorf("apartar binario actual: %w", err)
+		return fmt.Errorf("move current binary aside: %w", err)
 	}
 	if err := os.Rename(tmp, targetPath); err != nil {
 		_ = os.Rename(old, targetPath) // roll back
 		_ = os.Remove(tmp)
-		return fmt.Errorf("mover binario nuevo a su lugar: %w", err)
+		return fmt.Errorf("move new binary into place: %w", err)
 	}
 
 	_ = os.Remove(old) // best-effort; on Windows the running .old stays locked

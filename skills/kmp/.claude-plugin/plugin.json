@@ -1,6 +1,6 @@
 {
   "name": "kmp",
-  "description": "MobiAI para Kotlin Multiplatform — shared code, expect/actual, deps de Android+iOS",
+  "description": "MobiAI for Kotlin Multiplatform — shared code, expect/actual, Android+iOS deps",
   "version": "2.2.0",
   "author": {
     "name": "Matias Rosenstein",

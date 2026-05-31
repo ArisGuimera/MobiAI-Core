@@ -46,27 +46,27 @@ type UpdateResult struct {
 // to keep the invariant maintained by AppendEntry.
 func UpdateEntry(p BrainPaths, id string, opts UpdateOptions) (*UpdateResult, error) {
 	if !p.Exists() {
-		return nil, fmt.Errorf("brain no inicializado en %s — corré `mobiai brain init` primero", p.Root)
+		return nil, fmt.Errorf("brain not initialized at %s — run `mobiai brain init` first", p.Root)
 	}
 	id = strings.TrimSpace(id)
 	if id == "" {
-		return nil, fmt.Errorf("id es requerido")
+		return nil, fmt.Errorf("id is required")
 	}
 	if opts.Status != "" {
 		if _, ok := validStatuses[opts.Status]; !ok {
-			return nil, fmt.Errorf("--status %q inválido (esperado: active|temporary|deprecated)", opts.Status)
+			return nil, fmt.Errorf("invalid --status %q (expected: active|temporary|deprecated)", opts.Status)
 		}
 	}
 	if opts.ReviewAfter != "" {
 		if _, err := time.Parse(reviewAfterLayout, opts.ReviewAfter); err != nil {
-			return nil, fmt.Errorf("--review-after debe ser YYYY-MM-DD: %w", err)
+			return nil, fmt.Errorf("--review-after must be YYYY-MM-DD: %w", err)
 		}
 	}
 	if opts.ReviewAfter != "" && opts.ClearReviewAfter {
-		return nil, fmt.Errorf("no podés pasar --review-after y --clear-review-after a la vez")
+		return nil, fmt.Errorf("cannot pass --review-after and --clear-review-after at the same time")
 	}
 	if opts.Status == "" && opts.ReviewAfter == "" && !opts.ClearReviewAfter {
-		return nil, fmt.Errorf("nada que actualizar: pasá al menos --status, --review-after o --clear-review-after")
+		return nil, fmt.Errorf("nothing to update: pass at least --status, --review-after or --clear-review-after")
 	}
 
 	// Walk every memory file in canonical order until we find a `## `
@@ -78,7 +78,7 @@ func UpdateEntry(p BrainPaths, id string, opts UpdateOptions) (*UpdateResult, er
 			if os.IsNotExist(err) {
 				continue
 			}
-			return nil, fmt.Errorf("leer %s: %w", fpath, err)
+			return nil, fmt.Errorf("read %s: %w", fpath, err)
 		}
 		updated, res, found, err := rewriteEntryByID(string(data), id, mf.Name, opts)
 		if err != nil {
@@ -94,7 +94,7 @@ func UpdateEntry(p BrainPaths, id string, opts UpdateOptions) (*UpdateResult, er
 		res.File = mf.Name
 		return res, nil
 	}
-	return nil, fmt.Errorf("no encontré ninguna entrada con id %q en el brain", id)
+	return nil, fmt.Errorf("no entry with id %q found in the brain", id)
 }
 
 // rewriteEntryByID scans the raw file content line-by-line, locates the
@@ -342,18 +342,18 @@ func atomicWrite(path string, data []byte) error {
 	dir := filepath.Dir(path)
 	tmp, err := os.CreateTemp(dir, ".update-*.tmp")
 	if err != nil {
-		return fmt.Errorf("crear tmp en %s: %w", dir, err)
+		return fmt.Errorf("create tmp in %s: %w", dir, err)
 	}
 	tmpName := tmp.Name()
 	cleanup := func() { _ = os.Remove(tmpName) }
 	if _, err := tmp.Write(data); err != nil {
 		_ = tmp.Close()
 		cleanup()
-		return fmt.Errorf("escribir tmp: %w", err)
+		return fmt.Errorf("write tmp: %w", err)
 	}
 	if err := tmp.Close(); err != nil {
 		cleanup()
-		return fmt.Errorf("cerrar tmp: %w", err)
+		return fmt.Errorf("close tmp: %w", err)
 	}
 	if err := os.Rename(tmpName, path); err != nil {
 		cleanup()

@@ -168,7 +168,7 @@ func clientConfigPath(c MCPClient, home string) (string, error) {
 	case MCPClientCursor:
 		return filepath.Join(home, ".cursor", "mcp.json"), nil
 	default:
-		return "", fmt.Errorf("cliente desconocido: %q (soportados: claude, cursor)", c)
+		return "", fmt.Errorf("unknown client: %q (supported: claude, cursor)", c)
 	}
 }
 
@@ -277,14 +277,14 @@ func readJSONFile(path string) (map[string]interface{}, bool, error) {
 		if os.IsNotExist(err) {
 			return map[string]interface{}{}, false, nil
 		}
-		return nil, true, fmt.Errorf("leer %s: %w", path, err)
+		return nil, true, fmt.Errorf("read %s: %w", path, err)
 	}
 	if len(data) == 0 {
 		return map[string]interface{}{}, true, nil
 	}
 	var out map[string]interface{}
 	if err := json.Unmarshal(data, &out); err != nil {
-		return nil, true, fmt.Errorf("parsear %s como JSON: %w (revisá manualmente, podría tener una coma de más o estar truncado)", path, err)
+		return nil, true, fmt.Errorf("parse %s as JSON: %w (check it manually — it may have an extra comma or be truncated)", path, err)
 	}
 	if out == nil {
 		out = map[string]interface{}{}
@@ -298,14 +298,14 @@ func readJSONFile(path string) (map[string]interface{}, bool, error) {
 // original file untouched.
 func writeJSONFile(path string, cfg map[string]interface{}) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		return fmt.Errorf("crear %s: %w", filepath.Dir(path), err)
+		return fmt.Errorf("create %s: %w", filepath.Dir(path), err)
 	}
 	// Indent with 2 spaces — matches what Claude Code itself writes
 	// and reads, so a roundtrip through our tooling doesn't look
 	// gratuitously different from what the user had.
 	data, err := json.MarshalIndent(cfg, "", "  ")
 	if err != nil {
-		return fmt.Errorf("serializar JSON: %w", err)
+		return fmt.Errorf("marshal JSON: %w", err)
 	}
 	// Trailing newline so the file is POSIX-friendly and diffs cleanly.
 	data = append(data, '\n')
@@ -321,13 +321,13 @@ func resolveBinaryPath(override string) (string, error) {
 	if override != "" {
 		abs, err := filepath.Abs(override)
 		if err != nil {
-			return "", fmt.Errorf("absolutizar --binary: %w", err)
+			return "", fmt.Errorf("absolutize --binary: %w", err)
 		}
 		return abs, nil
 	}
 	exe, err := os.Executable()
 	if err != nil {
-		return "", fmt.Errorf("detectar binario en uso: %w (pasá --binary <path> para sobrescribir)", err)
+		return "", fmt.Errorf("detect running binary: %w (pass --binary <path> to override)", err)
 	}
 	// os.Executable() can return a symlink on some platforms;
 	// EvalSymlinks resolves it. This is what users expect: if you
@@ -351,7 +351,7 @@ func resolveHomeDir(override string) (string, error) {
 	}
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return "", fmt.Errorf("detectar HOME: %w", err)
+		return "", fmt.Errorf("detect HOME: %w", err)
 	}
 	return home, nil
 }

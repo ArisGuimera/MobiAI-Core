@@ -15,12 +15,12 @@ jobs:
   check-docs:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout (con historia para diff)
+      - name: Checkout (with history for diff)
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Verificar que se actualizó la documentación
+      - name: Verify that documentation was updated
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
@@ -39,11 +39,11 @@ jobs:
             || true)
 
           if [ -z "$touched_skills" ]; then
-            echo "No hay cambios en skills propias — skip."
+            echo "No changes in first-party skills — skip."
             exit 0
           fi
 
-          echo "Skills tocadas en este PR:"
+          echo "Skills touched in this PR:"
           echo "$touched_skills" | sed 's/^/  - /'
           echo
 
@@ -53,20 +53,20 @@ jobs:
             || true)
 
           if [ -z "$touched_docs" ]; then
-            echo "::error::Este PR agrega o modifica skills pero no toca documentación."
+            echo "::error::This PR adds or modifies skills but does not touch documentation."
             echo
-            echo "Cuando agregás o cambiás una skill, actualizá también al menos uno de:"
-            echo "  • skills/core/skills/using-mobiai/SKILL.md  (catálogo central)"
-            echo "  • README.md                                 (tabla de skills disponibles)"
-            echo "  • CONTRIBUTING.md                           (si cambiaste cómo se contribuye)"
-            echo "  • docs/*.md                                 (cualquier guía relevante)"
+            echo "When you add or change a skill, also update at least one of:"
+            echo "  • skills/core/skills/using-mobiai/SKILL.md  (central catalog)"
+            echo "  • README.md                                 (available skills table)"
+            echo "  • CONTRIBUTING.md                           (if you changed how to contribute)"
+            echo "  • docs/*.md                                 (any relevant guide)"
             echo
-            echo "Si tu cambio es trivial (typo, refactor interno que no afecta a usuarios)"
-            echo "podés justificarlo en el PR y el reviewer puede dispensar la regla."
+            echo "If your change is trivial (typo, internal refactor with no user impact)"
+            echo "you can justify it in the PR and the reviewer can waive the rule."
             exit 1
           fi
 
-          echo "Docs actualizadas en este PR:"
+          echo "Docs updated in this PR:"
           echo "$touched_docs" | sed 's/^/  - /'
           echo
-          echo "✓ Skill changes acompañados por docs."
+          echo "✓ Skill changes accompanied by docs."

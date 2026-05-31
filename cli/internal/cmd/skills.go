@@ -26,18 +26,18 @@ import (
 func NewSkillsCmd() *cobra.Command {
 	root := &cobra.Command{
 		Use:   "skills",
-		Short: "Gestionar skills de MobiAI",
+		Short: "Manage MobiAI skills",
 	}
 	// When invoked standalone (in tests), register the persistent flags
 	// locally so callers can pass --catalog-root and --yes without going
 	// through the root command's persistent flag set.
-	root.PersistentFlags().StringSlice("host", nil, "fuerza adapters específicos (default: todos los detectados)")
-	root.PersistentFlags().Bool("yes", false, "asume sí en confirmaciones")
-	root.PersistentFlags().String("catalog-root", "", "ruta a un catálogo local")
+	root.PersistentFlags().StringSlice("host", nil, "force specific adapters (default: all detected)")
+	root.PersistentFlags().Bool("yes", false, "assume yes on confirmations")
+	root.PersistentFlags().String("catalog-root", "", "path to a local catalog")
 
 	addCmd := &cobra.Command{
 		Use:   "add <pack>...",
-		Short: "Instalar packs en los hosts detectados",
+		Short: "Install packs into detected hosts",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runSkillsAdd(cmd, args)
@@ -45,7 +45,7 @@ func NewSkillsCmd() *cobra.Command {
 	}
 	removeCmd := &cobra.Command{
 		Use:   "remove <pack>...",
-		Short: "Desinstalar packs de los hosts detectados",
+		Short: "Uninstall packs from detected hosts",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runSkillsRemove(cmd, args)
@@ -54,7 +54,7 @@ func NewSkillsCmd() *cobra.Command {
 
 	listCmd := &cobra.Command{
 		Use:   "list",
-		Short: "Listar packs instalados",
+		Short: "List installed packs",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			paths, err := state.NewPaths()
 			if err != nil {
@@ -66,7 +66,7 @@ func NewSkillsCmd() *cobra.Command {
 			}
 			out := cmd.OutOrStdout()
 			if len(installed.Packs) == 0 {
-				fmt.Fprintln(out, "No hay packs instalados.")
+				fmt.Fprintln(out, "No packs installed.")
 				return nil
 			}
 			fmt.Fprintln(out, "Pack          | Hosts")
@@ -85,13 +85,13 @@ func NewSkillsCmd() *cobra.Command {
 
 	initCmd := &cobra.Command{
 		Use:   "init",
-		Short: "Selector interactivo para instalar/desinstalar skills",
-		Long:  "Lanza el picker TUI para elegir packs de skills y aplicar los cambios sobre los clientes detectados (Claude Code, Cursor, Codex, etc).",
+		Short: "Interactive picker to install/uninstall skills",
+		Long:  "Launches the TUI picker to choose skill packs and apply changes to detected clients (Claude Code, Cursor, Codex, etc).",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			g := flagsFromAnyCmd(cmd)
 			if err := RunPicker(g); err != nil {
 				if errors.Is(err, tui.ErrNoTTY) {
-					return fmt.Errorf("este comando necesita una terminal interactiva — corré `mobiai skills add <pack>` para instalar sin TUI")
+					return fmt.Errorf("this command requires an interactive terminal — run `mobiai skills add <pack>` to install without TUI")
 				}
 				return err
 			}
@@ -139,7 +139,7 @@ func runSkillsAdd(cmd *cobra.Command, packs []string) error {
 			return err
 		}
 		if !ok {
-			fmt.Fprintln(out, "Cancelado.")
+			fmt.Fprintln(out, "Cancelled.")
 			return nil
 		}
 	}
@@ -148,11 +148,11 @@ func runSkillsAdd(cmd *cobra.Command, packs []string) error {
 		pack, _ := c.Get(packName)
 		skills, err := c.Skills(pack)
 		if err != nil {
-			return fmt.Errorf("enumerar skills de %s: %w", packName, err)
+			return fmt.Errorf("enumerate skills for %s: %w", packName, err)
 		}
 		for _, h := range hosts {
 			if err := h.Install(skills); err != nil {
-				return fmt.Errorf("instalar %s en %s: %w", packName, h.ID(), err)
+				return fmt.Errorf("install %s into %s: %w", packName, h.ID(), err)
 			}
 			installed.Add(packName, h.ID())
 			fmt.Fprintf(out, "✓ %s → %s\n", packName, h.Name())
@@ -161,7 +161,7 @@ func runSkillsAdd(cmd *cobra.Command, packs []string) error {
 	if err := installed.Save(paths); err != nil {
 		return err
 	}
-	fmt.Fprintln(out, "Listo.")
+	fmt.Fprintln(out, "Done.")
 	return nil
 }
 
@@ -174,19 +174,19 @@ func confirmInstall(out io.Writer, in io.Reader, packs []string, hosts []host.Ho
 	for _, h := range hosts {
 		hostNames = append(hostNames, h.Name())
 	}
-	fmt.Fprintln(out, "Plan de instalación:")
+	fmt.Fprintln(out, "Install plan:")
 	fmt.Fprintf(out, "  Packs (%d): %s\n", len(packs), strings.Join(packs, ", "))
 	fmt.Fprintf(out, "  Hosts (%d): %s\n", len(hosts), strings.Join(hostNames, ", "))
 
 	if f, ok := in.(*os.File); ok && !term.IsTerminal(int(f.Fd())) {
-		return false, fmt.Errorf("stdin no es interactivo: pasá --yes para confirmar sin prompt")
+		return false, fmt.Errorf("stdin is not interactive: pass --yes to confirm without a prompt")
 	}
 
-	fmt.Fprint(out, "¿Continuar? [y/N]: ")
+	fmt.Fprint(out, "Continue? [y/N]: ")
 	r := bufio.NewReader(in)
 	line, err := r.ReadString('\n')
 	if err != nil && err != io.EOF {
-		return false, fmt.Errorf("leer confirmación: %w", err)
+		return false, fmt.Errorf("read confirmation: %w", err)
 	}
 	answer := strings.ToLower(strings.TrimSpace(line))
 	return answer == "y" || answer == "yes" || answer == "s" || answer == "si" || answer == "sí", nil
@@ -228,7 +228,7 @@ func runSkillsRemove(cmd *cobra.Command, packs []string) error {
 		}
 		for _, h := range hosts {
 			if err := h.Uninstall(ids); err != nil {
-				return fmt.Errorf("desinstalar %s de %s: %w", packName, h.ID(), err)
+				return fmt.Errorf("uninstall %s from %s: %w", packName, h.ID(), err)
 			}
 			installed.Remove(packName, h.ID())
 			fmt.Fprintf(out, "✓ %s ← %s\n", packName, h.Name())
@@ -237,7 +237,7 @@ func runSkillsRemove(cmd *cobra.Command, packs []string) error {
 	if err := installed.Save(paths); err != nil {
 		return err
 	}
-	fmt.Fprintln(out, "Listo.")
+	fmt.Fprintln(out, "Done.")
 	return nil
 }
 
@@ -272,10 +272,10 @@ func loadCatalog(g GlobalFlags) (*catalog.Catalog, error) {
 		root = defaultCatalogRoot()
 	}
 	if root == "" {
-		return nil, fmt.Errorf("no encontré el catálogo. Opciones:\n" +
-			"  - pasá --catalog-root <ruta>\n" +
-			"  - configurá MOBIAI_CATALOG_ROOT=<ruta>\n" +
-			"  - corré 'mobiai update --catalog-root <ruta>' para popular ~/.mobiai/cache/catalog/")
+		return nil, fmt.Errorf("could not find the catalog. Options:\n" +
+			"  - pass --catalog-root <path>\n" +
+			"  - set MOBIAI_CATALOG_ROOT=<path>\n" +
+			"  - run 'mobiai update --catalog-root <path>' to populate ~/.mobiai/cache/catalog/")
 	}
 	return catalog.Load(root)
 }
@@ -396,7 +396,7 @@ func selectHosts(g GlobalFlags) ([]host.HostAdapter, error) {
 	}
 	detected := r.Detect()
 	if len(detected) == 0 {
-		return nil, fmt.Errorf("no detecté ningún cliente de IA — instalá Claude Code, Cursor, Gemini CLI o Codex")
+		return nil, fmt.Errorf("no AI client detected — install Claude Code, Cursor, Gemini CLI, or Codex")
 	}
 	return detected, nil
 }

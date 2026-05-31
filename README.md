@@ -1,166 +1,170 @@
+<div align="center">
+  <img src="docs/assets/mobiai-hero.png" alt="MobiAI — Brain · Skills · Graph for Android, iOS, React Native, Flutter, and KMP" width="100%">
+</div>
+
+> **Read in another language:** **English** · [Español](README.es.md)
+
 # MobiAI-Core
 
-Evoluciona tu stack móvil con Inteligencia Artificial.
+<div align="center">
 
-## ¿Qué es MobiAI?
+<img src="https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Android">
+<img src="https://img.shields.io/badge/iOS-000000?style=for-the-badge&logo=apple&logoColor=white" alt="iOS">
+<img src="https://img.shields.io/badge/Kotlin_Multiplatform-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white" alt="Kotlin Multiplatform">
+<img src="https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white" alt="Flutter">
+<img src="https://img.shields.io/badge/React_Native-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React Native">
 
-MobiAI es un ecosistema Open Source diseñado para llevar la Inteligencia Artificial al corazón de tu flujo de trabajo. Más que una librería de funciones, es una plataforma evolutiva que automatiza lo complejo para que tú te centres en crear.
+<img src="https://img.shields.io/badge/Kotlin-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white" alt="Kotlin">
+<img src="https://img.shields.io/badge/Swift-F05138?style=for-the-badge&logo=swift&logoColor=white" alt="Swift">
+<img src="https://img.shields.io/badge/Dart-0175C2?style=for-the-badge&logo=dart&logoColor=white" alt="Dart">
+<img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript">
+<img src="https://img.shields.io/badge/Go-00ADD8?style=for-the-badge&logo=go&logoColor=white" alt="Go">
 
-- **Skills** — Contexto experto que adapta lo que la IA ya sabe al escenario adecuado. Los skills no le enseñan a programar — le dan el contexto, las herramientas y los flujos específicos de cada plataforma para que aplique su conocimiento de forma precisa. Corregir bugs, reproducir incidencias, escribir tests, analizar crashes, crear PRs... todo siguiendo las mejores prácticas de cada plataforma.
-- **Brain** - El cerebro contextual de cada proyecto: entiende tu stack mobile, recuerda decisiones, bugfixes y patrones clave, y entrega a la IA contexto preciso y filtrado para trabajar alineada con tu arquitectura, evitando ruido y ahorrando tokens.
-- **Agentes** — Agentes especializados que ejecutan tareas complejas de forma autónoma: un agente que analiza código, otro que interactúa con el dispositivo, otro que escribe tests.
-- **Pipeline automatizado** — Un flujo completo de corrección de bugs: recibe un error o ticket desde cualquier plataforma de mensajería, reproduce el bug en un emulador, encuentra la causa raíz, aplica el fix, ejecuta tests y crea el PR. Todo sin intervención humana.
+<img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="License: MIT">
+<img src="https://img.shields.io/badge/Open_Source-❤-red?style=for-the-badge" alt="Open Source">
 
-Compatible con **Claude Code**, **Cursor**, **Copilot CLI**, **Codex** y **Gemini CLI**.
+</div>
 
-## Estado actual
+Evolve your mobile stack with Artificial Intelligence.
 
-| Componente | Estado |
-|------------|--------|
-| Skills (multi-plataforma) | Estable |
-| Brain | Alpha |
-| Agentes autónomos | En desarrollo |
-| Pipeline automatizado (bot de mensajería) | Planificado |
-| Marketplace de skills comunitarios | Planificado |
+## What is MobiAI?
 
-## Instalación
+MobiAI is an Open Source ecosystem designed to bring Artificial Intelligence to the heart of your mobile workflow. Four pieces that fit together — click any of them for the full detail:
 
-MobiAI se organiza en plugins granulares. Instala sólo las plataformas que uses, o instala el meta-plugin `mobile` para todo el stack.
-
-### Claude Code
-
-```bash
-# 1. Agregá el marketplace
-/plugin marketplace add ArisGuimera/MobiAI-Core
-
-# 2a. Instalá todo (recomendado)
-/plugin install mobile@mobiai
-
-# 2b. O instalá sólo la plataforma que necesites
-/plugin install android@mobiai      # Android + deps (core + skills oficiales de Google)
-/plugin install ios@mobiai           # iOS + deps
-/plugin install kmp@mobiai           # KMP (trae Android e iOS)
-/plugin install flutter@mobiai       # Flutter
-/plugin install react-native@mobiai  # React Native
-```
-
-### Cursor / Copilot CLI
-
-Misma secuencia de comandos (`/plugin marketplace add` + `/plugin install`).
-
-### Gemini CLI
-
-```bash
-gemini extension install ArisGuimera/MobiAI-Core
-```
-
-Gemini instala la extension completa (todos los plugins vienen juntos).
-
-### Codex
-
-Consultá [`.codex/INSTALL.md`](.codex/INSTALL.md) para instrucciones con symlinks.
-
-## Actualizar
-
-### Claude Code / Cursor / Copilot CLI
-
-```bash
-/plugin update mobile@mobiai   # o el plugin específico que instalaste
-```
-
-Los skills oficiales de Google (`android-official-skills`) se actualizan automáticamente vía el marketplace.
-
-### Gemini CLI
-
-```bash
-gemini extension update mobiai-core
-```
-
-### Codex
-
-```bash
-cd ~/.codex/mobiai-core && git pull
-```
-
-### CLI `mobiai` (binario)
-
-```bash
-mobiai update
-```
-
-`mobiai update` refresca el catálogo de skills desde el remoto y, si hay una versión más nueva del binario publicada en GitHub Releases, **se auto-actualiza**: descarga el asset de tu plataforma, verifica su checksum SHA256 y reemplaza `~/.mobiai/bin/mobiai` (en Windows usa rename-then-write, así que funciona aunque el `.exe` esté en uso). Reiniciá la terminal para usar la nueva versión. Usá `mobiai update --skip-binary` para refrescar solo el catálogo.
-
-## Plugins disponibles
-
-| Plugin | Incluye | Comando |
+| | | |
 |---|---|---|
-| `mobile` | Todo (meta) | `/plugin install mobile@mobiai` |
-| `android` | Skills Android + skills oficiales de Google | `/plugin install android@mobiai` |
-| `ios` | Skills iOS | `/plugin install ios@mobiai` |
-| `mobiai-kmp` | KMP (incluye Android + iOS como deps) | `/plugin install kmp@mobiai` |
-| `mobiai-flutter` | Flutter / Dart | `/plugin install flutter@mobiai` |
-| `mobiai-react-native` | React Native | `/plugin install react-native@mobiai` |
+| 🛠️ **[CLI `mobiai`](cli/README.md)** | A single tool to manage the whole stack: install skills, index your code, manage project memory, and keep everything up to date. | [See detail →](cli/README.md) |
+| 🧩 **[Skills](skills/README.md)** | Expert per-platform context: fix bugs, reproduce incidents, write tests, analyze crashes, create PRs… all following each stack's best practices. | [See detail →](skills/README.md) |
+| 🔍 **[Graph](docs/graph/README.md)** | Semantic exploration of mobile code. Answers "which files to touch for this task" or "who calls this symbol" without walking the repo blindly. | [See detail →](docs/graph/README.md) |
+| 🧠 **[Brain](brain/README.md)** | Living per-project memory: decisions, bugfixes, workarounds, and project-specific integrations, kept separate from MobiAI's global state. | [See detail →](brain/README.md) |
 
-## Skills disponibles
+And two more pieces on the horizon:
 
-MobiAI incluye skills para todo el ciclo de desarrollo mobile:
+- **Agents** — Specialized agents that execute complex tasks autonomously (in development).
+- **Automated pipeline** — A bot that receives tickets from your messaging platform, reproduces the bug, applies the fix, and opens the PR (planned).
 
-- **Flujo de trabajo** (en `core`, auto-instalado con cualquier plataforma) — mobiai-fix-issue, mobiai-reproduce-bug, mobiai-analyze-crash, mobiai-crashlytics, mobiai-write-tests, mobiai-review-code, mobiai-create-pr
-- **Proceso** (en `core`) — mobiai-mobile-brainstorming, mobiai-mobile-debugging, mobiai-mobile-tdd, mobiai-mobile-planning, mobiai-mobile-verification, mobiai-mobile-executing-plans, mobiai-mobile-parallel-agents, mobiai-mobile-executing-plans-with-subagents, mobiai-mobile-worktrees, mobiai-mobile-finishing-branch, mobiai-writing-skills
-- **Android** (en `android`) — `mobiai-android-device`, `mobiai-android-build`, `mobiai-android-testing`, `mobiai-android-architecture`, más los [skills oficiales de Android mantenidos por Google](https://github.com/android/skills) (Apache 2.0, vendoreados en `skills/android/skills/google/` con auto-sync semanal). Ver [NOTICE.md](NOTICE.md).
-- **iOS** (en `ios`) — mobiai-ios-device, mobiai-ios-build, mobiai-ios-testing, mobiai-ios-architecture
-- **Multiplataforma** — mobiai-kmp, mobiai-flutter, mobiai-react-native (cada uno en su plugin)
+Compatible with **Claude Code**, **Cursor**, **Copilot CLI**, **Codex**, and **Gemini CLI**.
 
-Consulta el [catálogo completo de skills](skills/core/skills/using-mobiai/SKILL.md) para ver cuándo usar cada uno.
+## Current status
 
-## MobiAI Brain (preview)
+| Component | Status |
+|------------|--------|
+| CLI `mobiai` | Stable |
+| Skills (multi-platform) | Stable |
+| Graph (semantic indexer) | Alpha |
+| Brain (per-project memory) | Alpha |
+| Autonomous agents | In development |
+| Automated pipeline (messaging bot) | Planned |
+| Community skills marketplace | Planned |
 
-`mobiai brain` añade **memoria viva por proyecto** a la CLI: decisiones, bugfixes, workarounds e integraciones específicas de cada repo mobile, separadas del estado global de MobiAI.
+## Installation
+
+MobiAI installs as a standalone CLI (`mobiai`) that detects your assistant (Claude Code, Cursor, Copilot CLI, Codex, Gemini CLI) and pushes skills to the right place.
 
 ```bash
-mobiai brain init      # crea <repo>/.mobiai/brain/ (idempotente)
-mobiai brain scan      # detecta stack: Android/iOS/KMP/Flutter/RN + librerías
-mobiai brain context   # imprime Markdown listo para agentes
+# Mac / Linux
+curl -fsSL https://mobiai.dev/install.sh | sh
+
+# Windows (cmd)
+curl.exe -fsSL https://mobiai.dev/install.cmd -o "%TEMP%\i.cmd" && "%TEMP%\i.cmd"
+
+# Windows (PowerShell)
+iwr -useb https://mobiai.dev/install.ps1 | iex
 ```
 
-Detalle completo en [brain/README.md](brain/README.md). Los subcomandos `save` y `search` llegan en una próxima fase.
+Verify the install:
 
-## ¿Cómo funciona?
+```bash
+mobiai --version
+mobiai doctor      # diagnoses detected hosts, catalog, and permissions
+```
 
-1. **Instala el plugin** — MobiAI registra sus skills en tu asistente de IA (Claude Code, Cursor, Copilot CLI, Codex o Gemini CLI)
-2. **Empieza a programar** — Los skills se activan automáticamente según el contexto
-3. **Detección de plataforma** — MobiAI detecta tu proyecto (Android, iOS, Flutter...) y aplica el contexto adecuado
-4. **Tu proyecto, tus reglas** — Los skills respetan las convenciones de tu proyecto (`CLAUDE.md`, `GEMINI.md`, `AGENTS.md`)
+Full install details, local builds, and releases in [cli/README.md](cli/README.md).
+
+### First use
+
+```bash
+mobiai             # banner + help
+mobiai skills init # interactive selector to pick packs (mobile, android, ios, kmp, flutter, react-native)
+```
+
+Keeping things up to date (`mobiai update` refreshes the catalog and self-updates the binary) and diagnostics (`mobiai doctor`, `mobiai status`) live inside the CLI — see [cli/README.md](cli/README.md).
+
+## The CLI in three blocks
+
+> Quick summary. Each block has its own README with the full detail.
+
+### 🧩 [Skills](skills/README.md) — manage skills
+
+Install, list, and uninstall skill packs in the detected hosts. A `mobile` meta-pack brings everything, or install per-platform packs individually.
+
+```bash
+mobiai skills init                 # interactive selector
+mobiai skills add mobile           # install the whole stack
+mobiai skills list                 # what you have installed
+```
+
+Packs: `mobile`, `android`, `ios`, `kmp`, `flutter`, `react-native`. → [skills/README.md](skills/README.md)
+
+### 🔍 [Graph](docs/graph/README.md) — semantic code exploration
+
+Indexes your mobile project and answers "which files to touch" or "who calls this symbol" without walking the repo blindly. Downstream skills (debugging, fix-issue, planning) pre-flight Graph when available.
+
+```bash
+mobiai graph init                  # indexes the project into .mobiai/graph/
+mobiai graph context <task...>     # relevant files for a task
+```
+
+→ [docs/graph/README.md](docs/graph/README.md)
+
+### 🧠 [Brain](brain/README.md) — per-project memory
+
+Living per-repo memory: decisions, bugfixes, workarounds, and project-specific integrations, separate from MobiAI's global state. Stored under `<repo>/.mobiai/brain/`.
+
+```bash
+mobiai brain init                  # creates .mobiai/brain/ (idempotent)
+mobiai brain context               # prints Markdown ready for agents
+```
+
+→ [brain/README.md](brain/README.md)
+
+## How does it work?
+
+1. **Install the `mobiai` CLI** — a single binary that detects your assistant (Claude Code, Cursor, Copilot CLI, Codex, or Gemini CLI) and registers the skills in the right place
+2. **Choose your packs** — `mobiai skills init` opens the selector, or install what you need with `mobiai skills add <pack>`
+3. **Start coding** — Skills activate automatically based on context; optionally index the repo with `mobiai graph init` and seed memory with `mobiai brain init`
+4. **Platform detection** — MobiAI detects your project (Android, iOS, Flutter…) and applies the right context
+5. **Your project, your rules** — Skills respect your project conventions (`CLAUDE.md`, `GEMINI.md`, `AGENTS.md`)
 
 ## Roadmap
 
-### Fase 1 — Skills (actual)
-Plugin multi-plataforma con skills para todas las plataformas mobile. Compatible con Claude Code, Cursor, Copilot CLI, Codex y Gemini CLI. La comunidad puede contribuir nuevos skills.
+### Phase 1 — Skills (current)
+Multi-platform plugin with skills for every mobile platform. Compatible with Claude Code, Cursor, Copilot CLI, Codex, and Gemini CLI. The community can contribute new skills.
 
-### Fase 2 — Agentes
-Agentes especializados que van más allá de las instrucciones: analizan código de forma autónoma, interactúan con dispositivos, y toman decisiones inteligentes basándose en el contexto.
+### Phase 2 — Agents
+Specialized agents that go beyond instructions: they analyze code autonomously, interact with devices, and make informed decisions based on context.
 
-### Fase 3 — Pipeline automatizado
-Un bot que se conecta a tu plataforma de mensajería favorita, recibe errores o tickets, orquesta los agentes, y produce PRs listos para review — el ciclo completo de corrección de bugs sin intervención humana.
+### Phase 3 — Automated pipeline
+A bot that connects to your favorite messaging platform, receives errors or tickets, orchestrates agents, and produces review-ready PRs — the full bug-fix cycle with no human in the loop.
 
-### Fase 4 — Marketplace
-Un marketplace donde la comunidad publica y descarga skills, agentes y configuraciones para diferentes tipos de proyectos mobile.
+### Phase 4 — Marketplace
+A marketplace where the community publishes and downloads skills, agents, and configurations for different kinds of mobile projects.
 
-## Contribuir
+## Contributing
 
-¡Nos encantaría tu ayuda! MobiAI está creado por desarrolladores mobile, para desarrolladores mobile.
+We'd love your help! MobiAI is built by mobile developers, for mobile developers.
 
-- **Añadir un nuevo skill**: Consulta la [guía para crear skills](docs/crear-skills.md)
-- **Mejorar skills existentes**: Abre un PR con mejores instrucciones o manejo de casos edge
-- **Reportar problemas**: Abre un issue si un skill da mal consejo o le falta algo
+- **Add a new skill**: see the [skill-authoring guide](docs/crear-skills.md)
+- **Improve existing skills**: open a PR with better instructions or edge-case handling
+- **Report problems**: open an issue if a skill gives bad advice or is missing something
 
-Consulta [CONTRIBUTING.md](CONTRIBUTING.md) para más detalles.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for more details.
 
-## 👀 ¿Quieres estar actualizado/a?
+## 👀 Want to stay up to date?
 
-Únete al [discord de la comunidad](https://bit.ly/3bmeQvm) donde tenemos un canal para hablar del proyecto (`🤖-mobiai`). 
+Join the [community Discord](https://bit.ly/3bmeQvm) where we have a channel for the project (`🤖-mobiai`).
 
-## 👨‍💻 Colaboradores
+## 👨‍💻 Contributors
 
 <a href="https://github.com/ArisGuimera/JetpackComposePro/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=ArisGuimera/mobiai-core" />

@@ -206,8 +206,8 @@ func TestFetchUpdateBinary_UpToDate(t *testing.T) {
 	if bin != nil {
 		t.Error("expected no binary when already up to date")
 	}
-	if !strings.Contains(out.String(), "al día") {
-		t.Errorf("expected 'al día' message; got %q", out.String())
+	if !strings.Contains(out.String(), "up to date") {
+		t.Errorf("expected 'up to date' message; got %q", out.String())
 	}
 }
 

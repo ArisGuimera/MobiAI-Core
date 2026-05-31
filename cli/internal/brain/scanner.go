@@ -162,10 +162,10 @@ func (i *scanIndex) containsAny(needle string) bool {
 func ScanProject(root string) (*Scan, error) {
 	abs, err := filepath.Abs(root)
 	if err != nil {
-		return nil, fmt.Errorf("absolutizar root: %w", err)
+		return nil, fmt.Errorf("absolutize root: %w", err)
 	}
 	if info, err := os.Stat(abs); err != nil || !info.IsDir() {
-		return nil, fmt.Errorf("root no es un directorio: %s", abs)
+		return nil, fmt.Errorf("root is not a directory: %s", abs)
 	}
 
 	idx := newScanIndex(abs)
@@ -240,7 +240,7 @@ func buildIndex(idx *scanIndex) error {
 		data, err := os.ReadFile(path)
 		if err != nil {
 			idx.warnings = append(idx.warnings,
-				fmt.Sprintf("no se pudo leer %s: %v", rel, err))
+				fmt.Sprintf("could not read %s: %v", rel, err))
 			return nil
 		}
 		idx.files[rel] = data

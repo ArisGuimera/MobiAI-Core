@@ -44,10 +44,10 @@ Refresca el catálogo y, si hay una versión más nueva, se auto-actualiza el
 binario. Vas a ver algo como:
 
 ```
-Catálogo de skills actualizado a vX.Y.Z.
-N packs disponibles en ...
-Binario mobiai 0.2.0 → 0.2.1: descargando mobiai-0.2.1-<os>-<arch>...
-Binario mobiai actualizado a 0.2.1. Reiniciá la terminal (o volvé a correr mobiai) para usar la nueva versión.
+Skills catalog updated to vX.Y.Z.
+N packs available at ...
+mobiai binary 0.2.0 → 0.2.1: downloading mobiai-0.2.1-<os>-<arch>...
+mobiai binary updated to 0.2.1. Restart your terminal (or re-run mobiai) to use the new version.
 ```
 
 Si solo querés refrescar el catálogo sin tocar el binario: `mobiai update --skip-binary`.
@@ -107,7 +107,7 @@ echo "$PATH" | tr ':' '\n' | grep mobiai
 
 Si no aparece, agregalo a tu `~/.bashrc` / `~/.zshrc` / perfil de PowerShell.
 
-**El update aborta con "no encontré checksum" o "checksum no coincide":**
+**El update aborta con "no checksum found" o "checksum mismatch":**
 Es una protección a propósito: `mobiai update` nunca instala un binario que no
 matchea el SHA256 publicado en `checksums.txt`. Suele ser una descarga corrupta
 o parcial — reintentá más tarde, o usá el install script como fallback.

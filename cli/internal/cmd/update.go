@@ -23,7 +23,7 @@ const defaultCatalogGitURL = "https://github.com/ArisGuimera/MobiAI-Core.git"
 func NewUpdateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "update",
-		Short: "Refrescar el catálogo desde el remoto (o un local con --catalog-root)",
+		Short: "Refresh the catalog from the remote (or a local path with --catalog-root)",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			out := cmd.OutOrStdout()
 			g := flagsFromAnyCmd(cmd)
@@ -84,26 +84,26 @@ func NewUpdateCmd() *cobra.Command {
 			if err := meta.Save(paths); err != nil {
 				return err
 			}
-			fmt.Fprintf(out, "Catálogo de skills actualizado a v%s.\n", meta.Version)
-			fmt.Fprintf(out, "%d packs disponibles en %s.\n", len(c.Packs), rootFlag)
+			fmt.Fprintf(out, "Skills catalog updated to v%s.\n", meta.Version)
+			fmt.Fprintf(out, "%d packs available at %s.\n", len(c.Packs), rootFlag)
 
 			// Catalog is refreshed; now update the binary itself if a newer
 			// release exists. A binary-update failure is non-fatal: the
 			// catalog sync above already succeeded, so we warn and exit 0.
 			if skip, _ := cmd.Flags().GetBool("skip-binary"); skip {
-				fmt.Fprintf(out, "Binario mobiai: %s (--skip-binary, no se verificó si hay update).\n", version)
+				fmt.Fprintf(out, "mobiai binary: %s (--skip-binary, did not check for an update).\n", version)
 			} else if err := selfUpdateBinary(out, version); err != nil {
-				fmt.Fprintf(out, "Aviso: el catálogo se actualizó, pero no pude actualizar el binario: %v\n", err)
-				fmt.Fprintf(out, "Reintentá `mobiai update` más tarde, o reinstalá con el install script: https://mobiai.dev\n")
+				fmt.Fprintf(out, "Warning: the catalog was updated, but the binary could not be updated: %v\n", err)
+				fmt.Fprintf(out, "Retry `mobiai update` later, or reinstall with the install script: https://mobiai.dev\n")
 			}
 			return nil
 		},
 	}
-	cmd.Flags().String("catalog-root", "", "ruta a un catálogo local (override)")
-	cmd.Flags().Bool("force", false, "si el directorio cache existe sin ser un repo git, borralo y cloná de nuevo")
-	cmd.Flags().Bool("check", false, "solo consultar GitHub releases y cachear el resultado (no toca el catálogo)")
-	cmd.Flags().Bool("silent", false, "no imprime nada al salir (pensado para correr desde un hook en background)")
-	cmd.Flags().Bool("skip-binary", false, "no actualizar el binario mobiai, solo refrescar el catálogo")
+	cmd.Flags().String("catalog-root", "", "path to a local catalog (override)")
+	cmd.Flags().Bool("force", false, "if the cache dir exists but is not a git repo, delete it and re-clone")
+	cmd.Flags().Bool("check", false, "only query GitHub releases and cache the result (does not touch the catalog)")
+	cmd.Flags().Bool("silent", false, "print nothing on exit (intended for running from a background hook)")
+	cmd.Flags().Bool("skip-binary", false, "do not update the mobiai binary, only refresh the catalog")
 	return cmd
 }
 
@@ -119,7 +119,7 @@ func NewUpdateCmd() *cobra.Command {
 // placed there manually (e.g., a hand-curated catalog or extracted embed).
 func syncRemoteCatalog(out io.Writer, url, cacheRoot string, verbose, force bool) error {
 	if _, err := exec.LookPath("git"); err != nil {
-		return fmt.Errorf("'git' no está en PATH — instalalo o pasá --catalog-root <ruta-local>: %w", err)
+		return fmt.Errorf("'git' is not in PATH — install it or pass --catalog-root <local-path>: %w", err)
 	}
 
 	configureCmdIO := func(c *exec.Cmd) *bytes.Buffer {
@@ -137,7 +137,7 @@ func syncRemoteCatalog(out io.Writer, url, cacheRoot string, verbose, force bool
 	dotGit := filepath.Join(cacheRoot, ".git")
 	if _, err := os.Stat(dotGit); err == nil {
 		// Already cloned — pull.
-		fmt.Fprintf(out, "Sincronizando catálogo (git pull)...\n")
+		fmt.Fprintf(out, "Syncing catalog (git pull)...\n")
 		c := exec.Command("git", "-C", cacheRoot, "pull", "--ff-only")
 		buf := configureCmdIO(c)
 		if err := c.Run(); err != nil {
@@ -146,9 +146,9 @@ func syncRemoteCatalog(out io.Writer, url, cacheRoot string, verbose, force bool
 				detail = strings.TrimSpace(buf.String())
 			}
 			if detail != "" {
-				return fmt.Errorf("git pull en %s falló: %w\n%s", cacheRoot, err, detail)
+				return fmt.Errorf("git pull in %s failed: %w\n%s", cacheRoot, err, detail)
 			}
-			return fmt.Errorf("git pull en %s falló: %w (probá -V/--verbose para ver el output de git)", cacheRoot, err)
+			return fmt.Errorf("git pull in %s failed: %w (try -V/--verbose to see git's output)", cacheRoot, err)
 		}
 		return nil
 	}
@@ -161,13 +161,13 @@ func syncRemoteCatalog(out io.Writer, url, cacheRoot string, verbose, force bool
 		// Existing dir, not a git repo. Refuse to clobber unless --force,
 		// so we don't silently destroy hand-curated content.
 		if !force {
-			return fmt.Errorf("%s existe pero no es un repo git — pasá --force para borrarlo y clonar, o usá --catalog-root para apuntar a otra ruta", cacheRoot)
+			return fmt.Errorf("%s exists but is not a git repo — pass --force to delete it and clone, or use --catalog-root to point at another path", cacheRoot)
 		}
 		if err := os.RemoveAll(cacheRoot); err != nil {
 			return fmt.Errorf("clean %s: %w", cacheRoot, err)
 		}
 	}
-	fmt.Fprintf(out, "Clonando catálogo desde %s...\n", url)
+	fmt.Fprintf(out, "Cloning catalog from %s...\n", url)
 	c := exec.Command("git", "clone", "--depth=1", url, cacheRoot)
 	buf := configureCmdIO(c)
 	if err := c.Run(); err != nil {
@@ -176,9 +176,9 @@ func syncRemoteCatalog(out io.Writer, url, cacheRoot string, verbose, force bool
 			detail = strings.TrimSpace(buf.String())
 		}
 		if detail != "" {
-			return fmt.Errorf("git clone %s falló: %w\n%s\n(si el repo es privado, configurá MOBIAI_CATALOG_GIT_URL o pasá --catalog-root)", url, err, detail)
+			return fmt.Errorf("git clone %s failed: %w\n%s\n(if the repo is private, set MOBIAI_CATALOG_GIT_URL or pass --catalog-root)", url, err, detail)
 		}
-		return fmt.Errorf("git clone %s falló: %w (probá -V/--verbose para ver el output de git; si el repo es privado, configurá MOBIAI_CATALOG_GIT_URL o pasá --catalog-root)", url, err)
+		return fmt.Errorf("git clone %s failed: %w (try -V/--verbose to see git's output; if the repo is private, set MOBIAI_CATALOG_GIT_URL or pass --catalog-root)", url, err)
 	}
 	return nil
 }
