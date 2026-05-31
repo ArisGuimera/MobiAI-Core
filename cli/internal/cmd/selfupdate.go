@@ -16,6 +16,8 @@ import (
 	"runtime"
 	"strings"
 	"time"
+
+	"github.com/ArisGuimera/MobiAI-Core/cli/internal/i18n"
 )
 
 // defaultInstallBase is the GitHub Releases base URL. Release assets live at
@@ -50,7 +52,7 @@ func selfUpdateBinary(out io.Writer, currentVersion string) error {
 	if err := selfReplace(bin); err != nil {
 		return fmt.Errorf("install new binary: %w", err)
 	}
-	fmt.Fprintf(out, "mobiai binary updated to %s. Restart your terminal (or re-run mobiai) to use the new version.\n", latest)
+	fmt.Fprintf(out, i18n.T("mobiai binary updated to %s. Restart your terminal (or re-run mobiai) to use the new version.\n"), latest)
 	return nil
 }
 
@@ -74,7 +76,7 @@ func fetchUpdateBinary(out io.Writer, currentVersion string) (bin []byte, latest
 		return nil, "", fmt.Errorf("query releases: %w", err)
 	}
 	if !semverLess(currentVersion, latest) {
-		fmt.Fprintf(out, "mobiai binary %s: up to date.\n", currentVersion)
+		fmt.Fprintf(out, i18n.T("mobiai binary %s: up to date.\n"), currentVersion)
 		return nil, "", nil
 	}
 
@@ -83,7 +85,7 @@ func fetchUpdateBinary(out io.Writer, currentVersion string) (bin []byte, latest
 		base = defaultInstallBase
 	}
 	archive := assetName(latest, runtime.GOOS, runtime.GOARCH)
-	fmt.Fprintf(out, "mobiai binary %s → %s: downloading %s...\n", currentVersion, latest, archive)
+	fmt.Fprintf(out, i18n.T("mobiai binary %s → %s: downloading %s...\n"), currentVersion, latest, archive)
 
 	archiveURL := fmt.Sprintf("%s/download/cli-v%s/%s", base, latest, archive)
 	data, err := downloadBytes(archiveURL)

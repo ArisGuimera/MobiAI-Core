@@ -16,6 +16,7 @@ import (
 	"github.com/ArisGuimera/MobiAI-Core/cli/internal/catalog"
 	"github.com/ArisGuimera/MobiAI-Core/cli/internal/embedded"
 	"github.com/ArisGuimera/MobiAI-Core/cli/internal/host"
+	"github.com/ArisGuimera/MobiAI-Core/cli/internal/i18n"
 	"github.com/ArisGuimera/MobiAI-Core/cli/internal/resolver"
 	"github.com/ArisGuimera/MobiAI-Core/cli/internal/state"
 	"github.com/ArisGuimera/MobiAI-Core/cli/internal/tui"
@@ -26,18 +27,18 @@ import (
 func NewSkillsCmd() *cobra.Command {
 	root := &cobra.Command{
 		Use:   "skills",
-		Short: "Manage MobiAI skills",
+		Short: i18n.T("Manage MobiAI skills"),
 	}
 	// When invoked standalone (in tests), register the persistent flags
 	// locally so callers can pass --catalog-root and --yes without going
 	// through the root command's persistent flag set.
-	root.PersistentFlags().StringSlice("host", nil, "force specific adapters (default: all detected)")
-	root.PersistentFlags().Bool("yes", false, "assume yes on confirmations")
-	root.PersistentFlags().String("catalog-root", "", "path to a local catalog")
+	root.PersistentFlags().StringSlice("host", nil, i18n.T("force specific adapters (default: all detected)"))
+	root.PersistentFlags().Bool("yes", false, i18n.T("assume yes on confirmations"))
+	root.PersistentFlags().String("catalog-root", "", i18n.T("path to a local catalog"))
 
 	addCmd := &cobra.Command{
 		Use:   "add <pack>...",
-		Short: "Install packs into detected hosts",
+		Short: i18n.T("Install packs into detected hosts"),
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runSkillsAdd(cmd, args)
@@ -45,7 +46,7 @@ func NewSkillsCmd() *cobra.Command {
 	}
 	removeCmd := &cobra.Command{
 		Use:   "remove <pack>...",
-		Short: "Uninstall packs from detected hosts",
+		Short: i18n.T("Uninstall packs from detected hosts"),
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runSkillsRemove(cmd, args)
@@ -54,7 +55,7 @@ func NewSkillsCmd() *cobra.Command {
 
 	listCmd := &cobra.Command{
 		Use:   "list",
-		Short: "List installed packs",
+		Short: i18n.T("List installed packs"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			paths, err := state.NewPaths()
 			if err != nil {
@@ -66,7 +67,7 @@ func NewSkillsCmd() *cobra.Command {
 			}
 			out := cmd.OutOrStdout()
 			if len(installed.Packs) == 0 {
-				fmt.Fprintln(out, "No packs installed.")
+				fmt.Fprintln(out, i18n.T("No packs installed."))
 				return nil
 			}
 			fmt.Fprintln(out, "Pack          | Hosts")
@@ -85,8 +86,8 @@ func NewSkillsCmd() *cobra.Command {
 
 	initCmd := &cobra.Command{
 		Use:   "init",
-		Short: "Interactive picker to install/uninstall skills",
-		Long:  "Launches the TUI picker to choose skill packs and apply changes to detected clients (Claude Code, Cursor, Codex, etc).",
+		Short: i18n.T("Interactive picker to install/uninstall skills"),
+		Long:  i18n.T("Launches the TUI picker to choose skill packs and apply changes to detected clients (Claude Code, Cursor, Codex, etc)."),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			g := flagsFromAnyCmd(cmd)
 			if err := RunPicker(g); err != nil {
@@ -139,7 +140,7 @@ func runSkillsAdd(cmd *cobra.Command, packs []string) error {
 			return err
 		}
 		if !ok {
-			fmt.Fprintln(out, "Cancelled.")
+			fmt.Fprintln(out, i18n.T("Cancelled."))
 			return nil
 		}
 	}
@@ -161,7 +162,7 @@ func runSkillsAdd(cmd *cobra.Command, packs []string) error {
 	if err := installed.Save(paths); err != nil {
 		return err
 	}
-	fmt.Fprintln(out, "Done.")
+	fmt.Fprintln(out, i18n.T("Done."))
 	return nil
 }
 
@@ -174,7 +175,7 @@ func confirmInstall(out io.Writer, in io.Reader, packs []string, hosts []host.Ho
 	for _, h := range hosts {
 		hostNames = append(hostNames, h.Name())
 	}
-	fmt.Fprintln(out, "Install plan:")
+	fmt.Fprintln(out, i18n.T("Install plan:"))
 	fmt.Fprintf(out, "  Packs (%d): %s\n", len(packs), strings.Join(packs, ", "))
 	fmt.Fprintf(out, "  Hosts (%d): %s\n", len(hosts), strings.Join(hostNames, ", "))
 
@@ -182,7 +183,7 @@ func confirmInstall(out io.Writer, in io.Reader, packs []string, hosts []host.Ho
 		return false, fmt.Errorf("stdin is not interactive: pass --yes to confirm without a prompt")
 	}
 
-	fmt.Fprint(out, "Continue? [y/N]: ")
+	fmt.Fprint(out, i18n.T("Continue? [y/N]: "))
 	r := bufio.NewReader(in)
 	line, err := r.ReadString('\n')
 	if err != nil && err != io.EOF {
@@ -237,7 +238,7 @@ func runSkillsRemove(cmd *cobra.Command, packs []string) error {
 	if err := installed.Save(paths); err != nil {
 		return err
 	}
-	fmt.Fprintln(out, "Done.")
+	fmt.Fprintln(out, i18n.T("Done."))
 	return nil
 }
 

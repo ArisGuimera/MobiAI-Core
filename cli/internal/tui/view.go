@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
+
+	"github.com/ArisGuimera/MobiAI-Core/cli/internal/i18n"
 )
 
 var (
@@ -22,7 +24,7 @@ func (m Model) viewPicker() string {
 	for _, h := range m.hosts {
 		hostNames = append(hostNames, h.Name())
 	}
-	b.WriteString(titleStyle.Render("MobiAI") + "    " + dimStyle.Render(fmt.Sprintf("Detected hosts (%d): %s", len(m.hosts), strings.Join(hostNames, " · "))) + "\n\n")
+	b.WriteString(titleStyle.Render("MobiAI") + "    " + dimStyle.Render(fmt.Sprintf(i18n.T("Detected hosts (%d): %s"), len(m.hosts), strings.Join(hostNames, " · "))) + "\n\n")
 
 	rows := m.PackRows()
 	for i, r := range rows {
@@ -36,7 +38,7 @@ func (m Model) viewPicker() string {
 		b.WriteString(line + "\n")
 	}
 
-	b.WriteString("\n" + dimStyle.Render("↑↓ navigate  [space] change action  [enter] apply  [q] quit") + "\n")
+	b.WriteString("\n" + dimStyle.Render(i18n.T("↑↓ navigate  [space] change action  [enter] apply  [q] quit")) + "\n")
 	return b.String()
 }
 
@@ -72,7 +74,7 @@ func pickerMarker(r PackRow, totalHosts int) string {
 
 func (m Model) viewConfirm() string {
 	var b strings.Builder
-	b.WriteString(titleStyle.Render("Confirm changes") + "\n\n")
+	b.WriteString(titleStyle.Render(i18n.T("Confirm changes")) + "\n\n")
 
 	var installs, uninstalls []string
 	for name, act := range m.userActions {
@@ -87,10 +89,10 @@ func (m Model) viewConfirm() string {
 	sort.Strings(uninstalls)
 
 	if len(installs) == 0 && len(uninstalls) == 0 {
-		b.WriteString("No pending changes.\n")
+		b.WriteString(i18n.T("No pending changes.\n"))
 	}
 	if len(installs) > 0 {
-		b.WriteString("To install:\n")
+		b.WriteString(i18n.T("To install:\n"))
 		for _, name := range installs {
 			b.WriteString(checkboxStyle.Render("  + ") + name + "\n")
 		}
@@ -99,19 +101,19 @@ func (m Model) viewConfirm() string {
 		if len(installs) > 0 {
 			b.WriteString("\n")
 		}
-		b.WriteString("To uninstall:\n")
+		b.WriteString(i18n.T("To uninstall:\n"))
 		for _, name := range uninstalls {
 			b.WriteString(removalStyle.Render("  - ") + name + "\n")
 		}
 	}
-	b.WriteString(fmt.Sprintf("\nOn %d detected hosts.\n\n", len(m.hosts)))
-	b.WriteString(dimStyle.Render("[y] confirm  [n] back to picker  [esc] cancel"))
+	b.WriteString(fmt.Sprintf(i18n.T("\nOn %d detected hosts.\n\n"), len(m.hosts)))
+	b.WriteString(dimStyle.Render(i18n.T("[y] confirm  [n] back to picker  [esc] cancel")))
 	return b.String()
 }
 
 func (m Model) viewProgress() string {
 	var b strings.Builder
-	b.WriteString(titleStyle.Render(fmt.Sprintf("Applying changes... %d/%d", m.installDone, len(m.installPlan))) + "\n\n")
+	b.WriteString(titleStyle.Render(fmt.Sprintf(i18n.T("Applying changes... %d/%d"), m.installDone, len(m.installPlan))) + "\n\n")
 	for i, s := range m.installPlan {
 		marker := "  "
 		if i < m.installDone {
@@ -132,9 +134,9 @@ func (m Model) viewResult() string {
 	// usuario pierde la confirmación de qué se instaló. Re-renderizamos
 	// el plan completo con su marker final.
 	if len(m.installErrors) == 0 {
-		b.WriteString(checkboxStyle.Render("✓ Done") + "\n\n")
+		b.WriteString(checkboxStyle.Render(i18n.T("✓ Done")) + "\n\n")
 	} else {
-		b.WriteString(fmt.Sprintf("⚠ Finished with %d errors\n\n", len(m.installErrors)))
+		b.WriteString(fmt.Sprintf(i18n.T("⚠ Finished with %d errors\n\n"), len(m.installErrors)))
 	}
 
 	errBy := make(map[[2]string]error, len(m.installErrors))
@@ -150,8 +152,8 @@ func (m Model) viewResult() string {
 	}
 
 	if m.installSaveErr != nil {
-		b.WriteString(fmt.Sprintf("\n⚠ Could not save installed.json: %v\n", m.installSaveErr))
+		b.WriteString(fmt.Sprintf(i18n.T("\n⚠ Could not save installed.json: %v\n"), m.installSaveErr))
 	}
-	b.WriteString(dimStyle.Render("\n[enter] close"))
+	b.WriteString(dimStyle.Render(i18n.T("\n[enter] close")))
 	return b.String()
 }
