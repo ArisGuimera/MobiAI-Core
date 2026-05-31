@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -22,7 +23,13 @@ func NewLangCmd() *cobra.Command {
 			out := cmd.OutOrStdout()
 
 			if len(args) == 0 {
+				langs := make([]string, 0, len(i18n.Supported()))
+				for _, l := range i18n.Supported() {
+					langs = append(langs, string(l))
+				}
 				fmt.Fprintf(out, i18n.T("Current language: %s\n"), i18n.Current())
+				fmt.Fprintf(out, i18n.T("Available:        %s\n"), strings.Join(langs, ", "))
+				fmt.Fprint(out, i18n.T("Change it with `mobiai lang en` or `mobiai lang es`.\n"))
 				return nil
 			}
 

@@ -31,9 +31,11 @@ var catalogES = map[string]string{
 	"mobiai binary %s → %s: downloading %s...\n": "binario mobiai %s → %s: descargando %s...\n",
 
 	// ── internal/cmd/lang.go ─────────────────────────────────────────────
-	"Show or set the CLI language (en/es)": "Mostrar o cambiar el idioma del CLI (en/es)",
-	"Current language: %s\n":               "Idioma actual: %s\n",
-	"Language set to %s.\n":                "Idioma cambiado a %s.\n",
+	"Show or set the CLI language (en/es)":                   "Mostrar o cambiar el idioma del CLI (en/es)",
+	"Current language: %s\n":                                 "Idioma actual:    %s\n",
+	"Available:        %s\n":                                 "Disponibles:      %s\n",
+	"Change it with `mobiai lang en` or `mobiai lang es`.\n": "Cambialo con `mobiai lang en` o `mobiai lang es`.\n",
+	"Language set to %s.\n":                                  "Idioma cambiado a %s.\n",
 }
 
 // intentionallyEnglish lists wrapped strings that have no Spanish translation on
