@@ -82,6 +82,14 @@ gemini extension update mobiai-core
 cd ~/.codex/mobiai-core && git pull
 ```
 
+### CLI `mobiai` (binario)
+
+```bash
+mobiai update
+```
+
+`mobiai update` refresca el catálogo de skills desde el remoto y, si hay una versión más nueva del binario publicada en GitHub Releases, **se auto-actualiza**: descarga el asset de tu plataforma, verifica su checksum SHA256 y reemplaza `~/.mobiai/bin/mobiai` (en Windows usa rename-then-write, así que funciona aunque el `.exe` esté en uso). Reiniciá la terminal para usar la nueva versión. Usá `mobiai update --skip-binary` para refrescar solo el catálogo.
+
 ## Plugins disponibles
 
 | Plugin | Incluye | Comando |

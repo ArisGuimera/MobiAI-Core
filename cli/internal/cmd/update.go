@@ -85,8 +85,17 @@ func NewUpdateCmd() *cobra.Command {
 				return err
 			}
 			fmt.Fprintf(out, "Catálogo de skills actualizado a v%s.\n", meta.Version)
-			fmt.Fprintf(out, "Binario mobiai: %s.\n", version)
 			fmt.Fprintf(out, "%d packs disponibles en %s.\n", len(c.Packs), rootFlag)
+
+			// Catalog is refreshed; now update the binary itself if a newer
+			// release exists. A binary-update failure is non-fatal: the
+			// catalog sync above already succeeded, so we warn and exit 0.
+			if skip, _ := cmd.Flags().GetBool("skip-binary"); skip {
+				fmt.Fprintf(out, "Binario mobiai: %s (--skip-binary, no se verificó si hay update).\n", version)
+			} else if err := selfUpdateBinary(out, version); err != nil {
+				fmt.Fprintf(out, "Aviso: el catálogo se actualizó, pero no pude actualizar el binario: %v\n", err)
+				fmt.Fprintf(out, "Reintentá `mobiai update` más tarde, o reinstalá con el install script: https://mobiai.dev\n")
+			}
 			return nil
 		},
 	}
@@ -94,6 +103,7 @@ func NewUpdateCmd() *cobra.Command {
 	cmd.Flags().Bool("force", false, "si el directorio cache existe sin ser un repo git, borralo y cloná de nuevo")
 	cmd.Flags().Bool("check", false, "solo consultar GitHub releases y cachear el resultado (no toca el catálogo)")
 	cmd.Flags().Bool("silent", false, "no imprime nada al salir (pensado para correr desde un hook en background)")
+	cmd.Flags().Bool("skip-binary", false, "no actualizar el binario mobiai, solo refrescar el catálogo")
 	return cmd
 }
 
