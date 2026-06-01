@@ -33,6 +33,7 @@ skills/
 ├── kmp/               # depends on android + ios
 ├── flutter/           # depends on android + ios
 ├── react-native/      # depends on android + ios
+├── community/         # community-contributed skills — open to everyone
 └── mobile/            # meta-pack: brings everything above
 ```
 
@@ -48,6 +49,7 @@ Each pack contains a `.claude-plugin/plugin.json` with metadata and dependencies
 | `kmp` | Kotlin Multiplatform skills | core, android, ios | `mobiai skills add kmp` |
 | `flutter` | Flutter / Dart skills | core, android, ios | `mobiai skills add flutter` |
 | `react-native` | React Native skills | core, android, ios | `mobiai skills add react-native` |
+| `community` | Skills contributed by the community — the one pack open to everyone | core | `mobiai skills add community` |
 | `core` | ⚠️ Internal — cross-platform skills, `using-mobiai` bootstrap, and `SessionStart` hook. Not installed standalone | — | — |
 
 > `core` is installed automatically as a dependency of any other pack. Don't pick it manually.
@@ -143,9 +145,8 @@ The idea is that the assistant doesn't improvise: if there's a skill covering th
 
 1. Read the [skill-authoring guide](../docs/crear-skills.md).
 2. Invoke the `mobiai-writing-skills` skill from your assistant — it walks you through the structure, frontmatter, and actionable instructions.
-3. Place the skill in the right pack:
-   - Cross-platform or process → `core/skills/`
-   - Platform-specific → `android/skills/`, `ios/skills/`, etc.
+3. Place the skill under `community/skills/` — that's the pack open to everyone. Register it in [`community/README.md`](community/README.md).
+   - The platform packs (`core`, `android`, `ios`, …) are maintainer-curated; a CI guard (`guard-community-skills`) blocks non-maintainer PRs that touch them. If your skill belongs in one, propose it via an issue.
 4. Open a PR. CI blocks PRs that add or modify skills without updating the relevant documentation.
 
 General contribution guidance in [../CONTRIBUTING.md](../CONTRIBUTING.md).

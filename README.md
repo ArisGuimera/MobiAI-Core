@@ -85,7 +85,7 @@ Full install details, local builds, and releases in [cli/README.md](cli/README.m
 
 ```bash
 mobiai             # banner + help
-mobiai skills init # interactive selector to pick packs (mobile, android, ios, kmp, flutter, react-native)
+mobiai skills init # interactive selector to pick packs (mobile, android, ios, kmp, flutter, react-native, community)
 ```
 
 Keeping things up to date (`mobiai update` refreshes the catalog and self-updates the binary) and diagnostics (`mobiai doctor`, `mobiai status`) live inside the CLI — see [cli/README.md](cli/README.md).
@@ -104,7 +104,7 @@ mobiai skills add mobile           # install the whole stack
 mobiai skills list                 # what you have installed
 ```
 
-Packs: `mobile`, `android`, `ios`, `kmp`, `flutter`, `react-native`. → [skills/README.md](skills/README.md)
+Packs: `mobile`, `android`, `ios`, `kmp`, `flutter`, `react-native`, `community`. → [skills/README.md](skills/README.md)
 
 ### 🔍 [Graph](docs/graph/README.md) — semantic code exploration
 

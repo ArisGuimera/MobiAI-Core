@@ -33,6 +33,7 @@ skills/
 ├── kmp/               # depende de android + ios
 ├── flutter/           # depende de android + ios
 ├── react-native/      # depende de android + ios
+├── community/         # skills aportadas por la comunidad — abierto a todos
 └── mobile/            # meta-pack: trae todo lo de arriba
 ```
 
@@ -48,6 +49,7 @@ Cada pack contiene un `.claude-plugin/plugin.json` con metadatos y dependencias.
 | `kmp` | Skills de Kotlin Multiplatform | core, android, ios | `mobiai skills add kmp` |
 | `flutter` | Skills de Flutter / Dart | core, android, ios | `mobiai skills add flutter` |
 | `react-native` | Skills de React Native | core, android, ios | `mobiai skills add react-native` |
+| `community` | Skills aportadas por la comunidad — el único pack abierto a todos | core | `mobiai skills add community` |
 | `core` | ⚠️ Interno — skills cross-platform, bootstrap `using-mobiai` y `SessionStart` hook. No se instala suelto | — | — |
 
 > `core` se instala automáticamente como dependencia de cualquier otro pack. No lo elijas a mano.
@@ -143,9 +145,8 @@ La idea es que el asistente no improvise: si hay un skill que cubre la tarea, lo
 
 1. Lee la [guía para crear skills](../docs/crear-skills.md).
 2. Invoca el skill `mobiai-writing-skills` desde tu asistente — te lleva por la estructura, frontmatter e instrucciones accionables.
-3. Coloca el skill en el pack adecuado:
-   - Cross-platform o de proceso → `core/skills/`
-   - Específico de plataforma → `android/skills/`, `ios/skills/`, etc.
+3. Coloca el skill en `community/skills/` — es el pack abierto a todos. Registralo en [`community/README.md`](community/README.md).
+   - Los packs de plataforma (`core`, `android`, `ios`, …) los curan los maintainers; un guard de CI (`guard-community-skills`) bloquea los PRs de no-maintainers que los tocan. Si tu skill va en uno de ellos, proponelo vía issue.
 4. Abre un PR. El CI bloquea PRs que añaden o modifican skills sin actualizar la documentación correspondiente.
 
 Detalle de la guía de contribución general en [../CONTRIBUTING.md](../CONTRIBUTING.md).
