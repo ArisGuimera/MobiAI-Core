@@ -33,8 +33,8 @@ skills/
 ├── kmp/               # depende de android + ios
 ├── flutter/           # depende de android + ios
 ├── react-native/      # depende de android + ios
-├── community/         # skills aportadas por la comunidad — abierto a todos
-└── mobile/            # meta-pack: trae todo lo de arriba
+├── mobile/            # meta-pack: trae todo lo de arriba
+└── community/         # skills aportadas por la comunidad — abierto a todos (no entra en mobile)
 ```
 
 Cada pack contiene un `.claude-plugin/plugin.json` con metadatos y dependencias. Las dependencias se resuelven automáticamente al instalar (por ejemplo, instalar `kmp` arrastra `core`, `android` e `ios`).

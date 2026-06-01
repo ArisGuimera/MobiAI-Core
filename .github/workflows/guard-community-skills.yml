@@ -39,13 +39,12 @@ jobs:
 
           changed=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")
 
-          # Cambios de skills que NO están en community y NO son los skills de
-          # Google vendoreados (esos se sincronizan automáticamente vía bot PR
-          # desde upstream — ver sync-android-skills.yml).
+          # Cambios de skills que NO están en community. Cubre TODO skills/**
+          # (SKILL.md, plugin.json, references/, scripts/, READMEs curados…),
+          # no solo los SKILL.md: "modificar una skill" es más que su SKILL.md.
           protected=$(echo "$changed" \
             | grep -E '^skills/' \
             | grep -vE '^skills/community/' \
-            | grep -vE '^skills/android/skills/google/' \
             || true)
 
           if [ -z "$protected" ]; then
@@ -57,8 +56,19 @@ jobs:
           echo "$protected" | sed 's/^/  - /'
           echo
 
-          # ¿El autor del PR es maintainer? (case-insensitive)
           author_lc=$(echo "$PR_AUTHOR" | tr '[:upper:]' '[:lower:]')
+
+          # Excepción acotada: el bot que sincroniza los skills vendoreados de
+          # Google abre su PR como github-actions[bot] y solo toca
+          # skills/android/skills/google/ (ver sync-android-skills.yml). Se le
+          # permite en vez de excluir ese path de forma incondicional — así un
+          # humano externo que edite a mano esos skills SÍ queda bloqueado.
+          if [ "$author_lc" = "github-actions[bot]" ]; then
+            echo "Author @$PR_AUTHOR is the upstream-sync bot — allowed. ✓"
+            exit 0
+          fi
+
+          # ¿El autor del PR es maintainer? (case-insensitive)
           for m in $MAINTAINERS; do
             if [ "$author_lc" = "$(echo "$m" | tr '[:upper:]' '[:lower:]')" ]; then
               echo "Author @$PR_AUTHOR is a maintainer — allowed. ✓"
