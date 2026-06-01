@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/ArisGuimera/MobiAI-Core/cli/internal/catalog"
+	"github.com/ArisGuimera/MobiAI-Core/cli/internal/i18n"
 	"github.com/ArisGuimera/MobiAI-Core/cli/internal/resolver"
 )
 
@@ -17,19 +18,19 @@ import (
 func NewCatalogCmd() *cobra.Command {
 	root := &cobra.Command{
 		Use:    "catalog",
-		Short:  "Inspect the catalog (debug)",
-		Long:   "Hidden subcommand for catalog/resolver smoke tests. Not intended for end users.",
+		Short:  i18n.T("Inspect the catalog (debug)"),
+		Long:   i18n.T("Hidden subcommand for catalog/resolver smoke tests. Not intended for end users."),
 		Hidden: true,
 	}
 
 	var rootFlag string
 	addRootFlag := func(c *cobra.Command) {
-		c.Flags().StringVar(&rootFlag, "root", ".", "Path to the catalog root (directory containing .claude-plugin/marketplace.json)")
+		c.Flags().StringVar(&rootFlag, "root", ".", i18n.T("Path to the catalog root (directory containing .claude-plugin/marketplace.json)"))
 	}
 
 	listCmd := &cobra.Command{
 		Use:   "list",
-		Short: "List the packs in the catalog",
+		Short: i18n.T("List the packs in the catalog"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			root := rootFlag
 			if root == "" || root == "." {
@@ -42,10 +43,10 @@ func NewCatalogCmd() *cobra.Command {
 				return err
 			}
 			out := cmd.OutOrStdout()
-			fmt.Fprintf(out, "Catalog: %s (version %s)\n", c.Marketplace.Name, c.Marketplace.Metadata.Version)
+			fmt.Fprintf(out, i18n.T("Catalog: %s (version %s)\n"), c.Marketplace.Name, c.Marketplace.Metadata.Version)
 			fmt.Fprintf(out, "Packs (%d):\n", len(c.Packs))
 			for _, p := range c.Packs {
-				deps := "none"
+				deps := i18n.T("none")
 				if len(p.Manifest.Dependencies) > 0 {
 					deps = strings.Join(p.Manifest.Dependencies, ", ")
 				}
@@ -58,7 +59,7 @@ func NewCatalogCmd() *cobra.Command {
 
 	resolveCmd := &cobra.Command{
 		Use:   "resolve <pack>...",
-		Short: "Resolve the install order for the given packs",
+		Short: i18n.T("Resolve the install order for the given packs"),
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			root := rootFlag
@@ -76,7 +77,7 @@ func NewCatalogCmd() *cobra.Command {
 				return err
 			}
 			out := cmd.OutOrStdout()
-			fmt.Fprintf(out, "Install order:\n")
+			fmt.Fprint(out, i18n.T("Install order:\n"))
 			for i, name := range order {
 				fmt.Fprintf(out, "  %d. %s\n", i+1, name)
 			}

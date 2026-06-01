@@ -13,6 +13,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/ArisGuimera/MobiAI-Core/cli/internal/catalog"
+	"github.com/ArisGuimera/MobiAI-Core/cli/internal/i18n"
 	"github.com/ArisGuimera/MobiAI-Core/cli/internal/state"
 )
 
@@ -23,7 +24,7 @@ const defaultCatalogGitURL = "https://github.com/ArisGuimera/MobiAI-Core.git"
 func NewUpdateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "update",
-		Short: "Refresh the catalog from the remote (or a local path with --catalog-root)",
+		Short: i18n.T("Refresh the catalog from the remote (or a local path with --catalog-root)"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			out := cmd.OutOrStdout()
 			g := flagsFromAnyCmd(cmd)
@@ -84,26 +85,26 @@ func NewUpdateCmd() *cobra.Command {
 			if err := meta.Save(paths); err != nil {
 				return err
 			}
-			fmt.Fprintf(out, "Skills catalog updated to v%s.\n", meta.Version)
-			fmt.Fprintf(out, "%d packs available at %s.\n", len(c.Packs), rootFlag)
+			fmt.Fprintf(out, i18n.T("Skills catalog updated to v%s.\n"), meta.Version)
+			fmt.Fprintf(out, i18n.T("%d packs available at %s.\n"), len(c.Packs), rootFlag)
 
 			// Catalog is refreshed; now update the binary itself if a newer
 			// release exists. A binary-update failure is non-fatal: the
 			// catalog sync above already succeeded, so we warn and exit 0.
 			if skip, _ := cmd.Flags().GetBool("skip-binary"); skip {
-				fmt.Fprintf(out, "mobiai binary: %s (--skip-binary, did not check for an update).\n", version)
+				fmt.Fprintf(out, i18n.T("mobiai binary: %s (--skip-binary, did not check for an update).\n"), version)
 			} else if err := selfUpdateBinary(out, version); err != nil {
-				fmt.Fprintf(out, "Warning: the catalog was updated, but the binary could not be updated: %v\n", err)
-				fmt.Fprintf(out, "Retry `mobiai update` later, or reinstall with the install script: https://mobiai.dev\n")
+				fmt.Fprintf(out, i18n.T("Warning: the catalog was updated, but the binary could not be updated: %v\n"), err)
+				fmt.Fprint(out, i18n.T("Retry `mobiai update` later, or reinstall with the install script: https://mobiai.dev\n"))
 			}
 			return nil
 		},
 	}
-	cmd.Flags().String("catalog-root", "", "path to a local catalog (override)")
-	cmd.Flags().Bool("force", false, "if the cache dir exists but is not a git repo, delete it and re-clone")
-	cmd.Flags().Bool("check", false, "only query GitHub releases and cache the result (does not touch the catalog)")
-	cmd.Flags().Bool("silent", false, "print nothing on exit (intended for running from a background hook)")
-	cmd.Flags().Bool("skip-binary", false, "do not update the mobiai binary, only refresh the catalog")
+	cmd.Flags().String("catalog-root", "", i18n.T("path to a local catalog (override)"))
+	cmd.Flags().Bool("force", false, i18n.T("if the cache dir exists but is not a git repo, delete it and re-clone"))
+	cmd.Flags().Bool("check", false, i18n.T("only query GitHub releases and cache the result (does not touch the catalog)"))
+	cmd.Flags().Bool("silent", false, i18n.T("print nothing on exit (intended for running from a background hook)"))
+	cmd.Flags().Bool("skip-binary", false, i18n.T("do not update the mobiai binary, only refresh the catalog"))
 	return cmd
 }
 
@@ -137,7 +138,7 @@ func syncRemoteCatalog(out io.Writer, url, cacheRoot string, verbose, force bool
 	dotGit := filepath.Join(cacheRoot, ".git")
 	if _, err := os.Stat(dotGit); err == nil {
 		// Already cloned — pull.
-		fmt.Fprintf(out, "Syncing catalog (git pull)...\n")
+		fmt.Fprint(out, i18n.T("Syncing catalog (git pull)...\n"))
 		c := exec.Command("git", "-C", cacheRoot, "pull", "--ff-only")
 		buf := configureCmdIO(c)
 		if err := c.Run(); err != nil {
@@ -167,7 +168,7 @@ func syncRemoteCatalog(out io.Writer, url, cacheRoot string, verbose, force bool
 			return fmt.Errorf("clean %s: %w", cacheRoot, err)
 		}
 	}
-	fmt.Fprintf(out, "Cloning catalog from %s...\n", url)
+	fmt.Fprintf(out, i18n.T("Cloning catalog from %s...\n"), url)
 	c := exec.Command("git", "clone", "--depth=1", url, cacheRoot)
 	buf := configureCmdIO(c)
 	if err := c.Run(); err != nil {

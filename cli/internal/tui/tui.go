@@ -9,6 +9,7 @@ import (
 
 	"github.com/ArisGuimera/MobiAI-Core/cli/internal/catalog"
 	"github.com/ArisGuimera/MobiAI-Core/cli/internal/host"
+	"github.com/ArisGuimera/MobiAI-Core/cli/internal/i18n"
 	"github.com/ArisGuimera/MobiAI-Core/cli/internal/resolver"
 	"github.com/ArisGuimera/MobiAI-Core/cli/internal/state"
 )
@@ -391,7 +392,7 @@ func (m Model) toggleAt(i int) Model {
 func (m Model) View() string {
 	switch m.mode {
 	case ModeNoHosts:
-		return "No AI client detected.\nInstall Claude Code, Cursor, Gemini CLI or Codex and run `mobiai` again.\n"
+		return i18n.T("No AI client detected.\nInstall Claude Code, Cursor, Gemini CLI or Codex and run `mobiai` again.\n")
 	case ModePicker:
 		return m.viewPicker()
 	case ModeConfirm:

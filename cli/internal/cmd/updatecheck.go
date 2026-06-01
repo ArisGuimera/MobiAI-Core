@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/ArisGuimera/MobiAI-Core/cli/internal/i18n"
 )
 
 // updateCheckCache is the on-disk record consumed by the SessionStart hooks
@@ -86,9 +88,9 @@ func runUpdateCheck(out io.Writer, installedVersion string) error {
 	}
 
 	if available {
-		fmt.Fprintf(out, "MobiAI %s → %s available. Run: mobiai update\n", installedVersion, latest)
+		fmt.Fprintf(out, i18n.T("MobiAI %s → %s available. Run: mobiai update\n"), installedVersion, latest)
 	} else if out != io.Discard {
-		fmt.Fprintf(out, "MobiAI %s is up to date (latest release: %s).\n", installedVersion, latest)
+		fmt.Fprintf(out, i18n.T("MobiAI %s is up to date (latest release: %s).\n"), installedVersion, latest)
 	}
 	return nil
 }
