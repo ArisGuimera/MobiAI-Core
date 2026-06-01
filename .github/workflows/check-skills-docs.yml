@@ -48,14 +48,18 @@ jobs:
           echo
 
           # Qué archivos cuentan como "documentación de skills".
+          # skills/community/README.md es el catálogo de la comunidad: editarlo
+          # alcanza para documentar una skill de community (los contribuyentes
+          # externos no pueden tocar el catálogo central del core).
           touched_docs=$(echo "$changed" \
-            | grep -E '^(README\.md|CONTRIBUTING\.md|docs/.+\.md|skills/core/skills/using-mobiai/SKILL\.md)$' \
+            | grep -E '^(README\.md|CONTRIBUTING\.md|docs/.+\.md|skills/core/skills/using-mobiai/SKILL\.md|skills/community/README\.md)$' \
             || true)
 
           if [ -z "$touched_docs" ]; then
             echo "::error::This PR adds or modifies skills but does not touch documentation."
             echo
             echo "When you add or change a skill, also update at least one of:"
+            echo "  • skills/community/README.md                (community catalog — for community skills)"
             echo "  • skills/core/skills/using-mobiai/SKILL.md  (central catalog)"
             echo "  • README.md                                 (available skills table)"
             echo "  • CONTRIBUTING.md                           (if you changed how to contribute)"

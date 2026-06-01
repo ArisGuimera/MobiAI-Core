@@ -55,6 +55,13 @@
       "description": "Skills para React Native",
       "category": "platform",
       "tags": ["react-native", "javascript"]
+    },
+    {
+      "name": "community",
+      "source": "./skills/community",
+      "description": "Skills aportadas por la comunidad. Abierto a PRs de cualquiera; los packs de plataforma los curan los maintainers.",
+      "category": "community",
+      "tags": ["community", "contributed"]
     }
   ]
 }
