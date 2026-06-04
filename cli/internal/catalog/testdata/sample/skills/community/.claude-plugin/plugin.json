@@ -1,0 +1,7 @@
+{
+  "name": "community",
+  "description": "Community plugin (test fixture)",
+  "version": "1.0.0",
+  "dependencies": ["core"],
+  "skills": ["./skills/"]
+}

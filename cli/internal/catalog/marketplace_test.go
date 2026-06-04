@@ -17,8 +17,8 @@ func TestLoadMarketplace_Sample(t *testing.T) {
 	if mp.Metadata.Version != "0.1.0" {
 		t.Errorf("Metadata.Version: got %q, want %q", mp.Metadata.Version, "0.1.0")
 	}
-	if len(mp.Plugins) != 4 {
-		t.Fatalf("Plugins length: got %d, want 4", len(mp.Plugins))
+	if len(mp.Plugins) != 5 {
+		t.Fatalf("Plugins length: got %d, want 5", len(mp.Plugins))
 	}
 	if mp.Plugins[0].Name != "core" {
 		t.Errorf("Plugins[0].Name: got %q, want %q", mp.Plugins[0].Name, "core")

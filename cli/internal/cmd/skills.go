@@ -104,18 +104,39 @@ func NewSkillsCmd() *cobra.Command {
 	return root
 }
 
-func runSkillsAdd(cmd *cobra.Command, packs []string) error {
+func runSkillsAdd(cmd *cobra.Command, args []string) error {
 	g := flagsFromAnyCmd(cmd)
 
 	c, err := loadCatalog(g)
 	if err != nil {
 		return err
 	}
-	hosts, err := selectHosts(g)
+
+	packs, commSkills, bareCommunity := parseSkillArgs(args)
+	if bareCommunity {
+		// Bare `community` installs every community skill; per-skill specs are
+		// redundant, so drop them to avoid double-processing the same pack.
+		commSkills = nil
+	}
+	if len(commSkills) > 0 {
+		if err := validateCommunitySkills(c, commSkills); err != nil {
+			return err
+		}
+	}
+
+	// Resolve install order at the pack level. Per-skill community installs feed
+	// the resolver the "community" pack so its dep `core` lands first; the
+	// selected skill IDs are applied as a filter at install time.
+	resolveReq := append([]string(nil), packs...)
+	if len(commSkills) > 0 && !containsString(resolveReq, catalog.CommunityPack) {
+		resolveReq = append(resolveReq, catalog.CommunityPack)
+	}
+	order, err := resolver.Resolve(c, resolveReq)
 	if err != nil {
 		return err
 	}
-	order, err := resolver.Resolve(c, packs)
+
+	hosts, err := selectHosts(g)
 	if err != nil {
 		return err
 	}
@@ -135,6 +156,9 @@ func runSkillsAdd(cmd *cobra.Command, packs []string) error {
 	out := cmd.OutOrStdout()
 
 	if !g.Yes {
+		if len(commSkills) > 0 {
+			fmt.Fprintf(out, i18n.T("  Community skills (%d): %s\n"), len(commSkills), strings.Join(commSkills, ", "))
+		}
 		ok, err := confirmInstall(out, cmd.InOrStdin(), order, hosts)
 		if err != nil {
 			return err
@@ -151,12 +175,24 @@ func runSkillsAdd(cmd *cobra.Command, packs []string) error {
 		if err != nil {
 			return fmt.Errorf("enumerate skills for %s: %w", packName, err)
 		}
+		// Restrict the community pack to the requested skills (unless the user
+		// asked for the whole pack with a bare `community`).
+		perSkill := packName == catalog.CommunityPack && len(commSkills) > 0
+		if perSkill {
+			skills = filterCatalogSkills(skills, commSkills)
+		}
+		display := packName
+		if perSkill {
+			display = communityDisplay(skillIDsOf(skills))
+		}
 		for _, h := range hosts {
 			if err := h.Install(skills); err != nil {
 				return fmt.Errorf("install %s into %s: %w", packName, h.ID(), err)
 			}
-			installed.Add(packName, h.ID())
-			fmt.Fprintf(out, "✓ %s → %s\n", packName, h.Name())
+			for _, k := range stateKeysForInstall(packName, perSkill, commSkills) {
+				installed.Add(k, h.ID())
+			}
+			fmt.Fprintf(out, "✓ %s → %s\n", display, h.Name())
 		}
 	}
 	if err := installed.Save(paths); err != nil {
@@ -193,7 +229,7 @@ func confirmInstall(out io.Writer, in io.Reader, packs []string, hosts []host.Ho
 	return answer == "y" || answer == "yes" || answer == "s" || answer == "si" || answer == "sí", nil
 }
 
-func runSkillsRemove(cmd *cobra.Command, packs []string) error {
+func runSkillsRemove(cmd *cobra.Command, args []string) error {
 	g := flagsFromAnyCmd(cmd)
 
 	hosts, err := selectHosts(g)
@@ -214,6 +250,18 @@ func runSkillsRemove(cmd *cobra.Command, packs []string) error {
 	if err != nil {
 		return err
 	}
+
+	packs, commSkills, bareCommunity := parseSkillArgs(args)
+	if bareCommunity {
+		commSkills = nil // bare `community` removes every community skill
+	}
+	if len(commSkills) > 0 {
+		if err := validateCommunitySkills(c, commSkills); err != nil {
+			return err
+		}
+	}
+
+	// Whole-pack removals (a bare `community` removes all its skills here).
 	for _, packName := range packs {
 		pack, err := c.Get(packName)
 		if err != nil {
@@ -232,14 +280,154 @@ func runSkillsRemove(cmd *cobra.Command, packs []string) error {
 				return fmt.Errorf("uninstall %s from %s: %w", packName, h.ID(), err)
 			}
 			installed.Remove(packName, h.ID())
+			if packName == catalog.CommunityPack {
+				// Clear any per-skill "community/<id>" records for this host too.
+				removeCommunitySkillKeys(installed, h.ID())
+			}
 			fmt.Fprintf(out, "✓ %s ← %s\n", packName, h.Name())
 		}
 	}
+
+	// Per-skill community removals.
+	if len(commSkills) > 0 {
+		display := communityDisplay(commSkills)
+		for _, h := range hosts {
+			if err := h.Uninstall(commSkills); err != nil {
+				return fmt.Errorf("uninstall community skills from %s: %w", h.ID(), err)
+			}
+			for _, id := range commSkills {
+				installed.Remove(state.CommunitySkillKey(id), h.ID())
+			}
+			fmt.Fprintf(out, "✓ %s ← %s\n", display, h.Name())
+		}
+	}
+
 	if err := installed.Save(paths); err != nil {
 		return err
 	}
 	fmt.Fprintln(out, i18n.T("Done."))
 	return nil
+}
+
+// parseSkillArgs splits `skills add/remove` arguments into whole-pack names and
+// per-skill community specs. An argument of the form "community/<id>" selects a
+// single community skill; a bare "community" means the whole community pack and
+// sets bareCommunity so callers can apply all-skills behavior.
+func parseSkillArgs(args []string) (packs []string, communitySkills []string, bareCommunity bool) {
+	for _, a := range args {
+		if id, ok := strings.CutPrefix(a, catalog.CommunityPack+"/"); ok {
+			if id != "" {
+				communitySkills = append(communitySkills, id)
+			}
+			continue
+		}
+		if a == catalog.CommunityPack {
+			bareCommunity = true
+		}
+		packs = append(packs, a)
+	}
+	return packs, communitySkills, bareCommunity
+}
+
+// validateCommunitySkills ensures every requested community skill ID exists in
+// the catalog, returning a helpful error listing the available IDs otherwise.
+func validateCommunitySkills(c *catalog.Catalog, ids []string) error {
+	pack, err := c.Get(catalog.CommunityPack)
+	if err != nil {
+		return fmt.Errorf("the catalog has no %q pack", catalog.CommunityPack)
+	}
+	skills, err := c.Skills(pack)
+	if err != nil {
+		return err
+	}
+	available := make(map[string]bool, len(skills))
+	names := make([]string, 0, len(skills))
+	for _, s := range skills {
+		available[s.ID] = true
+		names = append(names, s.ID)
+	}
+	sort.Strings(names)
+	for _, id := range ids {
+		if available[id] {
+			continue
+		}
+		if len(names) == 0 {
+			return fmt.Errorf("community skill %q not found: the community pack has no skills yet", id)
+		}
+		return fmt.Errorf("community skill %q not found. Available: %s", id, strings.Join(names, ", "))
+	}
+	return nil
+}
+
+// filterCatalogSkills keeps only the skills whose ID is in ids (order preserved).
+func filterCatalogSkills(skills []catalog.Skill, ids []string) []catalog.Skill {
+	want := make(map[string]bool, len(ids))
+	for _, id := range ids {
+		want[id] = true
+	}
+	out := make([]catalog.Skill, 0, len(ids))
+	for _, s := range skills {
+		if want[s.ID] {
+			out = append(out, s)
+		}
+	}
+	return out
+}
+
+// stateKeysForInstall returns the installed.json keys to record for a freshly
+// installed pack. A per-skill community install records one "community/<id>" key
+// per skill; everything else records the bare pack name.
+func stateKeysForInstall(pack string, perSkill bool, communitySkills []string) []string {
+	if perSkill {
+		keys := make([]string, len(communitySkills))
+		for i, id := range communitySkills {
+			keys[i] = state.CommunitySkillKey(id)
+		}
+		return keys
+	}
+	return []string{pack}
+}
+
+// removeCommunitySkillKeys drops every per-skill "community/<id>" record for the
+// given host (used when the whole community pack is removed).
+func removeCommunitySkillKeys(installed *state.Installed, host string) {
+	var keys []string
+	for key := range installed.Packs {
+		if _, ok := state.ParseCommunitySkillKey(key); ok {
+			keys = append(keys, key)
+		}
+	}
+	for _, key := range keys {
+		installed.Remove(key, host)
+	}
+}
+
+// communityDisplay is the label printed for a per-skill community operation: a
+// single skill reads as "community/<id>"; several batch into "community (N skills)".
+func communityDisplay(ids []string) string {
+	if len(ids) == 1 {
+		return state.CommunitySkillKey(ids[0])
+	}
+	return fmt.Sprintf(i18n.T("community (%d skills)"), len(ids))
+}
+
+// skillIDsOf extracts the IDs from a slice of catalog skills.
+func skillIDsOf(skills []catalog.Skill) []string {
+	ids := make([]string, len(skills))
+	for i, s := range skills {
+		ids[i] = s.ID
+	}
+	return ids
+}
+
+// containsString reports whether s is in xs.
+func containsString(xs []string, s string) bool {
+	for _, x := range xs {
+		if x == s {
+			return true
+		}
+	}
+	return false
 }
 
 // flagsFromAnyCmd reads global flags from cmd, preferring the local lookup

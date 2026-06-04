@@ -14,9 +14,10 @@ func init() {
 		"No packs installed.":                             "No hay packs instalados.",
 		"Interactive picker to install/uninstall skills":  "Selector interactivo para instalar/desinstalar skills",
 		"Launches the TUI picker to choose skill packs and apply changes to detected clients (Claude Code, Cursor, Codex, etc).": "Lanza el picker TUI para elegir packs de skills y aplicar los cambios sobre los clientes detectados (Claude Code, Cursor, Codex, etc).",
-		"Cancelled.":        "Cancelado.",
-		"Done.":             "Listo.",
-		"Install plan:":     "Plan de instalación:",
-		"Continue? [y/N]: ": "¿Continuar? [y/N]: ",
+		"Cancelled.":                    "Cancelado.",
+		"Done.":                         "Listo.",
+		"Install plan:":                 "Plan de instalación:",
+		"Continue? [y/N]: ":             "¿Continuar? [y/N]: ",
+		"  Community skills (%d): %s\n": "  Skills de la comunidad (%d): %s\n",
 	})
 }

@@ -5,6 +5,20 @@ import (
 	"testing"
 )
 
+func TestCommunitySkillKey_RoundTrip(t *testing.T) {
+	key := CommunitySkillKey("foo")
+	if key != "community/foo" {
+		t.Errorf("CommunitySkillKey: got %q, want community/foo", key)
+	}
+	id, ok := ParseCommunitySkillKey(key)
+	if !ok || id != "foo" {
+		t.Errorf("ParseCommunitySkillKey(%q): got (%q, %v), want (foo, true)", key, id, ok)
+	}
+	if _, ok := ParseCommunitySkillKey("android"); ok {
+		t.Error("ParseCommunitySkillKey(android): a bare pack name must not parse as a community key")
+	}
+}
+
 func TestLoadInstalled_MissingFileReturnsEmpty(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("MOBIAI_HOME", tmp)

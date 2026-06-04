@@ -7,7 +7,13 @@ func init() {
 
 		// ── internal/tui/view.go ─────────────────────────────────────────────
 		"Detected hosts (%d): %s": "Hosts detectados (%d): %s",
-		"↑↓ navigate  [space] change action  [enter] apply  [q] quit": "↑↓ navegar  [espacio] cambiar acción  [enter] aplicar  [q] salir",
+		"↑↓ navigate  [space] change action  [enter] apply  [q] quit":   "↑↓ navegar  [espacio] cambiar acción  [enter] aplicar  [q] salir",
+		"↑↓ navigate  [space] change action  [enter] apply  [esc] back": "↑↓ navegar  [espacio] cambiar acción  [enter] aplicar  [esc] volver",
+		"→ pick skills":                                 "→ elegí skills",
+		"Community skills":                              "Skills de la comunidad",
+		"No community skills available yet.":            "Todavía no hay skills de la comunidad.",
+		"[esc] back":                                    "[esc] volver",
+		"community (%d skills)":                         "community (%d skills)",
 		"Confirm changes":                               "Confirmar cambios",
 		"No pending changes.\n":                         "No hay cambios pendientes.\n",
 		"To install:\n":                                 "A instalar:\n",
