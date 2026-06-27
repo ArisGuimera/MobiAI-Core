@@ -42,15 +42,29 @@ func (a *firebenderAdapter) SkillsDir() string {
 }
 
 func (a *firebenderAdapter) Detect() DetectResult {
-	dir, err := a.projectDir()
+	cwd, err := os.Getwd()
 	if err != nil {
 		return DetectResult{Found: false, Searched: []string{"<unresolved cwd>"}}
 	}
+	searched := []string{}
+
+	// 1. .firebender/ directory in the current project.
+	dir := filepath.Join(cwd, ".firebender")
+	searched = append(searched, dir)
 	info, statErr := os.Stat(dir)
 	if statErr == nil && info.IsDir() {
-		return DetectResult{Found: true, Path: dir, Searched: []string{dir}}
+		return DetectResult{Found: true, Path: dir, Searched: searched}
 	}
-	return DetectResult{Found: false, Searched: []string{dir}}
+
+	// 2. firebender.json project marker file.
+	marker := filepath.Join(cwd, "firebender.json")
+	searched = append(searched, marker)
+	info, statErr = os.Stat(marker)
+	if statErr == nil && !info.IsDir() {
+		return DetectResult{Found: true, Path: cwd, Searched: searched}
+	}
+
+	return DetectResult{Found: false, Searched: searched}
 }
 
 func (a *firebenderAdapter) Install(skills []catalog.Skill) error {
@@ -108,3 +122,8 @@ func (a *firebenderAdapter) List() ([]InstalledSkill, error) {
 	}
 	return out, nil
 }
+
+// NOTE: Verify() is inherited from genericAdapter. Go does not have virtual
+// dispatch — if genericAdapter.Verify ever starts calling SkillsDir(), it will
+// use the embedded genericAdapter's method, not firebenderAdapter's override.
+// If that happens, Verify() must be redefined here as well.

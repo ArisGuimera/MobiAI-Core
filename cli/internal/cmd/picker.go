@@ -38,10 +38,6 @@ func RunPicker(g GlobalFlags) error {
 		}
 	} else {
 		hosts = detectHosts(g)
-		hosts, err = withFirebenderHost(hosts)
-		if err != nil {
-			return err
-		}
 	}
 	return tui.Run(c, installed, paths, hosts)
 }

@@ -28,6 +28,7 @@ func adapterCases() []adapterCase {
 		{newOpenCode, "opencode", "OpenCode", ".opencode", false, false},
 		{newJunie, "junie", "Junie", ".junie", false, false},
 		{newRooCode, "roo-code", "Roo Code", ".roo-code", false, false},
+		// Project-level — detected by cwd markers, not gated by --include-experimental.
 		{newFirebender, "firebender", "Firebender", ".firebender", false, false},
 		// Tier 3 (speculative, paths a confirmar)
 		{newAutohand, "autohand", "Autohand", ".autohand", false, false},
@@ -117,6 +118,34 @@ func TestFirebenderAdapter_SkillsDir_UsesProjectDir(t *testing.T) {
 	want := filepath.Join(resolvedTmp, ".firebender", "skills")
 	if got := a.SkillsDir(); got != want {
 		t.Errorf("SkillsDir: got %q, want %q", got, want)
+	}
+}
+
+func TestFirebenderAdapter_Detect_ByFirebenderJson(t *testing.T) {
+	tmp := t.TempDir()
+	oldWD, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(tmp); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := os.Chdir(oldWD); err != nil {
+			t.Fatalf("restore cwd: %v", err)
+		}
+	})
+
+	a := newFirebender()
+	if a.Detect().Found {
+		t.Fatal("Detect should be false when no marker exists")
+	}
+
+	if err := os.WriteFile(filepath.Join(tmp, "firebender.json"), []byte("{}"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if !a.Detect().Found {
+		t.Fatal("Detect should be true when firebender.json exists")
 	}
 }
 
