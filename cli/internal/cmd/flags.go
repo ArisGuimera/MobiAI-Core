@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
+
+	"github.com/ArisGuimera/MobiAI-Core/cli/internal/i18n"
 )
 
 // GlobalFlags hold the persistent flags shared across all subcommands.
@@ -17,12 +19,12 @@ type GlobalFlags struct {
 
 // AddPersistentFlags attaches the global flags to the root command.
 func AddPersistentFlags(root *cobra.Command) {
-	root.PersistentFlags().StringSliceP("host", "", nil, "fuerza adapters específicos (default: todos los detectados)")
-	root.PersistentFlags().BoolP("yes", "y", false, "asume sí en confirmaciones (CI-friendly)")
-	root.PersistentFlags().BoolP("verbose", "V", false, "más output (hoy sólo afecta a 'mobiai update')")
-	root.PersistentFlags().Bool("no-color", false, "deshabilita colores ANSI en el help")
-	root.PersistentFlags().String("catalog-root", "", "ruta a un catálogo local (override de ~/.mobiai/cache/catalog)")
-	root.PersistentFlags().Bool("include-experimental", false, "incluir adapters tier-3 (paths especulativos) en la auto-detección")
+	root.PersistentFlags().StringSliceP("host", "", nil, i18n.T("force specific adapters (default: all detected)"))
+	root.PersistentFlags().BoolP("yes", "y", false, i18n.T("assume yes on confirmations (CI-friendly)"))
+	root.PersistentFlags().BoolP("verbose", "V", false, i18n.T("more output (currently only affects 'mobiai update')"))
+	root.PersistentFlags().Bool("no-color", false, i18n.T("disable ANSI colors in help output"))
+	root.PersistentFlags().String("catalog-root", "", i18n.T("path to a local catalog (overrides ~/.mobiai/cache/catalog)"))
+	root.PersistentFlags().Bool("include-experimental", false, i18n.T("include tier-3 adapters (speculative paths) in auto-detection"))
 }
 
 // FlagsFromCmd extracts the global flags from a cobra command's flag set.

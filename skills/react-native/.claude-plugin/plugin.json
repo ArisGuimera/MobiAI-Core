@@ -1,6 +1,6 @@
 {
   "name": "react-native",
-  "description": "MobiAI para React Native — build, test, navigation, state management",
+  "description": "MobiAI for React Native — build, test, navigation, state management",
   "version": "2.2.0",
   "author": {
     "name": "Matias Rosenstein",

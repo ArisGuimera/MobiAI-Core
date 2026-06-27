@@ -1,0 +1,90 @@
+name: Guard skill ownership
+
+# Solo los maintainers pueden agregar o modificar skills FUERA de
+# `skills/community/`. Cualquier otra persona puede contribuir libremente,
+# pero únicamente dentro de `skills/community/`. Los packs de plataforma
+# (core, android, ios, kmp, flutter, react-native) quedan curados.
+#
+# Este check da feedback visible en el PR. No es un bloqueo absoluto por sí
+# solo: para convertirlo en un gate real, marcalo como required check en
+# branch protection (Settings → Branches). Aun así, quien tenga permiso de
+# merge puede saltearlo — por eso el allowlist coincide con quienes mergean.
+
+on:
+  pull_request:
+
+# Solo lectura: comparamos paths y el autor del PR, no escribimos nada.
+permissions:
+  contents: read
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    env:
+      # Maintainers con permiso de merge. Mantené esta lista en sync con los
+      # colaboradores del repo (separados por espacios, case-insensitive).
+      MAINTAINERS: "ArisGuimera MatiRosen"
+      PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+      BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - name: Checkout (with history for diff)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Only maintainers may touch non-community skills
+        run: |
+          set -euo pipefail
+
+          changed=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")
+
+          # Cambios de skills que NO están en community. Cubre TODO skills/**
+          # (SKILL.md, plugin.json, references/, scripts/, READMEs curados…),
+          # no solo los SKILL.md: "modificar una skill" es más que su SKILL.md.
+          protected=$(echo "$changed" \
+            | grep -E '^skills/' \
+            | grep -vE '^skills/community/' \
+            || true)
+
+          if [ -z "$protected" ]; then
+            echo "No non-community skill changes — anyone can contribute here. ✓"
+            exit 0
+          fi
+
+          echo "Non-community skill files changed in this PR:"
+          echo "$protected" | sed 's/^/  - /'
+          echo
+
+          author_lc=$(echo "$PR_AUTHOR" | tr '[:upper:]' '[:lower:]')
+
+          # Excepción acotada: el bot que sincroniza los skills vendoreados de
+          # Google abre su PR como github-actions[bot] y solo toca
+          # skills/android/skills/google/ (ver sync-android-skills.yml). Se le
+          # permite en vez de excluir ese path de forma incondicional — así un
+          # humano externo que edite a mano esos skills SÍ queda bloqueado.
+          if [ "$author_lc" = "github-actions[bot]" ]; then
+            echo "Author @$PR_AUTHOR is the upstream-sync bot — allowed. ✓"
+            exit 0
+          fi
+
+          # ¿El autor del PR es maintainer? (case-insensitive)
+          for m in $MAINTAINERS; do
+            if [ "$author_lc" = "$(echo "$m" | tr '[:upper:]' '[:lower:]')" ]; then
+              echo "Author @$PR_AUTHOR is a maintainer — allowed. ✓"
+              exit 0
+            fi
+          done
+
+          echo "::error::@$PR_AUTHOR cannot modify skills outside skills/community/."
+          echo
+          echo "Only the maintainers ($MAINTAINERS) can change the curated packs"
+          echo "(core, android, ios, kmp, flutter, react-native)."
+          echo
+          echo "If you're contributing a new skill, put it under skills/community/"
+          echo "and register it in skills/community/README.md — that area is open to"
+          echo "everyone. See CONTRIBUTING.md."
+          echo
+          echo "If your skill really belongs in a platform pack, open an issue or a"
+          echo "PR proposing it and a maintainer will land it."
+          exit 1

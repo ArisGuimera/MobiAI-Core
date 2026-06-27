@@ -33,6 +33,8 @@ Esto significa que:
 
 ### 1. Crea el directorio
 
+> **¿Contribuís desde la comunidad?** Tu skill va en `skills/community/skills/`. Es la única área abierta a todos: un guard de CI (`guard-community-skills`) bloquea los PRs de no-maintainers que tocan los packs de plataforma. Creá `skills/community/skills/mi-skill/` y seguí desde el paso 2. Lo de abajo aplica a los maintainers que curan los packs de plataforma.
+
 Primero decidí a qué plugin pertenece tu skill:
 
 - `skills/core/skills/` — workflow cross-platform (planning, debugging, tdd, etc.)
@@ -71,7 +73,8 @@ Mira los skills existentes como ejemplo — cada uno tiene la estructura que mej
 
 ### 3. Agrégalo al catálogo
 
-Añade tu skill a la tabla en `skills/core/skills/using-mobiai/SKILL.md`.
+- **Skill de community:** registrala en la tabla de [`skills/community/README.md`](../skills/community/README.md). (No edites el catálogo central del core: el guard lo bloquea para no-maintainers.)
+- **Skill de plataforma (maintainers):** añadila a la tabla en `skills/core/skills/using-mobiai/SKILL.md`.
 
 ### 4. Pruébalo
 

@@ -7,6 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/ArisGuimera/MobiAI-Core/cli/internal/i18n"
 	"github.com/ArisGuimera/MobiAI-Core/cli/internal/state"
 )
 
@@ -20,7 +21,7 @@ func SetVersion(v string) { version = v }
 func NewStatusCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "status",
-		Short: "Resumen de hosts detectados, packs instalados y estado del catálogo",
+		Short: i18n.T("Summary of detected hosts, installed packs and catalog state"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			out := cmd.OutOrStdout()
 			fmt.Fprintf(out, "MobiAI %s\n\n", version)
@@ -30,7 +31,7 @@ func NewStatusCmd() *cobra.Command {
 			present := r.Detect()
 			fmt.Fprintln(out, "Hosts:")
 			if len(present) == 0 {
-				fmt.Fprintln(out, "  (ninguno detectado — instalá Claude Code, Cursor, Gemini CLI, Codex u otro cliente compatible con agentskills.io)")
+				fmt.Fprintln(out, i18n.T("  (none detected — install Claude Code, Cursor, Gemini CLI, Codex, or another agentskills.io-compatible client)"))
 			} else {
 				for _, a := range present {
 					det := a.Detect()
@@ -51,9 +52,9 @@ func NewStatusCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			fmt.Fprintln(out, "Packs instalados:")
+			fmt.Fprintln(out, i18n.T("Installed packs:"))
 			if len(installed.Packs) == 0 {
-				fmt.Fprintln(out, "  (ninguno)")
+				fmt.Fprintln(out, i18n.T("  (none)"))
 			} else {
 				names := make([]string, 0, len(installed.Packs))
 				for n := range installed.Packs {

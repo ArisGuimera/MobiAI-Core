@@ -23,8 +23,8 @@ func TestBrainSave_RequiresInit(t *testing.T) {
 	if err := cmd.Execute(); err == nil {
 		t.Errorf("save without init should fail; output:\n%s", buf.String())
 	}
-	if !strings.Contains(buf.String(), "no inicializado") {
-		t.Errorf("error message should mention 'no inicializado'; got:\n%s", buf.String())
+	if !strings.Contains(buf.String(), "not initialized") {
+		t.Errorf("error message should mention 'not initialized'; got:\n%s", buf.String())
 	}
 }
 
@@ -41,7 +41,7 @@ func TestBrainSave_DecisionAppendsToFile(t *testing.T) {
 		"--body", "### Decision\nUse Koin.\n\n### Reason\nKMP-friendly.",
 		"--files", "composeApp/src/commonMain/Module.kt,composeApp/build.gradle.kts",
 	})
-	if !strings.Contains(out, "✓ guardado") {
+	if !strings.Contains(out, "✓ saved") {
 		t.Errorf("expected success message, got:\n%s", out)
 	}
 

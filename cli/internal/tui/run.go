@@ -15,7 +15,7 @@ import (
 // ErrNoTTY signals that the picker cannot run because stdin or stdout is
 // not a terminal. Callers should print a friendly message and exit, or
 // fall back to non-interactive flags.
-var ErrNoTTY = errors.New("no hay terminal interactiva")
+var ErrNoTTY = errors.New("no interactive terminal")
 
 // IsTTY reports whether stdin and stdout are both connected to a terminal.
 func IsTTY() bool {

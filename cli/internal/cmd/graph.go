@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/ArisGuimera/MobiAI-Core/cli/internal/graph"
+	"github.com/ArisGuimera/MobiAI-Core/cli/internal/i18n"
 )
 
 // NewGraphCmd builds `mobiai graph <init|status|search|callers|context>`.
@@ -20,9 +21,8 @@ import (
 func NewGraphCmd() *cobra.Command {
 	root := &cobra.Command{
 		Use:   "graph",
-		Short: "Exploración semántica del código mobile",
-		Long: "MobiAI Graph indexa el proyecto y permite buscar símbolos, encontrar referencias " +
-			"y obtener contexto relevante para una tarea. Vive en <repo>/.mobiai/graph/.",
+		Short: i18n.T("Semantic exploration of mobile code"),
+		Long:  i18n.T("MobiAI Graph indexes the project and lets you search symbols, find references, and get relevant context for a task. Lives at <repo>/.mobiai/graph/."),
 	}
 	root.AddCommand(
 		newGraphInitCmd(),
@@ -37,7 +37,7 @@ func NewGraphCmd() *cobra.Command {
 // graphCommonFlags wires up the shared --root flag on a leaf command.
 // When omitted, the command resolves the project root from cwd.
 func graphCommonFlags(c *cobra.Command) {
-	c.Flags().String("root", "", "ruta del proyecto (default: cwd)")
+	c.Flags().String("root", "", i18n.T("project path (default: cwd)"))
 }
 
 // resolveGraphRoot returns the absolute project root for a graph command.
@@ -48,11 +48,11 @@ func resolveGraphRoot(c *cobra.Command) (string, error) {
 	if explicit, _ := c.Flags().GetString("root"); explicit != "" {
 		abs, err := filepath.Abs(explicit)
 		if err != nil {
-			return "", fmt.Errorf("absolutizar --root: %w", err)
+			return "", fmt.Errorf("resolve --root: %w", err)
 		}
 		info, err := os.Stat(abs)
 		if err != nil || !info.IsDir() {
-			return "", fmt.Errorf("--root no es un directorio: %s", abs)
+			return "", fmt.Errorf("--root is not a directory: %s", abs)
 		}
 		return abs, nil
 	}
@@ -69,16 +69,16 @@ func graphIndexPath(root string) string {
 	return filepath.Join(root, ".mobiai", "graph", "index.json")
 }
 
-// loadGraphIndex reads the index for root, returning a friendly Spanish
-// error suggesting `mobiai graph init` when the file is missing.
+// loadGraphIndex reads the index for root, returning a friendly error
+// suggesting `mobiai graph init` when the file is missing.
 func loadGraphIndex(root string) (*graph.Index, string, error) {
 	path := graphIndexPath(root)
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return nil, path, fmt.Errorf("no encontré %s. Corré `mobiai graph init` primero", path)
+		return nil, path, fmt.Errorf("could not find %s. Run `mobiai graph init` first", path)
 	}
 	idx, err := graph.Read(path)
 	if err != nil {
-		return nil, path, fmt.Errorf("leer índice %s: %w", path, err)
+		return nil, path, fmt.Errorf("read index %s: %w", path, err)
 	}
 	return idx, path, nil
 }
@@ -86,7 +86,7 @@ func loadGraphIndex(root string) (*graph.Index, string, error) {
 func newGraphInitCmd() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "init",
-		Short: "Indexa el proyecto y guarda .mobiai/graph/index.json",
+		Short: i18n.T("Index the project and save .mobiai/graph/index.json"),
 		RunE:  runGraphInit,
 	}
 	graphCommonFlags(c)
@@ -102,29 +102,29 @@ func runGraphInit(c *cobra.Command, _ []string) error {
 
 	idx, err := graph.Build(root)
 	if err != nil {
-		return fmt.Errorf("indexar proyecto: %w", err)
+		return fmt.Errorf("index project: %w", err)
 	}
 
 	path := graphIndexPath(root)
 	if err := graph.Write(path, idx); err != nil {
-		return fmt.Errorf("escribir índice: %w", err)
+		return fmt.Errorf("write index: %w", err)
 	}
 
 	kotlin, swift := countByLanguage(idx)
 	symbols := countSymbols(idx)
 
-	fmt.Fprintf(out, "✓ Índice generado: %s\n", path)
-	fmt.Fprintf(out, "  Archivos: %d\n", len(idx.Files))
-	fmt.Fprintf(out, "  Símbolos: %d\n", symbols)
-	fmt.Fprintf(out, "  Kotlin: %d\n", kotlin)
-	fmt.Fprintf(out, "  Swift: %d\n", swift)
+	fmt.Fprintf(out, i18n.T("✓ Index generated: %s\n"), path)
+	fmt.Fprintf(out, i18n.T("  Files:   %d\n"), len(idx.Files))
+	fmt.Fprintf(out, i18n.T("  Symbols: %d\n"), symbols)
+	fmt.Fprintf(out, i18n.T("  Kotlin:  %d\n"), kotlin)
+	fmt.Fprintf(out, i18n.T("  Swift:   %d\n"), swift)
 	return nil
 }
 
 func newGraphStatusCmd() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "status",
-		Short: "Muestra info del índice actual",
+		Short: i18n.T("Show info about the current index"),
 		RunE:  runGraphStatus,
 	}
 	graphCommonFlags(c)
@@ -145,26 +145,26 @@ func runGraphStatus(c *cobra.Command, _ []string) error {
 	kotlin, swift := countByLanguage(idx)
 	symbols := countSymbols(idx)
 
-	fmt.Fprintf(out, "Índice: %s\n", path)
-	fmt.Fprintf(out, "Generado: %s (%s)\n",
+	fmt.Fprintf(out, i18n.T("Index:     %s\n"), path)
+	fmt.Fprintf(out, i18n.T("Generated: %s (%s)\n"),
 		idx.GeneratedAt.Format(time.RFC3339), humanizeAge(idx.GeneratedAt))
-	fmt.Fprintf(out, "Archivos: %d\n", len(idx.Files))
-	fmt.Fprintf(out, "Símbolos: %d\n", symbols)
-	fmt.Fprintf(out, "Kotlin: %d\n", kotlin)
-	fmt.Fprintf(out, "Swift: %d\n", swift)
+	fmt.Fprintf(out, i18n.T("Files:     %d\n"), len(idx.Files))
+	fmt.Fprintf(out, i18n.T("Symbols:   %d\n"), symbols)
+	fmt.Fprintf(out, i18n.T("Kotlin:    %d\n"), kotlin)
+	fmt.Fprintf(out, i18n.T("Swift:     %d\n"), swift)
 	return nil
 }
 
 func newGraphSearchCmd() *cobra.Command {
 	c := &cobra.Command{
-		Use:   "search <término>",
-		Short: "Busca símbolos por nombre",
+		Use:   "search <term>",
+		Short: i18n.T("Search symbols by name"),
 		Args:  cobra.ExactArgs(1),
 		RunE:  runGraphSearch,
 	}
 	graphCommonFlags(c)
-	c.Flags().Int("limit", 0, "máximo de resultados a mostrar (0 = sin límite)")
-	c.Flags().String("kind", "", "filtrar por tipo de símbolo (class, fun, object, interface, struct, enum, protocol, actor, func, extension)")
+	c.Flags().Int("limit", 0, i18n.T("max results to show (0 = no limit)"))
+	c.Flags().String("kind", "", i18n.T("filter by symbol kind (class, fun, object, interface, struct, enum, protocol, actor, func, extension)"))
 	return c
 }
 
@@ -198,7 +198,7 @@ func runGraphSearch(c *cobra.Command, args []string) error {
 	}
 
 	if len(hits) == 0 {
-		fmt.Fprintln(out, "Sin coincidencias.")
+		fmt.Fprintln(out, i18n.T("No matches."))
 		return nil
 	}
 
@@ -212,15 +212,15 @@ func runGraphSearch(c *cobra.Command, args []string) error {
 		fmt.Fprintf(out, "%s:%d %s %s\n", h.File, h.Symbol.Line, h.Symbol.Kind, h.Symbol.Name)
 	}
 	if truncated {
-		fmt.Fprintf(out, "… (mostrando %d, usá --limit 0 para ver todos)\n", limit)
+		fmt.Fprintf(out, i18n.T("… (showing %d, use --limit 0 to see all)\n"), limit)
 	}
 	return nil
 }
 
 func newGraphCallersCmd() *cobra.Command {
 	c := &cobra.Command{
-		Use:   "callers <símbolo>",
-		Short: "Lista referencias textuales del símbolo",
+		Use:   "callers <symbol>",
+		Short: i18n.T("List textual references to the symbol"),
 		Args:  cobra.ExactArgs(1),
 		RunE:  runGraphCallers,
 	}
@@ -240,7 +240,7 @@ func runGraphCallers(c *cobra.Command, args []string) error {
 	}
 	hits := graph.Callers(idx, root, args[0])
 	if len(hits) == 0 {
-		fmt.Fprintln(out, "Sin referencias.")
+		fmt.Fprintln(out, i18n.T("No references."))
 		return nil
 	}
 	for _, h := range hits {
@@ -251,8 +251,8 @@ func runGraphCallers(c *cobra.Command, args []string) error {
 
 func newGraphContextCmd() *cobra.Command {
 	c := &cobra.Command{
-		Use:   "context <tarea...>",
-		Short: "Archivos relevantes para una tarea (heurística)",
+		Use:   "context <task...>",
+		Short: i18n.T("Relevant files for a task (heuristic)"),
 		Args:  cobra.MinimumNArgs(1),
 		RunE:  runGraphContext,
 	}
@@ -273,7 +273,7 @@ func runGraphContext(c *cobra.Command, args []string) error {
 	task := joinArgs(args)
 	hits := graph.Context(idx, task, 10)
 	if len(hits) == 0 {
-		fmt.Fprintln(out, "Sin archivos relevantes encontrados.")
+		fmt.Fprintln(out, i18n.T("No relevant files found."))
 		return nil
 	}
 	for _, h := range hits {
@@ -319,8 +319,8 @@ func countSymbols(idx *graph.Index) int {
 	return n
 }
 
-// humanizeAge renders a Spanish "hace Xm/Xh/Xd" relative timestamp for
-// a past time t. Falls back to "hace Xm" with X=0 for very fresh times.
+// humanizeAge renders an English "Xm/Xh/Xd ago" relative timestamp for
+// a past time t. Falls back to "0m ago" for very fresh times.
 func humanizeAge(t time.Time) string {
 	d := time.Since(t)
 	if d < 0 {
@@ -328,12 +328,12 @@ func humanizeAge(t time.Time) string {
 	}
 	if d < time.Hour {
 		mins := int(d.Round(time.Minute) / time.Minute)
-		return fmt.Sprintf("hace %dm", mins)
+		return fmt.Sprintf(i18n.T("%dm ago"), mins)
 	}
 	if d < 24*time.Hour {
 		hours := int(d.Round(time.Hour) / time.Hour)
-		return fmt.Sprintf("hace %dh", hours)
+		return fmt.Sprintf(i18n.T("%dh ago"), hours)
 	}
 	days := int(d.Round(24*time.Hour) / (24 * time.Hour))
-	return fmt.Sprintf("hace %dd", days)
+	return fmt.Sprintf(i18n.T("%dd ago"), days)
 }

@@ -1,0 +1,15 @@
+{
+  "name": "community",
+  "description": "Skills aportadas por la comunidad. Cualquiera puede contribuir acá vía PR; los packs de plataforma quedan curados por los maintainers.",
+  "version": "1.0.0",
+  "author": {
+    "name": "MobiAI Community",
+    "url": "https://github.com/ArisGuimera/MobiAI-Core"
+  },
+  "homepage": "https://github.com/ArisGuimera/MobiAI-Core",
+  "repository": "https://github.com/ArisGuimera/MobiAI-Core",
+  "license": "MIT",
+  "keywords": ["community", "contributed", "mobile"],
+  "dependencies": ["core"],
+  "skills": ["./skills/"]
+}

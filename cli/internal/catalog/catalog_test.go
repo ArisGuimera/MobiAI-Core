@@ -15,8 +15,34 @@ func TestLoad_Sample(t *testing.T) {
 	if c.Marketplace.Name != "mobiai" {
 		t.Errorf("Marketplace.Name: got %q, want %q", c.Marketplace.Name, "mobiai")
 	}
-	if len(c.Packs) != 4 {
-		t.Fatalf("Packs length: got %d, want 4", len(c.Packs))
+	if len(c.Packs) != 5 {
+		t.Fatalf("Packs length: got %d, want 5", len(c.Packs))
+	}
+}
+
+func TestCatalog_Skills_ReadsDescription(t *testing.T) {
+	root := filepath.Join("testdata", "sample")
+	c, err := Load(root)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	comm, err := c.Get(CommunityPack)
+	if err != nil {
+		t.Fatalf("Get(community): %v", err)
+	}
+	skills, err := c.Skills(comm)
+	if err != nil {
+		t.Fatalf("Skills(community): %v", err)
+	}
+	if len(skills) != 3 {
+		t.Fatalf("community skills: got %d, want 3", len(skills))
+	}
+	// os.ReadDir yields entries alphabetically, so the fixture comes back sorted.
+	if skills[0].ID != "alpha-skill" {
+		t.Errorf("first skill: got %q, want alpha-skill", skills[0].ID)
+	}
+	if skills[0].Description != "first community fixture skill" {
+		t.Errorf("description: got %q, want %q", skills[0].Description, "first community fixture skill")
 	}
 }
 

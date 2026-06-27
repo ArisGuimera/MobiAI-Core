@@ -1,5 +1,7 @@
 # MobiAI CLI
 
+> **Read in another language:** **English** · [Español](README.es.md)
+
 Standalone CLI for installing MobiAI skills across AI clients that conform to the [agentskills.io](https://agentskills.io) standard.
 
 > Internal architecture and design rationale: see internal design doc (gitignored).

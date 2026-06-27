@@ -5,24 +5,25 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/ArisGuimera/MobiAI-Core/cli/internal/i18n"
 	"github.com/ArisGuimera/MobiAI-Core/cli/internal/state"
 )
 
 func NewDoctorCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "doctor",
-		Short: "Diagnóstico exhaustivo del CLI, hosts y catálogo",
+		Short: i18n.T("Thorough diagnostics for CLI, hosts and catalog"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			out := cmd.OutOrStdout()
-			fmt.Fprintf(out, "MobiAI %s — diagnóstico\n\n", version)
+			fmt.Fprintf(out, i18n.T("MobiAI %s — diagnostics\n\n"), version)
 
-			fmt.Fprintln(out, "Hosts soportados:")
+			fmt.Fprintln(out, i18n.T("Supported hosts:"))
 			g := flagsFromAnyCmd(cmd)
 			r := newRegistry(g)
 			for _, a := range r.Adapters() {
 				det := a.Detect()
 				marker := "-"
-				note := "no detectado"
+				note := i18n.T("not detected")
 				if det.Found {
 					marker = "✓"
 					note = "OK"
@@ -39,16 +40,16 @@ func NewDoctorCmd() *cobra.Command {
 				return err
 			}
 			meta, _ := state.LoadMeta(paths)
-			fmt.Fprintln(out, "Catálogo:")
+			fmt.Fprintln(out, i18n.T("Catalog:"))
 			if meta.LastSync.IsZero() {
-				fmt.Fprintln(out, "  (nunca se sincronizó)")
+				fmt.Fprintln(out, i18n.T("  (never synced)"))
 			} else {
-				fmt.Fprintf(out, "  Última sincronización: %s\n", meta.LastSync.Format("2006-01-02 15:04:05"))
-				fmt.Fprintf(out, "  Versión: %s\n", meta.Version)
+				fmt.Fprintf(out, i18n.T("  Last sync: %s\n"), meta.LastSync.Format("2006-01-02 15:04:05"))
+				fmt.Fprintf(out, i18n.T("  Version:   %s\n"), meta.Version)
 			}
 			fmt.Fprintln(out)
 
-			fmt.Fprintln(out, "Drift check:")
+			fmt.Fprintln(out, i18n.T("Drift check:"))
 			anyDrift := false
 			for _, a := range r.Detect() {
 				rep := a.Verify()
@@ -60,7 +61,7 @@ func NewDoctorCmd() *cobra.Command {
 				}
 			}
 			if !anyDrift {
-				fmt.Fprintln(out, "  ✓ sin drift detectado (Verify es stub en esta versión)")
+				fmt.Fprintln(out, i18n.T("  ✓ no drift detected (Verify is a stub in this version)"))
 			}
 			return nil
 		},

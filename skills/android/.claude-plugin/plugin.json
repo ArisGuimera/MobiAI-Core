@@ -1,6 +1,6 @@
 {
   "name": "android",
-  "description": "MobiAI para Android — skills de device, build, testing, architecture, e integración con skills oficiales de Google (Apache 2.0)",
+  "description": "MobiAI for Android — device, build, testing, and architecture skills, plus integration with the official Google skills (Apache 2.0)",
   "version": "2.3.0",
   "author": {
     "name": "Matias Rosenstein",
