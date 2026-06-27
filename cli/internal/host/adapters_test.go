@@ -28,13 +28,14 @@ func adapterCases() []adapterCase {
 		{newOpenCode, "opencode", "OpenCode", ".opencode", false, false},
 		{newJunie, "junie", "Junie", ".junie", false, false},
 		{newRooCode, "roo-code", "Roo Code", ".roo-code", false, false},
+		// Project-level — detected by cwd markers, not gated by --include-experimental.
+		{newFirebender, "firebender", "Firebender", ".firebender", false, false},
 		// Tier 3 (speculative, paths a confirmar)
 		{newAutohand, "autohand", "Autohand", ".autohand", false, false},
 		{newOpenHands, "openhands", "OpenHands", ".openhands", false, false},
 		{newMux, "mux", "Mux", ".mux", false, false},
 		{newAmp, "amp", "Amp", ".amp", false, false},
 		{newLetta, "letta", "Letta", ".letta", false, false},
-		{newFirebender, "firebender", "Firebender", ".firebender", false, false},
 		{newClaudeDesktop, "claude-desktop", "Claude Desktop", ".claude-desktop", false, false},
 		{newPiebald, "piebald", "Piebald", ".piebald", false, false},
 		{newFactory, "factory", "Factory", ".factory", false, false},
@@ -81,11 +82,70 @@ func TestAdapters_SkillsDir(t *testing.T) {
 	setFakeHome(t, tmp)
 	for _, c := range adapterCases() {
 		t.Run(c.wantID, func(t *testing.T) {
+			if c.wantID == "firebender" {
+				t.Skip("firebender uses project dir, tested separately")
+			}
 			want := filepath.Join(tmp, c.wantHomeSub, "skills")
 			if got := c.factory().SkillsDir(); got != want {
 				t.Errorf("SkillsDir: got %q, want %q", got, want)
 			}
 		})
+	}
+}
+
+func TestFirebenderAdapter_SkillsDir_UsesProjectDir(t *testing.T) {
+	tmp := t.TempDir()
+	oldWD, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(tmp); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := os.Chdir(oldWD); err != nil {
+			t.Fatalf("restore cwd: %v", err)
+		}
+	})
+
+	// macOS: os.Getwd() resolves /var to /private/var; want must match.
+	resolvedTmp, err := filepath.EvalSymlinks(tmp)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	a := newFirebender()
+	want := filepath.Join(resolvedTmp, ".firebender", "skills")
+	if got := a.SkillsDir(); got != want {
+		t.Errorf("SkillsDir: got %q, want %q", got, want)
+	}
+}
+
+func TestFirebenderAdapter_Detect_ByFirebenderJson(t *testing.T) {
+	tmp := t.TempDir()
+	oldWD, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(tmp); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := os.Chdir(oldWD); err != nil {
+			t.Fatalf("restore cwd: %v", err)
+		}
+	})
+
+	a := newFirebender()
+	if a.Detect().Found {
+		t.Fatal("Detect should be false when no marker exists")
+	}
+
+	if err := os.WriteFile(filepath.Join(tmp, "firebender.json"), []byte("{}"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if !a.Detect().Found {
+		t.Fatal("Detect should be true when firebender.json exists")
 	}
 }
 
@@ -109,6 +169,18 @@ func TestAdapters_Capabilities(t *testing.T) {
 func TestAdapters_DetectFlow(t *testing.T) {
 	tmp := t.TempDir()
 	setFakeHome(t, tmp)
+	oldWD, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(tmp); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := os.Chdir(oldWD); err != nil {
+			t.Fatalf("restore cwd: %v", err)
+		}
+	})
 	for _, c := range adapterCases() {
 		t.Run(c.wantID+"_not_found", func(t *testing.T) {
 			if c.factory().Detect().Found {

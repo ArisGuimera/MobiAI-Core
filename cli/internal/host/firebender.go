@@ -1,13 +1,129 @@
 package host
 
+import (
+	"fmt"
+	"os"
+	"path/filepath"
+
+	"github.com/ArisGuimera/MobiAI-Core/cli/internal/catalog"
+)
+
 // newFirebender returns a HostAdapter for Firebender.
-// Tier-3: speculative path; community-confirmable.
 func newFirebender() HostAdapter {
-	return &genericAdapter{
-		id:         "firebender",
-		name:       "Firebender",
-		homepage:   "https://firebender.com",
-		homeSubdir: ".firebender",
-		caps:       Caps{Skills: true},
+	return &firebenderAdapter{
+		genericAdapter: genericAdapter{
+			id:         "firebender",
+			name:       "Firebender",
+			homepage:   "https://firebender.com",
+			homeSubdir: ".firebender",
+			caps:       Caps{Skills: true},
+		},
 	}
 }
+
+type firebenderAdapter struct {
+	genericAdapter
+}
+
+func (a *firebenderAdapter) projectDir() (string, error) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return "", fmt.Errorf("resolve current working directory for firebender: %w", err)
+	}
+	return filepath.Join(cwd, ".firebender"), nil
+}
+
+func (a *firebenderAdapter) SkillsDir() string {
+	dir, err := a.projectDir()
+	if err != nil {
+		return ""
+	}
+	return filepath.Join(dir, "skills")
+}
+
+func (a *firebenderAdapter) Detect() DetectResult {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return DetectResult{Found: false, Searched: []string{"<unresolved cwd>"}}
+	}
+	searched := []string{}
+
+	// 1. .firebender/ directory in the current project.
+	dir := filepath.Join(cwd, ".firebender")
+	searched = append(searched, dir)
+	info, statErr := os.Stat(dir)
+	if statErr == nil && info.IsDir() {
+		return DetectResult{Found: true, Path: dir, Searched: searched}
+	}
+
+	// 2. firebender.json project marker file.
+	marker := filepath.Join(cwd, "firebender.json")
+	searched = append(searched, marker)
+	info, statErr = os.Stat(marker)
+	if statErr == nil && !info.IsDir() {
+		return DetectResult{Found: true, Path: cwd, Searched: searched}
+	}
+
+	return DetectResult{Found: false, Searched: searched}
+}
+
+func (a *firebenderAdapter) Install(skills []catalog.Skill) error {
+	skillsDir := a.SkillsDir()
+	if skillsDir == "" {
+		return fmt.Errorf("resolve firebender skills dir")
+	}
+	if err := os.MkdirAll(skillsDir, 0o755); err != nil {
+		return fmt.Errorf("mkdir skills dir: %w", err)
+	}
+	for _, s := range skills {
+		dst := filepath.Join(skillsDir, s.ID)
+		if err := copyDir(s.AbsPath, dst); err != nil {
+			return fmt.Errorf("install skill %q: %w", s.ID, err)
+		}
+	}
+	return nil
+}
+
+func (a *firebenderAdapter) Uninstall(skillIDs []string) error {
+	skillsDir := a.SkillsDir()
+	if skillsDir == "" {
+		return fmt.Errorf("resolve firebender skills dir")
+	}
+	for _, id := range skillIDs {
+		dir := filepath.Join(skillsDir, id)
+		if err := os.RemoveAll(dir); err != nil {
+			return fmt.Errorf("uninstall skill %q: %w", id, err)
+		}
+	}
+	return nil
+}
+
+func (a *firebenderAdapter) List() ([]InstalledSkill, error) {
+	dir := a.SkillsDir()
+	if dir == "" {
+		return nil, fmt.Errorf("resolve firebender skills dir")
+	}
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("read skills dir %s: %w", dir, err)
+	}
+	var out []InstalledSkill
+	for _, e := range entries {
+		if !e.IsDir() {
+			continue
+		}
+		out = append(out, InstalledSkill{
+			ID:   e.Name(),
+			Path: filepath.Join(dir, e.Name()),
+		})
+	}
+	return out, nil
+}
+
+// NOTE: Verify() is inherited from genericAdapter. Go does not have virtual
+// dispatch — if genericAdapter.Verify ever starts calling SkillsDir(), it will
+// use the embedded genericAdapter's method, not firebenderAdapter's override.
+// If that happens, Verify() must be redefined here as well.

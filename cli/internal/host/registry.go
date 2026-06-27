@@ -28,7 +28,7 @@ var tier3IDs = map[string]bool{
 	"mux":              true,
 	"amp":              true,
 	"letta":            true,
-	"firebender":       true,
+
 	"claude-desktop":   true,
 	"piebald":          true,
 	"factory":          true,
@@ -68,13 +68,15 @@ func NewDefaultRegistry() *Registry {
 		newOpenCode(),
 		newJunie(),
 		newRooCode(),
+		// Project-level — real detection via cwd markers (firebender.json / .firebender/).
+		// Not gated by --include-experimental because it only targets active Firebender projects.
+		newFirebender(),
 		// Tier 3 — speculativo, paths a confirmar por la comunidad.
 		newAutohand(),
 		newOpenHands(),
 		newMux(),
 		newAmp(),
 		newLetta(),
-		newFirebender(),
 		newClaudeDesktop(),
 		newPiebald(),
 		newFactory(),
