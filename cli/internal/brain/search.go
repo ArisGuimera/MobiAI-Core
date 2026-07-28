@@ -23,7 +23,7 @@ type SearchHit struct {
 func Search(p BrainPaths, query string, filter EntryFilter) ([]SearchHit, error) {
 	groups, err := ParseAllMemories(p)
 	if err != nil {
-		return nil, fmt.Errorf("parsear memorias: %w", err)
+		return nil, fmt.Errorf("parse memories: %w", err)
 	}
 	full := filter
 	if q := strings.TrimSpace(query); q != "" {

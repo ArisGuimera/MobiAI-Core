@@ -30,7 +30,7 @@ func (t SaveType) memoryFileFor() (string, error) {
 	case SaveTypeTesting:
 		return "testing.md", nil
 	default:
-		return "", fmt.Errorf("save type desconocido: %q (esperado: decision|bugfix|testing)", t)
+		return "", fmt.Errorf("unknown save type: %q (expected: decision|bugfix|testing)", t)
 	}
 }
 
@@ -85,23 +85,23 @@ type SaveEntry struct {
 // human-readable error in Spanish (matching CLI tone) on first failure.
 func (e *SaveEntry) Validate() error {
 	if e.Type == "" {
-		return fmt.Errorf("type es requerido")
+		return fmt.Errorf("type is required")
 	}
 	if _, err := e.Type.memoryFileFor(); err != nil {
 		return err
 	}
 	if strings.TrimSpace(e.Title) == "" {
-		return fmt.Errorf("--title es requerido")
+		return fmt.Errorf("--title is required")
 	}
 	if e.Status == "" {
 		e.Status = StatusActive
 	}
 	if _, ok := validStatuses[e.Status]; !ok {
-		return fmt.Errorf("--status %q inválido (esperado: active|temporary|deprecated)", e.Status)
+		return fmt.Errorf("invalid --status %q (expected: active|temporary|deprecated)", e.Status)
 	}
 	if e.ReviewAfter != "" {
 		if _, err := time.Parse("2006-01-02", e.ReviewAfter); err != nil {
-			return fmt.Errorf("--review-after debe ser YYYY-MM-DD: %w", err)
+			return fmt.Errorf("--review-after must be YYYY-MM-DD: %w", err)
 		}
 	}
 	return nil
@@ -112,7 +112,7 @@ func (e *SaveEntry) Validate() error {
 // the generated id (slug + timestamp) so callers can echo it.
 func AppendEntry(p BrainPaths, e *SaveEntry) (string, error) {
 	if !p.Exists() {
-		return "", fmt.Errorf("brain no inicializado en %s — corré `mobiai brain init` primero", p.Root)
+		return "", fmt.Errorf("brain not initialized at %s — run `mobiai brain init` first", p.Root)
 	}
 	if err := e.Validate(); err != nil {
 		return "", err
@@ -207,15 +207,15 @@ func renderEntry(id string, e *SaveEntry) string {
 // memories are append-only — we never need atomic full-file replacement.
 func appendToFile(target, content string) error {
 	if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
-		return fmt.Errorf("crear %s: %w", filepath.Dir(target), err)
+		return fmt.Errorf("create %s: %w", filepath.Dir(target), err)
 	}
 	f, err := os.OpenFile(target, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 	if err != nil {
-		return fmt.Errorf("abrir %s: %w", target, err)
+		return fmt.Errorf("open %s: %w", target, err)
 	}
 	defer f.Close()
 	if _, err := f.WriteString(content); err != nil {
-		return fmt.Errorf("escribir %s: %w", target, err)
+		return fmt.Errorf("write %s: %w", target, err)
 	}
 	return nil
 }

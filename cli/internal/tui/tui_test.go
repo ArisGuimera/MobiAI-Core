@@ -1,6 +1,8 @@
 package tui
 
 import (
+	"path/filepath"
+	"strings"
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -115,8 +117,232 @@ func keyMsg(k string) tea.KeyMsg {
 		return tea.KeyMsg{Type: tea.KeySpace}
 	case "enter":
 		return tea.KeyMsg{Type: tea.KeyEnter}
+	case "esc":
+		return tea.KeyMsg{Type: tea.KeyEsc}
 	}
 	return tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(k)}
+}
+
+// communityModel builds a picker model from the on-disk sample catalog, which
+// includes a community pack with three skills (alpha/bravo/charlie-skill). The
+// community sub-picker reads real skills off disk, so these tests can't use the
+// hand-built inline catalogs the other tests use.
+func communityModel(t *testing.T) Model {
+	t.Helper()
+	root := filepath.Join("..", "catalog", "testdata", "sample")
+	c, err := catalog.Load(root)
+	if err != nil {
+		t.Fatalf("load sample catalog: %v", err)
+	}
+	return NewModel(c, &state.Installed{Packs: map[string][]string{}}, state.Paths{}, []host.HostAdapter{stubHost{}})
+}
+
+// communityRowIndex returns the cursor index of the community row in the main
+// picker, or -1 if absent.
+func communityRowIndex(m Model) int {
+	for i, r := range m.PackRows() {
+		if r.IsCommunity {
+			return i
+		}
+	}
+	return -1
+}
+
+func TestCommunityModel_CachesSkillsSorted(t *testing.T) {
+	m := communityModel(t)
+	if len(m.communitySkills) != 3 {
+		t.Fatalf("communitySkills: got %d, want 3", len(m.communitySkills))
+	}
+	if m.communitySkills[0].ID != "alpha-skill" || m.communitySkills[2].ID != "charlie-skill" {
+		t.Errorf("communitySkills not sorted: got %s..%s", m.communitySkills[0].ID, m.communitySkills[2].ID)
+	}
+	if m.communitySkills[0].Description != "first community fixture skill" {
+		t.Errorf("description not loaded: got %q", m.communitySkills[0].Description)
+	}
+}
+
+func TestUpdate_EnterOnCommunity_OpensSubPicker(t *testing.T) {
+	m := communityModel(t)
+	m.cursor = communityRowIndex(m)
+	if m.cursor < 0 {
+		t.Fatal("no community row found")
+	}
+	updated, _ := m.Update(keyMsg("enter"))
+	if updated.(Model).mode != ModeCommunityPicker {
+		t.Errorf("mode after enter on community: got %v, want ModeCommunityPicker", updated.(Model).mode)
+	}
+}
+
+func TestUpdate_SpaceOnCommunity_OpensSubPicker(t *testing.T) {
+	m := communityModel(t)
+	m.cursor = communityRowIndex(m)
+	updated, _ := m.Update(keyMsg("space"))
+	final := updated.(Model)
+	if final.mode != ModeCommunityPicker {
+		t.Errorf("mode after space on community: got %v, want ModeCommunityPicker", final.mode)
+	}
+	// Space on community must NOT toggle the whole pack as a user action.
+	if final.userActions[catalog.CommunityPack] != ActionNone {
+		t.Errorf("community pack should not be toggled at pack level; got %v", final.userActions)
+	}
+}
+
+func TestCommunitySubPicker_ToggleSelectsSkill(t *testing.T) {
+	m := communityModel(t)
+	m.mode = ModeCommunityPicker
+	m.subCursor = 0 // alpha-skill
+	updated, _ := m.Update(keyMsg("space"))
+	final := updated.(Model)
+	if final.communityActions["alpha-skill"] != ActionInstall {
+		t.Errorf("alpha-skill action after space: got %v, want ActionInstall", final.communityActions["alpha-skill"])
+	}
+	// Second space cycles back to None.
+	updated, _ = final.Update(keyMsg("space"))
+	if updated.(Model).communityActions["alpha-skill"] != ActionNone {
+		t.Errorf("second space should reset to None; got %v", updated.(Model).communityActions["alpha-skill"])
+	}
+}
+
+func TestCommunitySubPicker_EnterWithPendingGoesToConfirm(t *testing.T) {
+	m := communityModel(t)
+	m.mode = ModeCommunityPicker
+	m.communityActions = map[string]Action{"alpha-skill": ActionInstall}
+	updated, _ := m.Update(keyMsg("enter"))
+	if updated.(Model).mode != ModeConfirm {
+		t.Errorf("mode after enter with pending: got %v, want ModeConfirm", updated.(Model).mode)
+	}
+}
+
+func TestCommunitySubPicker_EscReturnsToPickerKeepingSelections(t *testing.T) {
+	m := communityModel(t)
+	m.mode = ModeCommunityPicker
+	m.communityActions = map[string]Action{"alpha-skill": ActionInstall}
+	updated, _ := m.Update(keyMsg("esc"))
+	final := updated.(Model)
+	if final.mode != ModePicker {
+		t.Errorf("mode after esc: got %v, want ModePicker", final.mode)
+	}
+	if final.communityActions["alpha-skill"] != ActionInstall {
+		t.Errorf("esc should keep pending selections; got %v", final.communityActions)
+	}
+}
+
+func TestCommunitySubPicker_ToggleInstalledSkill_MarksUninstall(t *testing.T) {
+	m := communityModel(t)
+	// alpha-skill is already installed in the only detected host.
+	m.state.Packs[state.CommunitySkillKey("alpha-skill")] = []string{"stub"}
+	m.mode = ModeCommunityPicker
+	m.subCursor = 0 // alpha-skill (sorted first)
+
+	updated, _ := m.Update(keyMsg("space"))
+	final := updated.(Model)
+	if final.communityActions["alpha-skill"] != ActionUninstall {
+		t.Fatalf("space on an installed community skill should mark Uninstall; got %v", final.communityActions["alpha-skill"])
+	}
+
+	plan := final.buildInstallPlan()
+	var sawUninstall bool
+	for _, s := range plan {
+		if s.pack == catalog.CommunityPack && s.kind == stepUninstall {
+			sawUninstall = true
+			if len(s.skillIDs) != 1 || s.skillIDs[0] != "alpha-skill" {
+				t.Errorf("uninstall step skillIDs: got %v, want [alpha-skill]", s.skillIDs)
+			}
+		}
+	}
+	if !sawUninstall {
+		t.Error("expected a community stepUninstall in the plan")
+	}
+}
+
+func TestBuildInstallPlan_CommunitySkill_PullsCoreAndFiltersStep(t *testing.T) {
+	m := communityModel(t)
+	m.communityActions = map[string]Action{"alpha-skill": ActionInstall}
+
+	plan := m.buildInstallPlan()
+	if len(plan) == 0 {
+		t.Fatal("expected non-empty plan")
+	}
+
+	var coreIdx, commIdx = -1, -1
+	for i, s := range plan {
+		switch s.pack {
+		case "core":
+			if s.kind == stepInstall {
+				coreIdx = i
+			}
+		case catalog.CommunityPack:
+			if s.kind == stepInstall {
+				commIdx = i
+				if len(s.skillIDs) != 1 || s.skillIDs[0] != "alpha-skill" {
+					t.Errorf("community step skillIDs: got %v, want [alpha-skill]", s.skillIDs)
+				}
+			}
+		}
+	}
+	if coreIdx < 0 {
+		t.Error("expected a core install step (community depends on core)")
+	}
+	if commIdx < 0 {
+		t.Fatal("expected a community install step")
+	}
+	if coreIdx > commIdx {
+		t.Errorf("core (%d) must install before community (%d)", coreIdx, commIdx)
+	}
+}
+
+func TestHandleInstallStep_CommunitySkill_RecordsCompositeKey(t *testing.T) {
+	tmp := t.TempDir()
+	t.Setenv("MOBIAI_HOME", tmp)
+	paths, _ := state.NewPaths()
+	if err := paths.EnsureDirs(); err != nil {
+		t.Fatal(err)
+	}
+
+	c := &catalog.Catalog{Marketplace: &catalog.Marketplace{}}
+	c.Reindex()
+	installed := &state.Installed{Packs: map[string][]string{}}
+	m := NewModel(c, installed, paths, []host.HostAdapter{stubHost{}})
+	m.mode = ModeProgress
+	m.installPlan = []installStep{{pack: "community", host: "stub", kind: stepInstall, skillIDs: []string{"alpha-skill"}}}
+
+	updated, _ := m.Update(installStepDoneMsg{pack: "community", host: "stub", kind: stepInstall, skillIDs: []string{"alpha-skill"}})
+	final := updated.(Model)
+
+	if hosts := final.state.HostsFor(state.CommunitySkillKey("alpha-skill")); len(hosts) != 1 || hosts[0] != "stub" {
+		t.Errorf("community/alpha-skill state: got %v, want [stub]", hosts)
+	}
+	if _, ok := final.state.Packs["community"]; ok {
+		t.Errorf("must not write a bare community key; got %v", final.state.Packs)
+	}
+}
+
+func TestCommunityMarker_ReflectsInstallState(t *testing.T) {
+	m := communityModel(t)
+
+	// None installed → empty marker.
+	if got := m.communityMarker(); strings.ContainsAny(got, "✓~+-") {
+		t.Errorf("no-install marker should be empty-ish; got %q", got)
+	}
+
+	// One of three installed → partial "[~]".
+	m.state.Packs[state.CommunitySkillKey("alpha-skill")] = []string{"stub"}
+	if got := m.communityMarker(); !strings.Contains(got, "~") {
+		t.Errorf("partial marker: got %q, want a ~", got)
+	}
+
+	// All three installed in the only host → "[✓]".
+	m.state.Packs[state.CommunitySkillKey("bravo-skill")] = []string{"stub"}
+	m.state.Packs[state.CommunitySkillKey("charlie-skill")] = []string{"stub"}
+	if got := m.communityMarker(); !strings.Contains(got, "✓") {
+		t.Errorf("all-installed marker: got %q, want a ✓", got)
+	}
+
+	// A pending install takes priority → "[+]".
+	m.communityActions = map[string]Action{"alpha-skill": ActionInstall}
+	if got := m.communityMarker(); !strings.Contains(got, "+") {
+		t.Errorf("pending-install marker: got %q, want a +", got)
+	}
 }
 
 func sampleModel(t *testing.T) Model {

@@ -1,10 +1,17 @@
 package catalog
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 )
+
+// CommunityPack is the catalog name of the community pack — the only pack
+// whose skills are installable individually (the picker drills into it and the
+// CLI accepts `community/<skill-id>` specs). Every other pack installs whole.
+const CommunityPack = "community"
 
 // Catalog is the aggregated view: marketplace + every plugin manifest +
 // resolved skill list per pack. All file IO happens in Load.
@@ -24,8 +31,9 @@ type Pack struct {
 // Skill is a single skill discovered under a pack's skills directories.
 // AbsPath is the absolute path to the skill directory (parent of SKILL.md).
 type Skill struct {
-	ID      string // directory name (e.g., "using-mobiai")
-	AbsPath string
+	ID          string // directory name (e.g., "using-mobiai")
+	AbsPath     string
+	Description string // `description:` from SKILL.md frontmatter (may be empty)
 }
 
 // Load reads the marketplace and every plugin manifest under rootDir.
@@ -109,8 +117,47 @@ func (c *Catalog) Skills(p *Pack) ([]Skill, error) {
 				continue
 			}
 			seen[abs] = true
-			out = append(out, Skill{ID: e.Name(), AbsPath: abs})
+			out = append(out, Skill{
+				ID:          e.Name(),
+				AbsPath:     abs,
+				Description: readSkillDescription(filepath.Join(abs, "SKILL.md")),
+			})
 		}
 	}
 	return out, nil
+}
+
+// readSkillDescription extracts the `description:` value from a SKILL.md
+// YAML frontmatter block (the lines between the first two `---` markers).
+// It is intentionally tolerant: any IO/format problem yields an empty string
+// so skill enumeration never fails just because a description is missing.
+func readSkillDescription(skillMdPath string) string {
+	f, err := os.Open(skillMdPath)
+	if err != nil {
+		return ""
+	}
+	defer f.Close()
+
+	sc := bufio.NewScanner(f)
+	sc.Buffer(make([]byte, 0, 64*1024), 1024*1024)
+	inFrontmatter := false
+	for sc.Scan() {
+		line := sc.Text()
+		trimmed := strings.TrimSpace(line)
+		if !inFrontmatter {
+			if trimmed == "---" {
+				inFrontmatter = true
+				continue
+			}
+			// No frontmatter at the top of the file → nothing to read.
+			return ""
+		}
+		if trimmed == "---" {
+			return "" // closed the block without finding a description
+		}
+		if rest, ok := strings.CutPrefix(line, "description:"); ok {
+			return strings.TrimSpace(rest)
+		}
+	}
+	return ""
 }

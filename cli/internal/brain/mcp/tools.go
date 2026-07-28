@@ -89,7 +89,7 @@ func handleSearch(paths brain.BrainPaths) func(context.Context, *mcp.CallToolReq
 			return nil, SearchResult{}, brainNotInitialized(paths)
 		}
 		if strings.TrimSpace(args.Query) == "" {
-			return nil, SearchResult{}, fmt.Errorf("query es requerido")
+			return nil, SearchResult{}, fmt.Errorf("query is required")
 		}
 		raw, err := brain.Search(paths, args.Query, brain.EntryFilter{
 			Platform: args.Platform,
@@ -122,10 +122,10 @@ func handleSearch(paths brain.BrainPaths) func(context.Context, *mcp.CallToolReq
 
 func formatSearchSummary(query string, hits []SearchHit) string {
 	if len(hits) == 0 {
-		return fmt.Sprintf("Sin resultados para %q.", query)
+		return fmt.Sprintf("No results for %q.", query)
 	}
 	var b strings.Builder
-	fmt.Fprintf(&b, "%d resultado(s) para %q:\n", len(hits), query)
+	fmt.Fprintf(&b, "%d result(s) for %q:\n", len(hits), query)
 	for _, h := range hits {
 		var meta []string
 		if h.Status != "" {
@@ -202,9 +202,9 @@ func handleScan(paths brain.BrainPaths) func(context.Context, *mcp.CallToolReque
 
 func formatScanSummary(s *brain.Scan) string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "Tipo: %s\n", s.ProjectType)
+	fmt.Fprintf(&b, "Type: %s\n", s.ProjectType)
 	if len(s.Platforms) > 0 {
-		fmt.Fprintf(&b, "Plataformas: %s\n", strings.Join(s.Platforms, ", "))
+		fmt.Fprintf(&b, "Platforms: %s\n", strings.Join(s.Platforms, ", "))
 	}
 	for _, row := range []struct {
 		label string
@@ -292,18 +292,18 @@ func handleReview(paths brain.BrainPaths) func(context.Context, *mcp.CallToolReq
 
 func formatReviewSummary(r ReviewResult) string {
 	if len(r.Overdue) == 0 && len(r.NoDate) == 0 {
-		return "✓ No hay entradas temporales vencidas."
+		return "✓ No expired temporary entries."
 	}
 	var b strings.Builder
 	if len(r.Overdue) > 0 {
-		fmt.Fprintf(&b, "⚠ %d entrada(s) vencida(s):\n", len(r.Overdue))
+		fmt.Fprintf(&b, "⚠ %d expired entry(ies):\n", len(r.Overdue))
 		for _, it := range r.Overdue {
-			fmt.Fprintf(&b, "  [%s] %s — review_after: %s (%d días)\n",
+			fmt.Fprintf(&b, "  [%s] %s — review_after: %s (%d days)\n",
 				it.Section, it.Title, it.ReviewAfter, it.DaysOverdue)
 		}
 	}
 	if len(r.NoDate) > 0 {
-		fmt.Fprintf(&b, "\n%d sin review_after:\n", len(r.NoDate))
+		fmt.Fprintf(&b, "\n%d without review_after:\n", len(r.NoDate))
 		for _, it := range r.NoDate {
 			fmt.Fprintf(&b, "  [%s] %s\n", it.Section, it.Title)
 		}
@@ -389,7 +389,7 @@ func updateResultToJSON(r *brain.UpdateResult) UpdateResult {
 
 func formatUpdateSummary(r *brain.UpdateResult) string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "✓ %s actualizada (%s)", r.Title, r.File)
+	fmt.Fprintf(&b, "✓ %s updated (%s)", r.Title, r.File)
 	if r.PrevStatus != r.NewStatus {
 		fmt.Fprintf(&b, "\n  status: %s → %s", r.PrevStatus, r.NewStatus)
 	}
@@ -458,7 +458,7 @@ func makeSaveHandler(paths brain.BrainPaths, saveType brain.SaveType, section st
 		if err != nil {
 			return nil, SaveResult{}, err
 		}
-		text := fmt.Sprintf("✓ guardado en %s.md (id: %s)", section, id)
+		text := fmt.Sprintf("✓ saved to %s.md (id: %s)", section, id)
 		return &mcp.CallToolResult{
 			Content: []mcp.Content{&mcp.TextContent{Text: text}},
 		}, SaveResult{ID: id, Section: section}, nil
@@ -469,5 +469,5 @@ func makeSaveHandler(paths brain.BrainPaths, saveType brain.SaveType, section st
 // the same Spanish phrasing the CLI uses. Keeping a single source of
 // truth here means MCP clients and CLI users see the same message.
 func brainNotInitialized(paths brain.BrainPaths) error {
-	return fmt.Errorf("brain no inicializado en %s — corré `mobiai brain init` primero", paths.Root)
+	return fmt.Errorf("brain not initialized at %s — run `mobiai brain init` first", paths.Root)
 }

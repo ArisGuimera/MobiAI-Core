@@ -15,8 +15,8 @@ func TestAppendEntry_FailsIfBrainNotInitialized(t *testing.T) {
 		Type:  SaveTypeDecision,
 		Title: "Use Koin",
 	})
-	if err == nil || !strings.Contains(err.Error(), "no inicializado") {
-		t.Fatalf("expected 'no inicializado' error, got: %v", err)
+	if err == nil || !strings.Contains(err.Error(), "not initialized") {
+		t.Fatalf("expected 'not initialized' error, got: %v", err)
 	}
 }
 

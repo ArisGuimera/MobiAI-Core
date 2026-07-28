@@ -7,25 +7,18 @@
 ### 1. Añadir un nuevo Skill
 Consulta la [guía para crear skills](docs/crear-skills.md).
 
+Las contribuciones de la comunidad van al pack **`community`**. Es la única área abierta a todos: un guard de CI (`guard-community-skills`) bloquea los PRs que tocan los packs curados (`core`, `android`, `ios`, `kmp`, `flutter`, `react-native`) si no vienen de un maintainer. Si creés que tu skill debería vivir en un pack de plataforma, abrí un issue o un PR proponiéndolo y un maintainer lo integra.
+
 **Pasos rápidos:**
-1. Haz fork del repo
-2. Decidí a qué plugin va tu skill:
-   - Workflow cross-platform → `skills/core/skills/`
-   - Android-specific → `skills/android/skills/`
-   - iOS-specific → `skills/ios/skills/`
-   - KMP/Flutter/RN → `skills/kmp/skills/` | `skills/flutter/skills/` | `skills/react-native/skills/`
-3. Crea `skills/<plugin>/skills/nombre-de-tu-skill/SKILL.md`
-4. Añade tu skill a la tabla en `skills/core/skills/using-mobiai/SKILL.md`
-5. Pruébalo en un proyecto real
-6. Abre un PR
+1. Haz fork del repo y creá una rama (`feat/community-<tu-skill>`)
+2. Crea `skills/community/skills/nombre-de-tu-skill/SKILL.md`
+3. Registrala en la tabla de [`skills/community/README.md`](skills/community/README.md)
+4. Pruébalo en un proyecto real
+5. Abre un PR
 
-**Regla crítica:** los nombres de skill deben ser únicos en TODO el catálogo. Si tu skill es platform-specific, prefijá con la plataforma (`mobiai-android-build`, `mobiai-ios-build`).
+**Regla crítica:** los nombres de skill deben ser únicos en TODO el catálogo. Prefijá tu skill de community para que no colisione (`mobiai-community-<tema>`).
 
-**Docs obligatorias:** un workflow de CI (`check-skills-docs`) bloquea PRs que agreguen o modifiquen skills sin tocar también la documentación. Para que tu PR pase, actualizá al menos uno de:
-
-- `skills/core/skills/using-mobiai/SKILL.md` (catálogo central — lo más común al agregar una skill nueva)
-- `README.md` (tabla de skills disponibles)
-- `docs/*.md` (cualquier guía relevante)
+**Docs obligatorias:** un workflow de CI (`check-skills-docs`) bloquea PRs que agreguen o modifiquen skills sin tocar también la documentación. Para una skill de community alcanza con actualizar `skills/community/README.md`. (Para el resto del catálogo: `README.md`, `docs/*.md`, o `skills/core/skills/using-mobiai/SKILL.md`.)
 
 Los skills vendoreados de Google bajo `skills/android/skills/google/` están exentos: se sincronizan automáticamente desde upstream.
 

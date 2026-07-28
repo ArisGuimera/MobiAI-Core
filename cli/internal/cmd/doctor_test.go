@@ -21,7 +21,7 @@ func TestDoctor_RunsAndPrintsSections(t *testing.T) {
 		t.Fatal(err)
 	}
 	got := out.String()
-	for _, section := range []string{"Hosts soportados", "Catálogo", "Drift"} {
+	for _, section := range []string{"Supported hosts", "Catalog", "Drift"} {
 		if !strings.Contains(got, section) {
 			t.Errorf("doctor should mention %q; got: %q", section, got)
 		}

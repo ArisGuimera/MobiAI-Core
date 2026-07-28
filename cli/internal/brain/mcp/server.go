@@ -28,7 +28,7 @@ const ServerName = "mobiai-brain"
 // Returns an error if projectRoot is empty.
 func NewServer(projectRoot, version string) (*mcp.Server, error) {
 	if projectRoot == "" {
-		return nil, fmt.Errorf("projectRoot vacío")
+		return nil, fmt.Errorf("empty projectRoot")
 	}
 	paths := brain.NewBrainPaths(projectRoot)
 

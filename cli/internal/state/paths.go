@@ -34,7 +34,7 @@ func (p Paths) State() string         { return filepath.Join(p.Home, "state") }
 func (p Paths) Logs() string          { return filepath.Join(p.Home, "logs") }
 func (p Paths) InstalledFile() string { return filepath.Join(p.State(), "installed.json") }
 func (p Paths) MetaFile() string      { return filepath.Join(p.Cache(), "meta.json") }
-func (p Paths) ConfigFile() string    { return filepath.Join(p.Home, "config.toml") }
+func (p Paths) ConfigFile() string    { return filepath.Join(p.Home, "config.json") }
 
 // EnsureDirs creates Bin, Cache, State, and Logs if they don't exist.
 // Permissions: 0o755.

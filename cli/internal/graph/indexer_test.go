@@ -182,8 +182,8 @@ func TestBuild_NotADirectory(t *testing.T) {
 	if idx != nil {
 		t.Errorf("want nil index, got %+v", idx)
 	}
-	if !strings.Contains(err.Error(), "no es un directorio") {
-		t.Errorf("error message %q does not mention 'no es un directorio'", err.Error())
+	if !strings.Contains(err.Error(), "is not a directory") {
+		t.Errorf("error message %q does not mention 'is not a directory'", err.Error())
 	}
 }
 

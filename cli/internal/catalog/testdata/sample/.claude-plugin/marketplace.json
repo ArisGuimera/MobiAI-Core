@@ -35,6 +35,13 @@
       "description": "KMP plugin (depends on android+ios)",
       "category": "platform",
       "tags": ["kmp"]
+    },
+    {
+      "name": "community",
+      "source": "./skills/community",
+      "description": "Community plugin (test fixture)",
+      "category": "community",
+      "tags": ["community"]
     }
   ]
 }

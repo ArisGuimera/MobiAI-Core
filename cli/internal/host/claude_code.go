@@ -51,11 +51,11 @@ func (a *claudeCodeAdapter) Install(skills []catalog.Skill) error {
 	settingsPath := filepath.Join(dir, "settings.json")
 	bumped, berr := ensureSkillListingBudget(settingsPath, claudeCodeMinSkillBudget)
 	if berr != nil {
-		fmt.Fprintf(os.Stderr, "  aviso: no pude ajustar skillListingBudgetFraction en %s: %v\n", settingsPath, berr)
+		fmt.Fprintf(os.Stderr, "  notice: could not adjust skillListingBudgetFraction in %s: %v\n", settingsPath, berr)
 		return nil
 	}
 	if bumped {
-		fmt.Fprintf(os.Stderr, "  aviso: subí skillListingBudgetFraction a %.0f%% en %s para listar todas las skills sin truncar\n", claudeCodeMinSkillBudget*100, settingsPath)
+		fmt.Fprintf(os.Stderr, "  notice: raised skillListingBudgetFraction to %.0f%% in %s so all skills list without truncation\n", claudeCodeMinSkillBudget*100, settingsPath)
 	}
 	return nil
 }

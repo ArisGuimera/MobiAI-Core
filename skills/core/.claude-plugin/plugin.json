@@ -1,6 +1,6 @@
 {
   "name": "core",
-  "description": "⚠️ Plugin interno — instalá mobile, android, ios, kmp, flutter o react-native en su lugar. Contiene skills cross-platform, el bootstrap using-mobiai y el SessionStart hook.",
+  "description": "⚠️ Internal plugin — install mobile, android, ios, kmp, flutter, or react-native instead. Contains cross-platform skills, the using-mobiai bootstrap, and the SessionStart hook.",
   "version": "2.3.0",
   "author": {
     "name": "Matias Rosenstein",

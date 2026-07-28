@@ -6,12 +6,32 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 )
+
+// communityKeyPrefix namespaces per-skill community entries inside the Packs
+// map. Community is the one pack installable skill-by-skill, so instead of a
+// bare "community" key we record "community/<skill-id>" per installed skill.
+// This lets `skills list`/`status` reflect partial installs for free.
+const communityKeyPrefix = "community/"
+
+// CommunitySkillKey returns the Packs-map key for an individual community
+// skill (e.g. "community/foo"). It is the single source of truth for the
+// composite-key format.
+func CommunitySkillKey(skillID string) string { return communityKeyPrefix + skillID }
+
+// ParseCommunitySkillKey reports whether key is a per-skill community entry and,
+// if so, returns the bare skill ID.
+func ParseCommunitySkillKey(key string) (skillID string, ok bool) {
+	return strings.CutPrefix(key, communityKeyPrefix)
+}
 
 // Installed tracks which packs are installed in which hosts.
 // Persisted as <state>/installed.json.
 type Installed struct {
-	// Packs maps pack name → list of host IDs (sorted).
+	// Packs maps pack name → list of host IDs (sorted). Community skills are
+	// recorded individually under "community/<skill-id>" keys (see
+	// CommunitySkillKey) rather than a single "community" key.
 	Packs map[string][]string `json:"packs"`
 }
 

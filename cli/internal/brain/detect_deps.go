@@ -118,11 +118,11 @@ func detectSensitiveFiles(idx *scanIndex, s *Scan) {
 		}
 		switch {
 		case path == ".env" || strings.HasSuffix(path, "/.env"):
-			s.Warnings = append(s.Warnings, "archivo sensible detectado: "+path+" (no leído)")
+			s.Warnings = append(s.Warnings, "sensitive file detected: "+path+" (not read)")
 		case strings.HasSuffix(path, "/GoogleService-Info.plist") || path == "GoogleService-Info.plist":
-			s.Warnings = append(s.Warnings, "archivo sensible detectado: "+path+" (no leído)")
+			s.Warnings = append(s.Warnings, "sensitive file detected: "+path+" (not read)")
 		case strings.HasSuffix(path, "/google-services.json") || path == "google-services.json":
-			s.Warnings = append(s.Warnings, "archivo sensible detectado: "+path+" (no leído)")
+			s.Warnings = append(s.Warnings, "sensitive file detected: "+path+" (not read)")
 		}
 	}
 }
