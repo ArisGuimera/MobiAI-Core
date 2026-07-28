@@ -16,7 +16,7 @@ It pulls in `core` automatically, so a community skill is discoverable as soon a
 
 | Skill | What it does | Author |
 |---|---|---|
-| _none yet_ | Be the first — see below. | — |
+| `mobiai-community-android-github-actions` | Create, update, or review reusable GitHub Actions workflows for Android unit and instrumented tests (caching, Gradle CI props, KVM + `android-emulator-runner` snapshot, report publisher). | LeandroLCD |
 
 ## Contribute a community skill
 

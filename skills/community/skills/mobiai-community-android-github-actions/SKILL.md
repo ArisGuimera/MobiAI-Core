@@ -1,6 +1,6 @@
 ---
-name: mobiai-android-github-actions
-description: Use when creating, updating, or reviewing reusable GitHub Actions workflows for Android unit tests or instrumented tests, especially when the workflow should ask about triggers, caching, Gradle CI settings, emulator setup, and action-version checks.
+name: mobiai-community-android-github-actions
+description: Use when creating, updating, or reviewing reusable GitHub Actions workflows for Android unit tests or instrumented tests, especially when the workflow should ask about triggers, caching, emulator setup, and action-version checks.
 license: MIT
 compatibility: [claude-code, cursor, copilot, codex, gemini]
 platforms: [android]
@@ -15,7 +15,7 @@ This skill supports two modes:
 - `unittest`
 - `androidtest`
 
-It is optimized for Gradle-based Android CI, `gradle-ci.properties`, test result publishing, artifacts, and emulator-backed instrumented tests.
+It is optimized for Gradle-based Android CI, test result publishing, artifacts, and emulator-backed instrumented tests.
 
 ## When to Use
 
@@ -28,7 +28,7 @@ It is optimized for Gradle-based Android CI, `gradle-ci.properties`, test result
 
 1. Ask decisions **one at a time** with a recommendation.
 2. Do not assume hard-coded module names, branches, paths, Gradle tasks, or emulator settings.
-3. Reuse repository conventions when they exist. If the repo has `gradle-ci.properties`, treat it as the base template for CI Gradle optimizations.
+3. Reuse repository conventions when they exist.
 4. Separate **common workflow blocks** from mode-specific blocks.
 5. Before finalizing the workflow, verify whether third-party and GitHub action dependencies should stay pinned as-is or be updated.
 
@@ -49,10 +49,7 @@ Search for these files before drafting the workflow:
 
 ```bash
 find .github/workflows -maxdepth 1 \( -name '*.yml' -o -name '*.yaml' \) 2>/dev/null
-find . -maxdepth 2 -name 'gradle-ci.properties' 2>/dev/null
 ```
-
-If `gradle-ci.properties` exists, treat it as the base template for optimized Gradle CI properties.
 
 ### Step 3: Ask the common decisions
 
@@ -73,10 +70,10 @@ Ask these one at a time:
    - enable/disable cache
    - restore/save behavior
    - artifact retention policy
-4. Gradle CI properties
-   - whether to copy/adapt `gradle-ci.properties`
-   - whether to override `GRADLE_OPTS`
-5. Reporting
+   - whether to use a **branch-specific key** so the same cache can be reused across runs on the same branch (for both Gradle and Java); ask which strategy to apply:
+     - **shared key** across branches (default `gradle/actions/setup-gradle` behavior)
+     - **per-branch key** (e.g. key includes `github.ref_name`) so each branch keeps its own warm cache
+4. Reporting
    - publish XML results
    - upload HTML reports on failure or always
    - artifact retention days
@@ -89,6 +86,7 @@ If the mode is `androidtest`, also ask:
 2. Single emulator or multiple emulators
 3. Emulator target and architecture
 4. AVD cache / snapshot strategy
+   - AVD cache key is **always tied to the API level** (and architecture), never to the branch — emulator images and system snapshots depend on the system image, so reusing them across branches is safe and desirable
 5. Emulator boot timeout
 6. Emulator options
 7. Whether to enable KVM permissions setup
@@ -100,13 +98,13 @@ Before generating or updating the workflow, verify the current tags for the acti
 Use `gh api` and check the exact repositories involved:
 
 ```bash
-gh api repos/actions/checkout/tags --jq '.[0].name'
-gh api repos/actions/setup-java/tags --jq '.[0].name'
-gh api repos/actions/cache/tags --jq '.[0].name'
-gh api repos/actions/upload-artifact/tags --jq '.[0].name'
-gh api repos/gradle/actions/tags --jq '.[0].name'
-gh api repos/reactivecircus/android-emulator-runner/tags --jq '.[0].name'
-gh api repos/EnricoMi/publish-unit-test-result-action/tags --jq '.[0].name'
+gh api repos/actions/checkout/releases/latest --jq '.tag_name'
+gh api repos/actions/setup-java/releases/latest --jq '.tag_name'
+gh api repos/actions/cache/releases/latest --jq '.tag_name'
+gh api repos/actions/upload-artifact/releases/latest --jq '.tag_name'
+gh api repos/gradle/actions/releases/latest --jq '.tag_name'
+gh api repos/reactivecircus/android-emulator-runner/releases/latest --jq '.tag_name'
+gh api repos/EnricoMi/publish-unit-test-result-action/releases/latest --jq '.tag_name'
 ```
 
 Rules:
@@ -150,19 +148,7 @@ Always structure the generated workflow in layers:
 - instrumented-test XML paths
 - instrumented-test HTML report paths
 
-### Step 7: Use `gradle-ci.properties` correctly
-
-If the repository has `gradle-ci.properties`, prefer this pattern:
-
-```bash
-chmod +x ./gradlew
-cp gradle-ci.properties gradle.properties || true
-echo "GRADLE_OPTS=-Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.caching=true" >> $GITHUB_ENV
-```
-
-Do not invent a second CI properties file when the repository already provides one. Adapt only when the user explicitly needs changes.
-
-### Step 8: Output contract
+### Step 7: Output contract
 
 When you finish, provide:
 
@@ -177,7 +163,6 @@ When you finish, provide:
 - Prefer a fast Ubuntu job
 - Prefer host Gradle execution
 - Prefer XML publication and HTML upload on failure
-- Reuse `gradle-ci.properties` when present
 - Ask whether cache should use `actions/cache` explicitly or `setup-java cache: gradle` only
 
 ### If the user wants `androidtest`
@@ -185,7 +170,6 @@ When you finish, provide:
 - Prefer one emulator first unless the user explicitly wants a matrix
 - Ask whether AVD snapshots should be cached
 - Ask whether multiple API levels should run in parallel
-- Reuse `gradle-ci.properties` when present
 - Verify `reactivecircus/android-emulator-runner` before reusing its version
 
 ## Output Quality Bar

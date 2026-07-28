@@ -1,6 +1,6 @@
 # Workflow Patterns
 
-This reference captures reusable patterns extracted from Android CI workflows and a `gradle-ci.properties` baseline.
+This reference captures reusable patterns extracted from Android CI workflows.
 
 ## Common patterns
 
@@ -19,16 +19,6 @@ permissions:
   contents: read
   checks: write
   pull-requests: write
-```
-
-### Gradle CI setup
-
-```yaml
-- name: Configure Gradle for CI
-  run: |
-    chmod +x ./gradlew
-    cp gradle-ci.properties gradle.properties || true
-    echo "GRADLE_OPTS=-Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.caching=true" >> $GITHUB_ENV
 ```
 
 ### Report publication
@@ -132,6 +122,8 @@ Do not hard-code module names or report directories unless they match the reposi
 
 ### AVD cache pattern
 
+AVD cache is always tied to the API level (and architecture) — never to the branch — so the same snapshot is safely reused across branches.
+
 ```yaml
 - name: AVD cache
   uses: actions/cache@v4
@@ -140,7 +132,32 @@ Do not hard-code module names or report directories unless they match the reposi
     path: |
       ~/.android/avd/*
       ~/.android/adb*
-    key: avd-<key-suffix>
+    key: avd-${{ matrix.api-level }}-${{ matrix.target }}-${{ matrix.arch }}
+```
+
+### Gradle cache pattern (per-branch key)
+
+Default behavior of `gradle/actions/setup-gradle` is a shared cache key across branches. If the user wants per-branch reuse (each branch keeps its own warm cache), include `github.ref_name` in the key:
+
+```yaml
+- name: 🐘 Gradle cache
+  uses: gradle/actions/setup-gradle@v6
+  with:
+    cache-read-only: ${{ github.ref_name != 'develop' }}
+    cache-cleanup: always
+    gradle-home-cache-cleanup: true
+```
+
+For Java (Maven/Gradle dependency caches), mirror the same branching decision:
+
+```yaml
+- name: 🐘 Java cache
+  uses: actions/setup-java@v5
+  with:
+    distribution: temurin
+    java-version: <version>
+    cache: gradle
+    cache-key: ${{ runner.os }}-java-${{ github.ref_name }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
 ```
 
 ### Snapshot creation
@@ -186,21 +203,6 @@ path: <module>/build/reports/androidTests/connected/
 
 Do not hard-code module names unless they match the target repository.
 
-## `gradle-ci.properties` baseline
-
-When a repository provides `gradle-ci.properties`, treat it as the source of truth for CI Gradle properties.
-
-Typical contents include:
-
-- larger JVM memory for CI
-- configuration cache
-- build cache
-- parallel workers
-- daemon disabled
-- Kotlin incremental/caching options
-- AndroidX / non-transitive R settings
-- reduced warning noise
-
 ## Dependency-check reminder
 
 Before finalizing a workflow, check whether these action references are still appropriate:
@@ -216,11 +218,11 @@ Before finalizing a workflow, check whether these action references are still ap
 Suggested commands:
 
 ```bash
-gh api repos/actions/checkout/tags --jq '.[0].name'
-gh api repos/actions/setup-java/tags --jq '.[0].name'
-gh api repos/actions/cache/tags --jq '.[0].name'
-gh api repos/actions/upload-artifact/tags --jq '.[0].name'
-gh api repos/gradle/actions/tags --jq '.[0].name'
-gh api repos/reactivecircus/android-emulator-runner/tags --jq '.[0].name'
-gh api repos/EnricoMi/publish-unit-test-result-action/tags --jq '.[0].name'
+gh api repos/actions/checkout/releases/latest --jq '.tag_name'
+gh api repos/actions/setup-java/releases/latest --jq '.tag_name'
+gh api repos/actions/cache/releases/latest --jq '.tag_name'
+gh api repos/actions/upload-artifact/releases/latest --jq '.tag_name'
+gh api repos/gradle/actions/releases/latest --jq '.tag_name'
+gh api repos/reactivecircus/android-emulator-runner/releases/latest --jq '.tag_name'
+gh api repos/EnricoMi/publish-unit-test-result-action/releases/latest --jq '.tag_name'
 ```
