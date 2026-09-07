@@ -15,9 +15,9 @@ Material 3 Compose theming.
 | Term | Definition |
 |---|---|
 | `MaterialTheme` | The composable function that provides theming (colors, typography, shapes) to Compose UI components. |
-| `Shape` | A Compose object used to define custom component shapes for a `MaterialTheme`. |
+| `Shapes` | A Compose object used to define custom component shapes for a `MaterialTheme`. |
 | `Typography` | A Compose object used to define custom text styles (font families, sizes, weights) for a `MaterialTheme`. |
-| `Color` | A Compose object used to define custom color schemes for `MaterialTheme`. |
+| `ColorScheme` | A Compose object used to define custom color schemes for `MaterialTheme`. |
 | XML Theme | The Android theming system defined in XML files, used by the View system. |
 
 ## Limitations
@@ -79,8 +79,8 @@ Material 3 Compose.
 
 - If your app uses custom shapes:
 
-  1. In your Compose code, define a `Shape` object to replicate your XML shape definitions.
-  2. Provide this `Shape` object to your `MaterialTheme`.
+  1. In your Compose code, define a `Shapes` object to replicate your XML shape definitions.
+  2. Provide this `Shapes` object to your `MaterialTheme`.
 
      For more details, see [shapes](https://developer.android.com/develop/ui/compose/designsystems/material3#shapes).
 - If your app uses custom typography:
@@ -111,6 +111,7 @@ Material 3 Compose.
 ## Step 5: Migrate styles (styles.xml)
 
 XML styles (styles.xml) system defines styles and appearance of:
+
 1. Widgets, components, themes for windows and dialogs
 2. Typography
 3. Themes and overlays
@@ -118,12 +119,14 @@ XML styles (styles.xml) system defines styles and appearance of:
 
 XML Views and components combine multiple attributes to create a style.
 They set their styles from styles.xml in two different ways:
+
 1. Setting "style="@style/..." directly and explicitly in the XML View
 2. Setting the style indirectly and implicitly for a component as part of a larger Theme (theme.xml)
 
-Styles have no direct equivalent in Compose - instead styles are passed as:
-parameters to composables, defined in the AppTheme, or by creating layered,
-reusable composable variations with the defined style.
+Styles have no **direct** equivalent in Compose - instead styles are passed as:
+parameters or modifiers to composables, using the
+[new, experimental Styles API](https://developer.android.com/develop/ui/compose/styles) defined in the AppTheme, or by creating
+layered, reusable composable variations with the defined style.
 
 Provide separate @Composable functions named according to the style and the
 base component, to signify the difference in styling and use cases for those
@@ -139,11 +142,11 @@ components.
 
 | XML | Compose |
 |---|---|
-| `Theme.MaterialComponents.*` | `MaterialTheme(colorScheme, typography, shapes) { }` |
+| `Theme.Material3.*` | `MaterialTheme(colorScheme, typography, shapes) { }` |
 | `TextAppearance.Material3.BodyMedium` | `TextStyle(...)` defined in `Typography(bodyMedium = ...)` |
 | `ShapeAppearance.*.SmallComponent` | `Shapes(small = RoundedCornerShape(X.dp))` |
-| `Widget.MaterialComponents.Button` | `Button(colors = ButtonDefaults.buttonColors(...))` |
-| `Widget.MaterialComponents.CardView` | `Card(shape=..., elevation=..., colors=...)` |
+| `Widget.Material3.Button` | `Button(colors = ButtonDefaults.buttonColors(...))` |
+| `Widget.Material3.CardView` | `Card(shape=..., elevation=..., colors=...)` |
 | `Widget.*.TextInputLayout.OutlinedBox` | `OutlinedTextField(colors = OutlinedTextFieldDefaults.colors(...))` |
 | `Widget.*.Chip.Filter` | `FilterChip(colors = FilterChipDefaults.filterChipColors(...))` |
 | `Widget.*.Toolbar.Primary` | `TopAppBar(colors = TopAppBarDefaults.topAppBarColors(...))` |
@@ -160,7 +163,7 @@ components.
 ## Step 6: Validate the theme migration
 
 Always use the existing theme values from the original XML theme as the source
-of truth for the new Material Theme in Compose
+of truth for the new Material Theme in Compose.
 Never invent new theme values during migration, to maintain brand consistency
 and avoid visual regressions.
 

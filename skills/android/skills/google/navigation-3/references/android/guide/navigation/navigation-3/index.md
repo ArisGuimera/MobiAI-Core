@@ -1,3 +1,15 @@
+## Android skills
+
+[View on GitHub](https://github.com/android/skills/tree/main/navigation/navigation-3)
+
+### Jetpack Navigation 3
+
+Use an Android skill to help you build using Jetpack Navigation 3. To install the skill from the [Android CLI](https://developer.android.com/tools/agents/android-cli), run:
+
+    android skills add --skill navigation-3
+
+<br />
+
 Navigation 3 is a new navigation library designed to work with Compose. With
 Navigation 3, you have full control over your back stack, and navigating to and
 from destinations is as simple as adding and removing items from a list. It

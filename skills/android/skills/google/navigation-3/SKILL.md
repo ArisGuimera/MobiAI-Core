@@ -3,11 +3,12 @@ name: navigation-3
 description: Learn how to install and migrate to Jetpack Navigation 3, and how to
   implement features and patterns such as deep links, multiple backstacks, scenes
   (dialogs, bottom sheets, list-detail, two-pane, supporting pane), conditional navigation
-  (such as logged-in navigation vs anonymous), returning results from flows, integration
+  (such as logged-in navigation versus anonymous), returning results from flows, integration
   with Hilt, ViewModel, Kotlin, and view interoperability.
 license: Complete terms in LICENSE.txt
 metadata:
   author: Google LLC
+  last-updated: '2026-08-14'
   keywords:
   - recipe
   - Android
@@ -32,6 +33,8 @@ metadata:
   - View interop.
 ---
 
+*** ** * ** ***
+
 ## Migration guide
 
 - *[Navigation 2 to Navigation 3 migration guide](references/android/guide/navigation/navigation-3/migration-guide.md)*: Step-by-step guide to migrate an Android application from Navigation 2 to Navigation 3, covering dependency updates, route changes, state management, and UI component replacements.
@@ -42,7 +45,7 @@ metadata:
 
 ## Developer documentation
 
-- \*[Navigation 3](references/android/guide/navigation/navigation-3/index.md). Search documentation for more information on basics, saving and managing navigation state, modularizing navigation code, creating custom layouts using Scenes, animating between destinations, or applying logic or wrappers to destinations.
+- *[Navigation 3](references/android/guide/navigation/navigation-3/index.md)*. Search documentation for more information on basics, saving and managing navigation state, modularizing navigation code, creating custom layouts using Scenes, animating between destinations, or applying logic or wrappers to destinations.
 
 ## Recipes
 
@@ -60,8 +63,10 @@ Code examples showcasing common patterns.
 
 ### Deep links
 
-- *[Basic](references/android/guide/navigation/navigation-3/recipes/deeplinks-basic.md)*: Shows how to parse a deep link URL from an Android Intent into a navigation key.
-- *[Advanced](references/android/guide/navigation/navigation-3/recipes/deeplinks-advanced.md)*: Shows how to handle deep links with a synthetic back stack and correct "Up" navigation behavior.
+- *[Static URI](references/android/guide/navigation/navigation-3/recipes/deeplinks-staticuri.md)*: Shows how to handle simple static URI deep links.
+- *[URI with Arguments](references/android/guide/navigation/navigation-3/recipes/deeplinks-uriarguments.md)*: Shows how to parse path and query arguments from a deep link.
+- *[Synthetic BackStack](references/android/guide/navigation/navigation-3/recipes/deeplinks-syntheticbackstack.md)*: Shows how to handle deep links with a synthetic back stack.
+- *[Custom Matcher](references/android/guide/navigation/navigation-3/recipes/deeplinks-custommatcher.md)*: Shows how to implement custom deep link matching logic.
 
 ### Scenes
 
@@ -83,6 +88,7 @@ Code examples showcasing common patterns.
 ### Animations
 
 - *[Animations](references/android/guide/navigation/navigation-3/recipes/animations.md)*: Shows how to override the default animations for all destinations and a single destination.
+- *[Conditional Transitions](references/android/guide/navigation/navigation-3/recipes/conditional-transitions.md)*: Shows how to implement conditional transition animations.
 
 ### Common back stack behavior
 
@@ -91,6 +97,10 @@ Code examples showcasing common patterns.
 ### Conditional navigation
 
 - *[Conditional navigation](references/android/guide/navigation/navigation-3/recipes/conditional.md)*: Switch to a different navigation flow when a condition is met. For example, for authentication or first-time user onboarding.
+
+### Lifecycle
+
+- *[Lifecycle Owner](references/android/guide/navigation/navigation-3/recipes/lifecycle-owner.md)*: Shows how to use and observe Lifecycle in Navigation 3.
 
 ### Architecture
 
