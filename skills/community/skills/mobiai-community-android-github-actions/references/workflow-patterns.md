@@ -35,6 +35,12 @@ permissions:
     comment_mode: always
 ```
 
+On `pull_request` runs from a **fork**, `GITHUB_TOKEN` is read-only no matter what the
+`permissions:` block says, so this step cannot publish checks or comments. If the repo
+takes PRs from forks, either guard the step with
+`if: github.event.pull_request.head.repo.full_name == github.repository` or publish from
+a separate `workflow_run` workflow.
+
 ### Upload HTML report on failure
 
 ```yaml
@@ -135,30 +141,53 @@ AVD cache is always tied to the API level (and architecture) — never to the br
     key: avd-${{ matrix.api-level }}-${{ matrix.target }}-${{ matrix.arch }}
 ```
 
-### Gradle cache pattern (per-branch key)
+### Gradle cache pattern (branch strategy)
 
-Default behavior of `gradle/actions/setup-gradle` is a shared cache key across branches. If the user wants per-branch reuse (each branch keeps its own warm cache), include `github.ref_name` in the key:
+Neither `gradle/actions/setup-gradle` nor `actions/setup-java` exposes a cache-key
+input — both derive their keys internally. So "per-branch cache" is not something
+you configure with a key on these actions; you choose it with **read/write scope**:
 
 ```yaml
-- name: 🐘 Gradle cache
+- name: Set up Gradle
   uses: gradle/actions/setup-gradle@v6
   with:
-    cache-read-only: ${{ github.ref_name != 'develop' }}
+    # Only the default branch writes the shared cache; every other branch reads it.
+    # Substitute the repository's real default branch.
+    cache-read-only: ${{ github.ref_name != '<default-branch>' }}
     cache-cleanup: always
-    gradle-home-cache-cleanup: true
 ```
 
-For Java (Maven/Gradle dependency caches), mirror the same branching decision:
+Do not also pass `gradle-home-cache-cleanup` — it is deprecated and superseded by
+`cache-cleanup`.
+
+If the user genuinely wants each branch to keep its own warm cache, `setup-gradle`
+cannot express that. Fall back to the manual `actions/cache` pattern above and put
+`github.ref_name` in the key yourself:
 
 ```yaml
-- name: 🐘 Java cache
-  uses: actions/setup-java@v5
+key: gradle-${{ runner.os }}-${{ github.ref_name }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+restore-keys: |
+  gradle-${{ runner.os }}-
+```
+
+For the JDK, `actions/setup-java` caches Gradle dependencies via `cache:`. Its valid
+cache inputs are `cache`, `cache-jdk`, `cache-dependency-path`, `cache-path` and
+`cache-read-only` — there is no `cache-key`:
+
+```yaml
+- name: Set up JDK
+  uses: actions/setup-java@v6
   with:
     distribution: temurin
     java-version: <version>
     cache: gradle
-    cache-key: ${{ runner.os }}-java-${{ github.ref_name }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+    cache-dependency-path: |
+      **/*.gradle*
+      **/gradle-wrapper.properties
 ```
+
+Pick a single cache owner: if the workflow already uses `setup-gradle`, leave `cache:`
+off `setup-java` — running both caches the same Gradle home twice.
 
 ### Snapshot creation
 

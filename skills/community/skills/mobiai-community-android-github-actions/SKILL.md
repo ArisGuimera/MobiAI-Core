@@ -70,9 +70,10 @@ Ask these one at a time:
    - enable/disable cache
    - restore/save behavior
    - artifact retention policy
-   - whether to use a **branch-specific key** so the same cache can be reused across runs on the same branch (for both Gradle and Java); ask which strategy to apply:
-     - **shared key** across branches (default `gradle/actions/setup-gradle` behavior)
-     - **per-branch key** (e.g. key includes `github.ref_name`) so each branch keeps its own warm cache
+   - which branch strategy to apply:
+     - **shared cache** across branches, written only by the default branch (default `gradle/actions/setup-gradle` behavior; scope it with `cache-read-only`)
+     - **per-branch cache**, where each branch keeps its own warm entry — this needs a manual `actions/cache` step, since neither `setup-gradle` nor `setup-java` accepts a cache-key input
+   - which step owns the cache: `setup-gradle` or `setup-java cache: gradle`, never both
 4. Reporting
    - publish XML results
    - upload HTML reports on failure or always
