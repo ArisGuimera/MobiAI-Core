@@ -166,8 +166,8 @@ Join the [community Discord](https://bit.ly/3bmeQvm) where we have a channel for
 
 ## 👨‍💻 Contributors
 
-<a href="https://github.com/ArisGuimera/JetpackComposePro/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=ArisGuimera/mobiai-core" />
+<a href="https://github.com/ArisGuimera/MobiAI-Core/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=ArisGuimera/MobiAI-Core" />
 </a>
 
 
