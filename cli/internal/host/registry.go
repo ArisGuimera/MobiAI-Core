@@ -28,7 +28,6 @@ var tier3IDs = map[string]bool{
 	"mux":              true,
 	"amp":              true,
 	"letta":            true,
-
 	"claude-desktop":   true,
 	"piebald":          true,
 	"factory":          true,

@@ -41,6 +41,11 @@ func (a *firebenderAdapter) SkillsDir() string {
 	return filepath.Join(dir, "skills")
 }
 
+// Detect looks for a Firebender project marker in the current directory only;
+// it deliberately does not walk up to parent directories. Widening the search
+// would also widen where Install writes, and this adapter writes into the
+// working tree rather than $HOME. Run from the project root, or pass
+// --host=firebender to target it explicitly.
 func (a *firebenderAdapter) Detect() DetectResult {
 	cwd, err := os.Getwd()
 	if err != nil {
