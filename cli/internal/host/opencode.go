@@ -7,7 +7,7 @@ func newOpenCode() HostAdapter {
 		id:         "opencode",
 		name:       "OpenCode",
 		homepage:   "https://opencode.ai",
-		homeSubdir: ".agents",
+		homeSubdir: ".config/opencode",
 		caps:       Caps{Skills: true},
 	}
 }

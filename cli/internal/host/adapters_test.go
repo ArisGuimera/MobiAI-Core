@@ -25,7 +25,7 @@ func adapterCases() []adapterCase {
 		// Tier 2 (best-effort)
 		{newGoose, "goose", "Goose", ".config/goose", false, false},
 		{newGitHubCopilot, "github-copilot", "GitHub Copilot", ".copilot", false, false},
-		{newOpenCode, "opencode", "OpenCode", ".agents", false, false},
+		{newOpenCode, "opencode", "OpenCode", ".config/opencode", false, false},
 		{newJunie, "junie", "Junie", ".junie", false, false},
 		{newRooCode, "roo-code", "Roo Code", ".roo-code", false, false},
 		// Tier 3 (speculative, paths a confirmar)
@@ -38,7 +38,7 @@ func adapterCases() []adapterCase {
 		{newClaudeDesktop, "claude-desktop", "Claude Desktop", ".claude-desktop", false, false},
 		{newPiebald, "piebald", "Piebald", ".piebald", false, false},
 		{newFactory, "factory", "Factory", ".factory", false, false},
-		{newPi, "pi", "pi", ".agents", false, false},
+		{newPi, "pi", "pi", ".pi/agent", false, false},
 		{newDatabricksGenie, "databricks-genie", "Databricks Genie Code", ".databricks/genie-code", false, false},
 		{newAgentman, "agentman", "Agentman", ".agentman", false, false},
 		{newTRAE, "trae", "TRAE", ".trae", false, false},
