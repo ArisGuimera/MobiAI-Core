@@ -108,14 +108,29 @@ func TestFirebenderAdapter_SkillsDir_UsesProjectDir(t *testing.T) {
 		}
 	})
 
-	// macOS: os.Getwd() resolves /var to /private/var; want must match.
-	resolvedTmp, err := filepath.EvalSymlinks(tmp)
+	// The OS can report the same directory under a different spelling than the
+	// one passed to Chdir: macOS aliases /var to /private/var, and Windows hands
+	// back 8.3 short names (runneradmin -> RUNNER~1). Deriving `want` from
+	// EvalSymlinks(tmp) breaks on both. Use os.Getwd() -- the same source the
+	// adapter reads -- and os.SameFile to confirm we really landed in tmp.
+	cwd, err := os.Getwd()
 	if err != nil {
 		t.Fatal(err)
 	}
+	fiTmp, err := os.Stat(tmp)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fiCwd, err := os.Stat(cwd)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !os.SameFile(fiTmp, fiCwd) {
+		t.Fatalf("cwd %q is not the temp dir %q", cwd, tmp)
+	}
 
 	a := newFirebender()
-	want := filepath.Join(resolvedTmp, ".firebender", "skills")
+	want := filepath.Join(cwd, ".firebender", "skills")
 	if got := a.SkillsDir(); got != want {
 		t.Errorf("SkillsDir: got %q, want %q", got, want)
 	}
