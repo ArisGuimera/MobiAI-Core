@@ -25,7 +25,7 @@ func adapterCases() []adapterCase {
 		// Tier 2 (best-effort)
 		{newGoose, "goose", "Goose", ".config/goose", false, false},
 		{newGitHubCopilot, "github-copilot", "GitHub Copilot", ".copilot", false, false},
-		{newOpenCode, "opencode", "OpenCode", ".opencode", false, false},
+		{newOpenCode, "opencode", "OpenCode", ".config/opencode", false, false},
 		{newJunie, "junie", "Junie", ".junie", false, false},
 		{newRooCode, "roo-code", "Roo Code", ".roo-code", false, false},
 		// Project-level — detected by cwd markers, not gated by --include-experimental.
@@ -39,7 +39,7 @@ func adapterCases() []adapterCase {
 		{newClaudeDesktop, "claude-desktop", "Claude Desktop", ".claude-desktop", false, false},
 		{newPiebald, "piebald", "Piebald", ".piebald", false, false},
 		{newFactory, "factory", "Factory", ".factory", false, false},
-		{newPi, "pi", "pi", ".pi", false, false},
+		{newPi, "pi", "pi", ".pi/agent", false, false},
 		{newDatabricksGenie, "databricks-genie", "Databricks Genie Code", ".databricks/genie-code", false, false},
 		{newAgentman, "agentman", "Agentman", ".agentman", false, false},
 		{newTRAE, "trae", "TRAE", ".trae", false, false},
@@ -210,5 +210,6 @@ func TestAdapters_DetectFlow(t *testing.T) {
 				t.Errorf("Detect should be true after creating %s", c.wantHomeSub)
 			}
 		})
+		os.RemoveAll(filepath.Join(tmp, c.wantHomeSub))
 	}
 }
