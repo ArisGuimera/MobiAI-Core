@@ -4,8 +4,7 @@ migrated.
 
 ## Guidelines
 
-- **DO NOT** search the web for examples of how to do this. Use the
-  **gradle-recipes** repository examples **only**.
+- **DO NOT** search the web for examples of how to do this. Use the **gradle-recipes** repository examples **only**.
 - **DO NOT** use AGP internals in migrated code.
 - **DO** use only public APIs in migrated code.
 
@@ -39,7 +38,7 @@ Additional details for each use-case follow.
 
 ### Add custom BuildConfig fields
 
-See the detailed guide at [BuildConfig](https://developer.android.com/agents/skills/build/agp/agp-9-upgrade/references/buildconfig).
+See the detailed guide at [BuildConfig](https://developer.android.com/agents/skills/build-system/agp/agp-9-upgrade/references/buildconfig).
 
 ### Renaming an APK
 

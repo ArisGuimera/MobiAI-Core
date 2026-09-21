@@ -6,9 +6,10 @@ This recipe demonstrates how to return a result from one screen to a previous sc
 
 This example uses a `ResultEventBus` to facilitate communication between the screens.
 
-1. **`ResultEventBus`**: A simple event bus is created and made available to the composables.
-2. **Sending the result** : The screen that produces the result calls `resultBus.sendResult(person)` to send the data back as a one-time event.
-3. **Receiving the result** : The screen that needs the result uses a `ResultEffect` composable to listen for results of a specific type. When a result is received, the effect's lambda is triggered.
+1. **ResultEventBusNavEntryDecorator** : A `NavEntryDecorator` that provides a `ResultEventBus` via `LocalResultEventBus`.
+2. **`ResultEventBus`** : A `ResultEventBus` is created and made available to the composables via `LocalResultEventBus`. This EventBus sends and receives the results.
+3. **Sending the result** : The screen that produces the result calls `resultBus.sendResult(person)` to send the data back as a one-time event.
+4. **Receiving the result** : The screen that needs the result uses a `ResultEffect` composable to listen for results of a specific type. When a result is received, the effect's lambda is triggered.
 
 This approach is useful for results that are transient and should be handled as one-time events.
 [![](https://developer.android.com/static/images/picto-icons/code.svg) Explore View the full recipe on GitHub.](https://github.com/android/nav3-recipes/tree/main/app/src/main/java/com/example/nav3recipes/results/event)
@@ -68,7 +69,7 @@ import kotlinx.serialization.Serializable
 data object Home : NavKey
 
 @Serializable
-class PersonDetailsForm : NavKeyhttps://github.com/android/nav3-recipes/blob/d2a2288a393dfa373e02b04c48c483cd9add9dbf/app/src/main/java/com/example/nav3recipes/results/common/NavKeys.kt
+class PersonDetailsForm : NavKey
 ```
 
 ```
@@ -90,11 +91,10 @@ class PersonDetailsForm : NavKeyhttps://github.com/android/nav3-recipes/blob/d2a
 
 package com.example.nav3recipes.results.common
 
-import android.os.Parcelable
-import kotlinx.parcelize.Parcelize
+import kotlinx.serialization.Serializable
 
-@Parcelize
-data class Person(val name: String, val favoriteColor: String) : Parcelablehttps://github.com/android/nav3-recipes/blob/d2a2288a393dfa373e02b04c48c483cd9add9dbf/app/src/main/java/com/example/nav3recipes/results/common/Person.kt
+@Serializable
+data class Person(val name: String, val favoriteColor: String)
 ```
 
 ```
@@ -201,63 +201,19 @@ fun PersonDetailsScreen(
 
 package com.example.nav3recipes.results.event
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-
-/**
- * An Effect to provide a result even between different screens
- *
- * The trailing lambda provides the result from a flow of results.
- *
- * @param resultEventBus the ResultEventBus to retrieve the result from. The default value
- * is read from the `LocalResultEventBus` composition local.
- * @param resultKey the key that should be associated with this effect
- * @param onResult the callback to invoke when a result is received
- */
-@Composable
-inline fun <reified T> ResultEffect(
-    resultEventBus: ResultEventBus = LocalResultEventBus.current,
-    resultKey: String = T::class.toString(),
-    crossinline onResult: suspend (T) -> Unit
-) {
-    LaunchedEffect(resultKey, resultEventBus.channelMap[resultKey]) {
-        resultEventBus.getResultFlow<T>(resultKey)?.collect { result ->
-            onResult.invoke(result as T)
-        }
-    }
-}
-```
-
-```
-/*
- * Copyright 2025 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-package com.example.nav3recipes.results.event
-
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
+import androidx.navigation3.runtime.result.LocalResultEventBus
+import androidx.navigation3.runtime.result.ResultEffect
+import androidx.navigation3.runtime.result.rememberResultEventBusNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import com.example.nav3recipes.results.common.Home
 import com.example.nav3recipes.results.common.HomeScreen
@@ -265,15 +221,15 @@ import com.example.nav3recipes.results.common.HomeViewModel
 import com.example.nav3recipes.results.common.Person
 import com.example.nav3recipes.results.common.PersonDetailsForm
 import com.example.nav3recipes.results.common.PersonDetailsScreen
+import com.example.nav3recipes.ui.setEdgeToEdgeConfig
 
 class ResultEventActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        setEdgeToEdgeConfig()
         super.onCreate(savedInstanceState)
 
         setContent {
-            val resultBus = remember { ResultEventBus() }
-
             Scaffold { paddingValues ->
 
                 val backStack = rememberNavBackStack(Home)
@@ -282,10 +238,14 @@ class ResultEventActivity : ComponentActivity() {
                     backStack = backStack,
                     modifier = Modifier.padding(paddingValues),
                     onBack = { backStack.removeLastOrNull() },
+                    entryDecorators = listOf(
+                        rememberSaveableStateHolderNavEntryDecorator(),
+                        rememberResultEventBusNavEntryDecorator()
+                    ),
                     entryProvider = entryProvider {
                         entry<Home> {
                             val viewModel = viewModel<HomeViewModel>(key = Home.toString())
-                            ResultEffect<Person>(resultBus) { person ->
+                            ResultEffect<Person> { person ->
                                 viewModel.person = person
                             }
 
@@ -296,6 +256,7 @@ class ResultEventActivity : ComponentActivity() {
                             )
                         }
                         entry<PersonDetailsForm> {
+                            val resultBus = LocalResultEventBus.current
                             PersonDetailsScreen(
                                 onSubmit = { person ->
                                     resultBus.sendResult<Person>(result = person)
@@ -307,94 +268,6 @@ class ResultEventActivity : ComponentActivity() {
                 )
             }
         }
-    }
-}
-```
-
-```
-/*
- * Copyright 2025 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-package com.example.nav3recipes.results.event
-
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.ProvidableCompositionLocal
-import androidx.compose.runtime.ProvidedValue
-import androidx.compose.runtime.compositionLocalOf
-import androidx.compose.runtime.mutableStateMapOf
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.Channel.Factory.BUFFERED
-import kotlinx.coroutines.flow.receiveAsFlow
-
-/**
- * Local for receiving results in a [ResultEventBus]
- */
-object LocalResultEventBus {
-    private val LocalResultEventBus: ProvidableCompositionLocal<ResultEventBus?> =
-        compositionLocalOf { null }
-
-    /**
-     * The current [ResultEventBus]
-     */
-    val current: ResultEventBus
-        @Composable
-        get() = LocalResultEventBus.current ?: error("No ResultEventBus has been provided")
-
-    /**
-     * Provides a [ResultEventBus] to the composition
-     */
-    infix fun provides(
-        bus: ResultEventBus
-    ): ProvidedValue<ResultEventBus?> {
-        return LocalResultEventBus.provides(bus)
-    }
-}
-/**
- * An EventBus for passing results between multiple sets of screens.
- *
- * It provides a solution for event based results.
- */
-class ResultEventBus {
-    /**
-     * Map from the result key to a channel of results.
-     */
-    val channelMap = mutableStateMapOf<String, Channel<Any?>>()
-
-    /**
-     * Provides a flow for the given resultKey.
-     */
-    inline fun <reified T> getResultFlow(resultKey: String = T::class.toString()) =
-        channelMap[resultKey]?.receiveAsFlow()
-
-    /**
-     * Sends a result into the channel associated with the given resultKey.
-     */
-    inline fun <reified T> sendResult(resultKey: String = T::class.toString(), result: T) {
-        if (!channelMap.contains(resultKey)) {
-            channelMap[resultKey] = Channel(capacity = BUFFERED, onBufferOverflow = BufferOverflow.SUSPEND)
-        }
-        channelMap[resultKey]?.trySend(result)
-    }
-
-    /**
-     * Removes all results associated with the given key from the store.
-     */
-    inline fun <reified T> removeResult(resultKey: String = T::class.toString()) {
-        channelMap.remove(resultKey)
     }
 }
 ```
