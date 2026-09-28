@@ -63,7 +63,8 @@ checks.
 ### 6. SDK \& Environment Requirements
 
 - **PBL 7.0** : Requires `compileSdk 34` or higher.
-- **PBL 8.0** : Requires `compileSdk 35`.
+- **PBL 8.0** : Requires `compileSdk 34` or higher.
+- **PBL 9.0** : Requires `compileSdk 35` or higher.
 - **Kotlin** : Verify that `kotlin-stdlib` is updated to at least 1.9.x to support new library coroutine extensions.
 
 ### 7. User-Facing Features (Post-Upgrade Recommendations)
@@ -74,3 +75,4 @@ versions:
 - **v7** : **Installments** (Monthly payments for annual plans).
 - **v8** : **Prepaid Plans** (Users can top-up time without auto-renewing).
 - **v8** : **Personalized Pricing** (Show legal disclosure if price varies by user).
+- **v9** : **In-App Price Reviews** (Users can accept upcoming subscription price increases directly inside the app without leaving for the Play Store; capped by Google at a maximum of once every 7 days).
