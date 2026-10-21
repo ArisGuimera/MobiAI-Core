@@ -58,16 +58,6 @@ jobs:
 
           author_lc=$(echo "$PR_AUTHOR" | tr '[:upper:]' '[:lower:]')
 
-          # Excepción acotada: el bot que sincroniza los skills vendoreados de
-          # Google abre su PR como github-actions[bot] y solo toca
-          # skills/android/skills/google/ (ver sync-android-skills.yml). Se le
-          # permite en vez de excluir ese path de forma incondicional — así un
-          # humano externo que edite a mano esos skills SÍ queda bloqueado.
-          if [ "$author_lc" = "github-actions[bot]" ]; then
-            echo "Author @$PR_AUTHOR is the upstream-sync bot — allowed. ✓"
-            exit 0
-          fi
-
           # ¿El autor del PR es maintainer? (case-insensitive)
           for m in $MAINTAINERS; do
             if [ "$author_lc" = "$(echo "$m" | tr '[:upper:]' '[:lower:]')" ]; then
