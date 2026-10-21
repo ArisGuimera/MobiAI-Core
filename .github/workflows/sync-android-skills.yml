@@ -5,9 +5,13 @@ on:
     - cron: '0 6 * * 1'  # cada lunes a las 06:00 UTC
   workflow_dispatch:
 
+# Sin pull-requests: write a propósito. El bot pushea la rama y avisa con un
+# issue; el PR lo abre un maintainer. Así no hace falta habilitar "Allow GitHub
+# Actions to create and approve pull requests", y los checks corren en el PR
+# (los PRs abiertos con GITHUB_TOKEN no disparan otros workflows).
 permissions:
   contents: write
-  pull-requests: write
+  issues: write
 
 concurrency:
   group: sync-android-skills
@@ -53,10 +57,12 @@ jobs:
           fi
 
       - name: Sync SKILL.md directories
+        id: sync
         env:
           VENDOR_ROOT: skills/android/skills/google
         run: |
           set -euo pipefail
+          echo "upstream_sha=$(git -C _upstream rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
           mapfile -t upstream_paths < <(find _upstream -name SKILL.md -type f | sort)
           declare -A upstream_names
@@ -87,32 +93,75 @@ jobs:
 
       - name: Detect changes
         id: changes
+        env:
+          VENDOR_ROOT: skills/android/skills/google
         run: |
           set -euo pipefail
-          if git diff --quiet --exit-code; then
+          # git add primero: las skills nuevas son archivos untracked y
+          # `git diff` sin --cached no las ve.
+          git add -A "$VENDOR_ROOT"
+          if git diff --cached --quiet; then
             echo "has_changes=false" >> "$GITHUB_OUTPUT"
             echo "No changes detected."
           else
             echo "has_changes=true" >> "$GITHUB_OUTPUT"
             echo "Changes detected:"
-            git diff --stat
+            git diff --cached --stat
           fi
 
-      - name: Open PR
+      - name: Push sync branch
+        id: push
         if: steps.changes.outputs.has_changes == 'true'
-        uses: peter-evans/create-pull-request@v6
-        with:
-          branch: chore/sync-android-skills
-          delete-branch: true
-          commit-message: "chore: sincronizar android/skills vendoreados"
-          title: "chore: sincronizar android/skills vendoreados"
-          body: |
-            Sincronizacion automatica del contenido vendoreado desde
-            [android/skills](https://github.com/android/skills) upstream.
+        env:
+          BRANCH: chore/sync-android-skills
+          VENDOR_ROOT: skills/android/skills/google
+          UPSTREAM_SHA: ${{ steps.sync.outputs.upstream_sha }}
+        run: |
+          set -euo pipefail
+          # Si la rama ya tiene exactamente este contenido, upstream no cambió
+          # desde el último aviso: no re-pusheamos ni volvemos a notificar.
+          if git fetch --quiet origin "$BRANCH" 2>/dev/null \
+             && git diff --cached --quiet FETCH_HEAD -- "$VENDOR_ROOT"; then
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
+            echo "La rama $BRANCH ya está al día con upstream."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BRANCH"
+          git commit -m "chore: sincronizar android/skills vendoreados" \
+            -m "Upstream: android/skills@$UPSTREAM_SHA"
+          git push --force origin "$BRANCH"
+          echo "pushed=true" >> "$GITHUB_OUTPUT"
 
-            El diff de este PR muestra los archivos que cambiaron: SKILL.md
-            actualizados, skills agregadas, skills removidas, o cambios en
-            LICENSE/README.
+      - name: Open or update tracking issue
+        if: steps.push.outputs.pushed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          BRANCH: chore/sync-android-skills
+          TITLE: "chore: sincronizar android/skills vendoreados"
+          UPSTREAM_SHA: ${{ steps.sync.outputs.upstream_sha }}
+          COMPARE_URL: ${{ github.server_url }}/${{ github.repository }}/compare/main...chore/sync-android-skills?expand=1
+        run: |
+          set -euo pipefail
+          stat=$(git diff --shortstat HEAD~1 HEAD)
+          cat > issue-body.md <<EOF
+          El sync semanal trajo cambios de [android/skills](https://github.com/android/skills) a la rama \`$BRANCH\` (upstream \`${UPSTREAM_SHA:0:7}\`):$stat.
 
-            Auto-generado por `.github/workflows/sync-android-skills.yml`.
-            Apache 2.0 attribution preserved (ver `NOTICE.md`).
+          Estas skills se cargan en el contexto de los agentes, así que **no se mergean sin revisión**:
+
+          1. Revisar el diff completo en busca de prompt injection: $COMPARE_URL
+          2. Abrir el PR a mano (así corren los checks; un PR abierto por el bot no los dispara):
+             \`gh pr create --base main --head $BRANCH --fill\` y agregar \`Closes #<este issue>\` en la descripción.
+          3. Si el bot vuelve a actualizar la rama con el PR abierto, revisar de nuevo el diff nuevo antes de mergear.
+
+          Auto-generado por \`.github/workflows/sync-android-skills.yml\`. Apache 2.0 attribution preserved (ver \`NOTICE.md\`).
+          EOF
+          number=$(gh issue list --state open --search "\"$TITLE\" in:title" --json number,title \
+            --jq ".[] | select(.title == \"$TITLE\") | .number" | head -1)
+          if [ -n "$number" ]; then
+            gh issue comment "$number" --body-file issue-body.md
+          else
+            gh issue create --title "$TITLE" --body-file issue-body.md
+          fi
