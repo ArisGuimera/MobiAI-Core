@@ -144,6 +144,19 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -B "$BRANCH"
+          # Claude Code solo actualiza un plugin instalado si cambia la versión
+          # de su plugin.json: sin este bump, quien tiene el plugin android
+          # nunca recibe lo que trae el sync.
+          python3 - skills/android/.claude-plugin/plugin.json <<'PY'
+          import re, sys
+          path = sys.argv[1]
+          text = open(path, encoding="utf-8").read()
+          m = re.search(r'("version"\s*:\s*")(\d+)\.(\d+)\.(\d+)(")', text)
+          new = f"{m[2]}.{m[3]}.{int(m[4]) + 1}"
+          open(path, "w", encoding="utf-8").write(text[:m.start()] + m[1] + new + m[5] + text[m.end():])
+          print(f"android plugin version -> {new}")
+          PY
+          git add skills/android/.claude-plugin/plugin.json
           git commit -m "chore: sincronizar android/skills vendoreados" \
             -m "Upstream: android/skills@$UPSTREAM_SHA"
           git push --force origin "$BRANCH"
