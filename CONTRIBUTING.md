@@ -47,6 +47,7 @@ Antes de enviar una contribución:
 - [ ] **Secciones por plataforma** — Si es multi-plataforma, cada plataforma tiene su sección
 - [ ] **Conciso** — Mueve explicaciones detalladas a archivos en `references/`
 - [ ] **Sin secretos** — Sin API keys, tokens ni credenciales
+- [ ] **Versión del plugin** — Si cambiaste skills de un plugin, sube la `version` de su `.claude-plugin/plugin.json`. Claude Code solo actualiza un plugin instalado cuando cambia esa versión: sin el bump, quienes usan MobiAI como plugin no reciben tu cambio
 
 ## Proceso de Pull Request
 
