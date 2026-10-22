@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bytes"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -48,6 +49,14 @@ func TestUpdate_FromLocalRoot_UpdatesMeta(t *testing.T) {
 // cloned from. Skips the test if `git` is not installed.
 func makeBareCatalogRepo(t *testing.T) string {
 	t.Helper()
+	_, url := makeCatalogRepos(t)
+	return url
+}
+
+// makeCatalogRepos is makeBareCatalogRepo but also returns the working repo,
+// so a test can push follow-up commits that the next `mobiai update` pulls.
+func makeCatalogRepos(t *testing.T) (work, url string) {
+	t.Helper()
 	if _, err := exec.LookPath("git"); err != nil {
 		t.Skip("git not on PATH; skipping remote-catalog test")
 	}
@@ -58,7 +67,7 @@ func makeBareCatalogRepo(t *testing.T) string {
 	}
 
 	// Create a working repo from the fixture.
-	work := filepath.Join(t.TempDir(), "work")
+	work = filepath.Join(t.TempDir(), "work")
 	if err := os.MkdirAll(work, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -82,7 +91,7 @@ func makeBareCatalogRepo(t *testing.T) string {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return "file:///" + filepath.ToSlash(abs)
+	return work, "file:///" + filepath.ToSlash(abs)
 }
 
 func copyDirContents(src, dst string) error {
@@ -208,5 +217,127 @@ func TestUpdate_GitPull_ExistingCache(t *testing.T) {
 
 	if !strings.Contains(out2.String(), "Syncing catalog (git pull)") {
 		t.Errorf("expected pull message on 2nd run; got: %q", out2.String())
+	}
+}
+
+// runCmd executes a fresh command with args and returns its combined output.
+func runCmd(t *testing.T, c interface {
+	SetOut(io.Writer)
+	SetErr(io.Writer)
+	SetArgs([]string)
+	Execute() error
+}, args ...string) string {
+	t.Helper()
+	var out bytes.Buffer
+	c.SetOut(&out)
+	c.SetErr(&out)
+	c.SetArgs(args)
+	if err := c.Execute(); err != nil {
+		t.Fatalf("execute %v: %v\n%s", args, err, out.String())
+	}
+	return out.String()
+}
+
+// An update must re-copy the packs the user already installed: new skills
+// land, changed skills get the new content, and skills that left the catalog
+// are removed from the host.
+func TestUpdate_RefreshesInstalledPacks(t *testing.T) {
+	tmp := communityTestHome(t)
+	work, url := makeCatalogRepos(t)
+	t.Setenv("MOBIAI_CATALOG_GIT_URL", url)
+
+	runCmd(t, NewUpdateCmd(), "--skip-binary")
+	runCmd(t, NewSkillsCmd(), "add", "android", "--yes")
+
+	skillsDir := filepath.Join(tmp, ".claude", "skills")
+	if _, err := os.Stat(filepath.Join(skillsDir, "android-build", "SKILL.md")); err != nil {
+		t.Fatalf("precondition: android-build should be installed: %v", err)
+	}
+
+	// Upstream catalog changes: edge-to-edge is edited, android-build leaves
+	// the pack and new-skill joins it. android-build exists only in this
+	// fixture (not in the catalog embedded in the test binary), so removing it
+	// proves the pre-update snapshot of the cached catalog drives the pruning.
+	android := filepath.Join(work, "skills", "android", "skills")
+	edgeSkill := filepath.Join(android, "google", "edge-to-edge", "SKILL.md")
+	if err := os.WriteFile(edgeSkill, []byte("---\nname: edge-to-edge\ndescription: test fixture\n---\nv2 body\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.RemoveAll(filepath.Join(android, "android-build")); err != nil {
+		t.Fatal(err)
+	}
+	newSkill := filepath.Join(android, "google", "new-skill")
+	if err := os.MkdirAll(newSkill, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(newSkill, "SKILL.md"), []byte("---\nname: new-skill\ndescription: test fixture\n---\nnew body\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	mustRun(t, work, "git", "-c", "user.email=t@t", "-c", "user.name=t", "add", "-A")
+	mustRun(t, work, "git", "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-m", "catalog v2")
+	mustRun(t, work, "git", "push", "origin", "main")
+
+	out := runCmd(t, NewUpdateCmd(), "--skip-binary")
+
+	got, err := os.ReadFile(filepath.Join(skillsDir, "edge-to-edge", "SKILL.md"))
+	if err != nil || !strings.Contains(string(got), "v2 body") {
+		t.Errorf("edge-to-edge should have the new content; got %q (err %v)", got, err)
+	}
+	if _, err := os.Stat(filepath.Join(skillsDir, "new-skill", "SKILL.md")); err != nil {
+		t.Errorf("new-skill should be installed by the update: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(skillsDir, "android-build")); !os.IsNotExist(err) {
+		t.Errorf("android-build left the catalog and should be removed; stat err: %v", err)
+	}
+	if !strings.Contains(out, "android") {
+		t.Errorf("output should report the refreshed pack; got: %q", out)
+	}
+}
+
+// A skill that moves from one installed pack to another must survive the
+// refresh: it is stale for the old pack but still shipped by the new one.
+// community → android is the order-sensitive case, because "android" is
+// refreshed first and "community" would then delete what it just installed.
+func TestUpdate_RefreshKeepsSkillMovedBetweenPacks(t *testing.T) {
+	tmp := communityTestHome(t)
+	work, url := makeCatalogRepos(t)
+	t.Setenv("MOBIAI_CATALOG_GIT_URL", url)
+
+	runCmd(t, NewUpdateCmd(), "--skip-binary")
+	runCmd(t, NewSkillsCmd(), "add", "android", "community", "--yes")
+
+	from := filepath.Join(work, "skills", "community", "skills", "alpha-skill")
+	to := filepath.Join(work, "skills", "android", "skills", "alpha-skill")
+	if err := os.Rename(from, to); err != nil {
+		t.Fatal(err)
+	}
+	mustRun(t, work, "git", "-c", "user.email=t@t", "-c", "user.name=t", "add", "-A")
+	mustRun(t, work, "git", "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-m", "move alpha-skill to android")
+	mustRun(t, work, "git", "push", "origin", "main")
+
+	runCmd(t, NewUpdateCmd(), "--skip-binary")
+
+	if _, err := os.Stat(filepath.Join(tmp, ".claude", "skills", "alpha-skill", "SKILL.md")); err != nil {
+		t.Errorf("alpha-skill moved to android and must stay installed: %v", err)
+	}
+}
+
+// A host recorded in installed.json but no longer present (its config dir was
+// deleted) must be skipped, not recreated by the refresh.
+func TestUpdate_RefreshSkipsMissingHosts(t *testing.T) {
+	tmp := communityTestHome(t)
+	paths, err := state.NewPaths()
+	if err != nil {
+		t.Fatal(err)
+	}
+	installed := &state.Installed{Packs: map[string][]string{"android": {"codex"}}}
+	if err := installed.Save(paths); err != nil {
+		t.Fatal(err)
+	}
+
+	runCmd(t, NewUpdateCmd(), "--catalog-root", sampleCatalogRoot(t), "--skip-binary")
+
+	if _, err := os.Stat(filepath.Join(tmp, ".codex")); !os.IsNotExist(err) {
+		t.Errorf("refresh must not create the config dir of a missing host; stat err: %v", err)
 	}
 }
