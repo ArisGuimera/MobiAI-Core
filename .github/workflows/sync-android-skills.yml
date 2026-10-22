@@ -60,9 +60,20 @@ jobs:
         id: sync
         env:
           VENDOR_ROOT: skills/android/skills/google
+          # Skills de upstream que no vendoreamos hasta que Google las arregle.
+          # Como no quedan en upstream_names, la limpieza de abajo las borra si
+          # ya estaban vendoreadas.
+          # - appfunctions: manda al agente a obedecer las descripciones de
+          #   cualquier app instalada (android/skills#251).
+          # - r8-analyzer: exige correr scripts que no vienen en la skill
+          #   (android/skills#172).
+          EXCLUDED_SKILLS: "appfunctions r8-analyzer"
         run: |
           set -euo pipefail
           echo "upstream_sha=$(git -C _upstream rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+          declare -A excluded_names
+          for name in $EXCLUDED_SKILLS; do excluded_names[$name]=1; done
 
           mapfile -t upstream_paths < <(find _upstream -name SKILL.md -type f | sort)
           declare -A upstream_names
@@ -70,6 +81,10 @@ jobs:
           for path in "${upstream_paths[@]}"; do
             skill_dir=$(dirname "$path")
             name=$(basename "$skill_dir")
+            if [ -n "${excluded_names[$name]:-}" ]; then
+              echo "Skipped (excluded): $name"
+              continue
+            fi
             upstream_names[$name]=1
 
             target_dir="$VENDOR_ROOT/$name"
@@ -83,7 +98,7 @@ jobs:
             [ -d "$vendored_dir" ] || continue
             name=$(basename "$vendored_dir")
             if [ -z "${upstream_names[$name]:-}" ]; then
-              echo "Removing (no longer upstream): $name"
+              echo "Removing (excluded or no longer upstream): $name"
               rm -rf "$vendored_dir"
             fi
           done
