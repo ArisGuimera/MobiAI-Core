@@ -4,13 +4,14 @@ This recipe demonstrates how to return a result from one screen to a previous sc
 
 ## How it works
 
-This example uses a `ResultStore` to manage the result as state.
+This example uses a `ResultEventBus` to manage the result as state.
 
-1. **`ResultStore`** : A `ResultStore` is created and made available to the composables. This store holds the results.
-2. **Setting the result** : The screen that produces the result calls `resultStore.setResult(person)` to save the data in the store.
-3. **Observing the result** : The screen that needs the result calls `resultStore.getResultState<Person?>()` to get a `State` object representing the result. The UI then observes this state and recomposes whenever the result changes.
+1. **ResultEventBusNavEntryDecorator** : A `NavEntryDecorator` that provides a `ResultEventBus` via `LocalResultEventBus`.
+2. **`ResultEventBus`** : A `ResultEventBus` is created and made available to the composables via `LocalResultEventBus`. This EventBus sends and receives the results.
+3. **Setting the result** : The screen that produces the result calls `resultBus.sendResult(person)` to send the data back.
+4. **Observing the result** : The screen that needs the result calls `resultBus.conflateAsState<Person?>()` to get a `State` object representing the result. The UI then observes this state and recomposes whenever the result changes.
 
-This approach is suitable when the result should be treated as persistent state that survives recomposition and configuration changes.
+This approach is suitable when only the latest result is required. The result state does not survive configuration change or process death.
 [![](https://developer.android.com/static/images/picto-icons/code.svg) Explore View the full recipe on GitHub.](https://github.com/android/nav3-recipes/tree/main/app/src/main/java/com/example/nav3recipes/results/state)
 
 ```
@@ -68,7 +69,7 @@ import kotlinx.serialization.Serializable
 data object Home : NavKey
 
 @Serializable
-class PersonDetailsForm : NavKeyhttps://github.com/android/nav3-recipes/blob/d2a2288a393dfa373e02b04c48c483cd9add9dbf/app/src/main/java/com/example/nav3recipes/results/common/NavKeys.kt
+class PersonDetailsForm : NavKey
 ```
 
 ```
@@ -90,11 +91,10 @@ class PersonDetailsForm : NavKeyhttps://github.com/android/nav3-recipes/blob/d2a
 
 package com.example.nav3recipes.results.common
 
-import android.os.Parcelable
-import kotlinx.parcelize.Parcelize
+import kotlinx.serialization.Serializable
 
-@Parcelize
-data class Person(val name: String, val favoriteColor: String) : Parcelablehttps://github.com/android/nav3-recipes/blob/d2a2288a393dfa373e02b04c48c483cd9add9dbf/app/src/main/java/com/example/nav3recipes/results/common/Person.kt
+@Serializable
+data class Person(val name: String, val favoriteColor: String)
 ```
 
 ```
@@ -209,40 +209,50 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
+import androidx.navigation3.runtime.result.LocalResultEventBus
+import androidx.navigation3.runtime.result.rememberResultEventBusNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import com.example.nav3recipes.results.common.Home
 import com.example.nav3recipes.results.common.HomeScreen
 import com.example.nav3recipes.results.common.Person
 import com.example.nav3recipes.results.common.PersonDetailsForm
 import com.example.nav3recipes.results.common.PersonDetailsScreen
+import com.example.nav3recipes.ui.setEdgeToEdgeConfig
 
 class ResultStateActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        setEdgeToEdgeConfig()
         super.onCreate(savedInstanceState)
 
         setContent {
-            val resultStore = rememberResultStore()
-
             Scaffold { paddingValues ->
                 val backStack = rememberNavBackStack(Home)
-
                 NavDisplay(
                     backStack = backStack,
                     modifier = Modifier.padding(paddingValues),
                     onBack = { backStack.removeLastOrNull() },
+                    entryDecorators = listOf(
+                        rememberSaveableStateHolderNavEntryDecorator(),
+                        rememberResultEventBusNavEntryDecorator()
+                    ),
                     entryProvider = entryProvider {
                         entry<Home> {
-                            val person = resultStore.getResultState<Person?>()
+                            val resultState = LocalResultEventBus
+                                .current
+                                .conflateAsState<Person?>(null)
+                            val person = resultState.value
                             HomeScreen(
                                 person = person,
                                 onNext = { backStack.add(PersonDetailsForm()) }
                             )
                         }
                         entry<PersonDetailsForm> {
+                            val resultBus = LocalResultEventBus.current
                             PersonDetailsScreen(
                                 onSubmit = { person ->
-                                    resultStore.setResult<Person>(result = person)
+                                    resultBus.sendResult(result = person)
                                     backStack.removeLastOrNull()
                                 }
                             )
@@ -253,117 +263,4 @@ class ResultStateActivity : ComponentActivity() {
         }
     }
 }
-```
-
-```
-/*
- * Copyright 2025 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-package com.example.nav3recipes.results.state
-
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.ProvidableCompositionLocal
-import androidx.compose.runtime.ProvidedValue
-import androidx.compose.runtime.compositionLocalOf
-import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.Saver
-import androidx.compose.runtime.saveable.mapSaver
-import androidx.compose.runtime.saveable.rememberSaveable
-
-/**
- * Local for storing results in a [ResultStore]
- */
-object LocalResultStore {
-    private val LocalResultStore: ProvidableCompositionLocal<ResultStore?> =
-        compositionLocalOf { null }
-
-    /**
-     * The current [ResultStore]
-     */
-    val current: ResultStore
-        @Composable
-        get() = LocalResultStore.current ?: error("No ResultStore has been provided")
-
-    /**
-     * Provides a [ResultStore] to the composition
-     */
-    infix fun provides(
-        store: ResultStore
-    ): ProvidedValue<ResultStore?> {
-        return LocalResultStore.provides(store)
-    }
-}
-
-/**
- * Provides a [ResultStore] that will be remembered across configuration changes.
- */
-@Composable
-fun rememberResultStore(): ResultStore {
-    return rememberSaveable(saver = ResultStoreSaver()) {
-        ResultStore()
-    }
-}
-
-/**
- * A store for passing results between multiple sets of screens.
- *
- * It provides a solution for state based results.
- */
-class ResultStore {
-
-    /**
-     * Map from the result key to a mutable state of the result.
-     */
-    val resultStateMap = mutableStateMapOf<String, MutableState<Any?>>()
-
-    /**
-     * Retrieves the current result of the given resultKey.
-     */
-    inline fun <reified T> getResultState(resultKey: String = T::class.toString()) =
-        resultStateMap[resultKey]?.value as T
-
-    /**
-     * Sets the result for the given resultKey.
-     */
-    inline fun <reified T> setResult(resultKey: String = T::class.toString(), result: T) {
-        resultStateMap[resultKey] = mutableStateOf(result)
-    }
-
-    /**
-     * Removes all results associated with the given key from the store.
-     */
-    inline fun <reified T> removeResult(resultKey: String = T::class.toString()) {
-        resultStateMap.remove(resultKey)
-    }
-}
-
-/** Saver to save and restore the ResultStore across config change and process death. */
-private fun ResultStoreSaver(): Saver<ResultStore, *> =
-    mapSaver(
-        save = { resultStore ->
-            resultStore.resultStateMap.mapValues { it.value.value }
-        },
-        restore = { restoredMap ->
-            ResultStore().apply {
-                restoredMap.forEach { (key, value) ->
-                    resultStateMap[key] = mutableStateOf(value)
-                }
-            }
-        }
-    )
 ```

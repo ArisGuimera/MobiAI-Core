@@ -37,7 +37,7 @@ In custom build-logic using `CommonExtension`:
 
 ### Step 2: Migrate to the new API
 
-Use the **addCustomBuildConfigFields** recipe from the [gradle-recipes](https://developer.android.com/agents/skills/build/agp/agp-9-upgrade/references/recipes)
+Use the **addCustomBuildConfigFields** recipe from the [gradle-recipes](https://developer.android.com/agents/skills/build-system/agp/agp-9-upgrade/references/recipes)
 repository.
 
 **IMPORTANT:** For `BuildConfigField`s with a type of `String`, the `value` field
