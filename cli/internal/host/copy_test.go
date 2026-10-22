@@ -80,3 +80,19 @@ func TestCopyDir_SrcIsFileNotDir(t *testing.T) {
 		t.Error("expected error when src is a file, got nil")
 	}
 }
+
+// If the source is missing, replaceDir must fail before deleting what is
+// installed: otherwise a broken catalog would wipe the user's copy.
+func TestReplaceDir_MissingSrcKeepsDst(t *testing.T) {
+	dst := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dst, "SKILL.md"), []byte("installed"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := replaceDir(filepath.Join(t.TempDir(), "missing"), dst); err == nil {
+		t.Fatal("replaceDir should fail when src is missing")
+	}
+	if _, err := os.Stat(filepath.Join(dst, "SKILL.md")); err != nil {
+		t.Errorf("dst should be untouched: %v", err)
+	}
+}

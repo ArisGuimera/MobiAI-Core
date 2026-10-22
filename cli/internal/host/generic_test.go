@@ -117,6 +117,33 @@ func TestGenericAdapter_Install_Idempotent(t *testing.T) {
 	}
 }
 
+// A reinstall must mirror the source: a file the new version of a skill no
+// longer ships has to disappear from the host, not linger from the old copy.
+func TestGenericAdapter_Install_RemovesFilesDroppedFromSkill(t *testing.T) {
+	tmp := t.TempDir()
+	setFakeHome(t, tmp)
+
+	a := newTestAdapter()
+	skill := makeFakeSkill(t, "delta")
+	if err := a.Install([]catalog.Skill{skill}); err != nil {
+		t.Fatalf("first Install: %v", err)
+	}
+	if err := os.Remove(filepath.Join(skill.AbsPath, "scripts", "x.sh")); err != nil {
+		t.Fatal(err)
+	}
+	if err := a.Install([]catalog.Skill{skill}); err != nil {
+		t.Fatalf("second Install: %v", err)
+	}
+
+	dst := filepath.Join(tmp, ".test-host", "skills", "delta")
+	if _, err := os.Stat(filepath.Join(dst, "scripts", "x.sh")); !os.IsNotExist(err) {
+		t.Errorf("scripts/x.sh should be gone after reinstall, err=%v", err)
+	}
+	if _, err := os.Stat(filepath.Join(dst, "SKILL.md")); err != nil {
+		t.Errorf("SKILL.md should still exist: %v", err)
+	}
+}
+
 func TestGenericAdapter_Uninstall_RemovesSkill(t *testing.T) {
 	tmp := t.TempDir()
 	setFakeHome(t, tmp)

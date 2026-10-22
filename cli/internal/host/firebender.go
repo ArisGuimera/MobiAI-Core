@@ -82,7 +82,7 @@ func (a *firebenderAdapter) Install(skills []catalog.Skill) error {
 	}
 	for _, s := range skills {
 		dst := filepath.Join(skillsDir, s.ID)
-		if err := copyDir(s.AbsPath, dst); err != nil {
+		if err := replaceDir(s.AbsPath, dst); err != nil {
 			return fmt.Errorf("install skill %q: %w", s.ID, err)
 		}
 	}
