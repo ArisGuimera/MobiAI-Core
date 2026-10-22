@@ -57,7 +57,8 @@ func (a *genericAdapter) Detect() DetectResult {
 }
 
 // Install copies each skill's source directory into <SkillsDir>/<skill.ID>/.
-// Existing files in the target are overwritten (Install is idempotent).
+// The target is replaced, so files the skill no longer ships are removed
+// (Install is idempotent).
 func (a *genericAdapter) Install(skills []catalog.Skill) error {
 	hostDir, err := a.hostDir()
 	if err != nil {
@@ -69,7 +70,7 @@ func (a *genericAdapter) Install(skills []catalog.Skill) error {
 	}
 	for _, s := range skills {
 		dst := filepath.Join(skillsDir, s.ID)
-		if err := copyDir(s.AbsPath, dst); err != nil {
+		if err := replaceDir(s.AbsPath, dst); err != nil {
 			return fmt.Errorf("install skill %q: %w", s.ID, err)
 		}
 	}

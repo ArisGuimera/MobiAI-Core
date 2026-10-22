@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/ArisGuimera/MobiAI-Core/cli/internal/catalog"
 )
 
 type adapterCase struct {
@@ -161,6 +163,42 @@ func TestFirebenderAdapter_Detect_ByFirebenderJson(t *testing.T) {
 	}
 	if !a.Detect().Found {
 		t.Fatal("Detect should be true when firebender.json exists")
+	}
+}
+
+func TestFirebenderAdapter_Install_RemovesFilesDroppedFromSkill(t *testing.T) {
+	tmp := t.TempDir()
+	oldWD, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(tmp); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := os.Chdir(oldWD); err != nil {
+			t.Fatalf("restore cwd: %v", err)
+		}
+	})
+
+	a := newFirebender()
+	skill := makeFakeSkill(t, "delta")
+	if err := a.Install([]catalog.Skill{skill}); err != nil {
+		t.Fatalf("first Install: %v", err)
+	}
+	if err := os.Remove(filepath.Join(skill.AbsPath, "scripts", "x.sh")); err != nil {
+		t.Fatal(err)
+	}
+	if err := a.Install([]catalog.Skill{skill}); err != nil {
+		t.Fatalf("second Install: %v", err)
+	}
+
+	dst := filepath.Join(a.SkillsDir(), "delta")
+	if _, err := os.Stat(filepath.Join(dst, "scripts", "x.sh")); !os.IsNotExist(err) {
+		t.Errorf("scripts/x.sh should be gone after reinstall, err=%v", err)
+	}
+	if _, err := os.Stat(filepath.Join(dst, "SKILL.md")); err != nil {
+		t.Errorf("SKILL.md should still exist: %v", err)
 	}
 }
 

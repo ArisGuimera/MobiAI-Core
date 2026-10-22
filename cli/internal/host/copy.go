@@ -42,6 +42,24 @@ func copyDir(src, dst string) error {
 	return nil
 }
 
+// replaceDir makes dst an exact copy of src: files dst has but src no longer
+// does are removed, so a file dropped from a new version of a skill does not
+// linger from the old copy. src is checked first so a missing source never
+// deletes what is already installed.
+func replaceDir(src, dst string) error {
+	info, err := os.Stat(src)
+	if err != nil {
+		return fmt.Errorf("stat src: %w", err)
+	}
+	if !info.IsDir() {
+		return fmt.Errorf("src is not a directory: %s", src)
+	}
+	if err := os.RemoveAll(dst); err != nil {
+		return fmt.Errorf("remove old %s: %w", dst, err)
+	}
+	return copyDir(src, dst)
+}
+
 func copyFile(src, dst string) error {
 	sf, err := os.Open(src)
 	if err != nil {
