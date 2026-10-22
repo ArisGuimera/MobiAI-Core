@@ -24,7 +24,7 @@ const defaultCatalogGitURL = "https://github.com/ArisGuimera/MobiAI-Core.git"
 func NewUpdateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "update",
-		Short: i18n.T("Refresh the catalog from the remote (or a local path with --catalog-root)"),
+		Short: i18n.T("Refresh the catalog and the installed skills from the remote (or a local path with --catalog-root)"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			out := cmd.OutOrStdout()
 			g := flagsFromAnyCmd(cmd)
@@ -46,15 +46,19 @@ func NewUpdateCmd() *cobra.Command {
 				rootFlag = os.Getenv("MOBIAI_CATALOG_ROOT")
 			}
 
+			paths, err := state.NewPaths()
+			if err != nil {
+				return err
+			}
+			if err := paths.EnsureDirs(); err != nil {
+				return err
+			}
+			// Snapshot what the installed skills came from before the sync
+			// below replaces the cached catalog.
+			previous := previousSkillIDs(paths)
+
 			if rootFlag == "" {
 				// Clone or pull the remote into ~/.mobiai/cache/catalog/.
-				paths, err := state.NewPaths()
-				if err != nil {
-					return err
-				}
-				if err := paths.EnsureDirs(); err != nil {
-					return err
-				}
 				cacheRoot := paths.CatalogDir()
 				url := os.Getenv("MOBIAI_CATALOG_GIT_URL")
 				if url == "" {
@@ -71,13 +75,6 @@ func NewUpdateCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			paths, err := state.NewPaths()
-			if err != nil {
-				return err
-			}
-			if err := paths.EnsureDirs(); err != nil {
-				return err
-			}
 			meta := &state.CatalogMeta{
 				LastSync: time.Now().UTC(),
 				Version:  c.Marketplace.Metadata.Version,
@@ -87,6 +84,12 @@ func NewUpdateCmd() *cobra.Command {
 			}
 			fmt.Fprintf(out, i18n.T("Skills catalog updated to v%s.\n"), meta.Version)
 			fmt.Fprintf(out, i18n.T("%d packs available at %s.\n"), len(c.Packs), rootFlag)
+
+			// Re-copy the packs the user already installed, so the new
+			// catalog reaches their hosts without a separate `skills add`.
+			if err := refreshInstalledPacks(out, c, previous, g, paths); err != nil {
+				return err
+			}
 
 			// Catalog is refreshed; now update the binary itself if a newer
 			// release exists. A binary-update failure is non-fatal: the

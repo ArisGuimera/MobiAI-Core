@@ -1,7 +1,7 @@
 {
   "name": "ios",
   "description": "MobiAI for iOS — simulator, build, testing, and architecture skills",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "author": {
     "name": "Matias Rosenstein",
     "url": "https://github.com/ArisGuimera/MobiAI-Core"

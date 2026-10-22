@@ -9,7 +9,7 @@ package i18n
 // English strings absent from this map fall back to English at runtime.
 var catalogES = map[string]string{
 	// ── internal/cmd/update.go ───────────────────────────────────────────
-	"Refresh the catalog from the remote (or a local path with --catalog-root)":               "Refrescar el catálogo desde el remoto (o un local con --catalog-root)",
+	"Refresh the catalog and the installed skills from the remote (or a local path with --catalog-root)": "Refrescar el catálogo y las skills instaladas desde el remoto (o un local con --catalog-root)",
 	"Skills catalog updated to v%s.\n":                                                        "Catálogo de skills actualizado a v%s.\n",
 	"%d packs available at %s.\n":                                                             "%d packs disponibles en %s.\n",
 	"mobiai binary: %s (--skip-binary, did not check for an update).\n":                       "binario mobiai: %s (--skip-binary, no se verificó si hay update).\n",
@@ -20,6 +20,12 @@ var catalogES = map[string]string{
 	"only query GitHub releases and cache the result (does not touch the catalog)":            "solo consultar GitHub releases y cachear el resultado (no toca el catálogo)",
 	"print nothing on exit (intended for running from a background hook)":                     "no imprime nada al salir (pensado para correr desde un hook en background)",
 	"do not update the mobiai binary, only refresh the catalog":                               "no actualizar el binario mobiai, solo refrescar el catálogo",
+
+	// ── internal/cmd/refresh.go ──────────────────────────────────────────
+	"Refreshing installed skills...\n":                   "Actualizando las skills instaladas...\n",
+	"  %s is no longer in the catalog; left as it is.\n": "  %s ya no está en el catálogo; se deja como está.\n",
+	"  %s: skipped %s (not found on this machine).\n":    "  %s: se saltea %s (no está en esta máquina).\n",
+	"Warning: could not refresh %s in %s: %v\n":          "Aviso: no pude actualizar %s en %s: %v\n",
 
 	// ── internal/cmd/updatecheck.go ──────────────────────────────────────
 	"MobiAI %s → %s available. Run: mobiai update\n":  "MobiAI %s → %s disponible. Actualizá con: mobiai update\n",
