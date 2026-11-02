@@ -9,22 +9,24 @@ description: Instructions to make or update an app's UI so that it adapts to dif
   or resizing a window). It also covers multi-pane layouts using Navigation3 Scenes,
   adaptive UI components (such as buttons) with varying target sizes, and adaptive
   layouts (including navigation areas - nav rails and nav bars) using the Compose
-  Grid and FlexBox APIs.
+  Grid and FlexBox APIs. It also covers desktop experiences with keyboard shortcuts,
+  tooltips and custom cursors.
 license: Complete terms in LICENSE.txt
 metadata:
   author: Google LLC
-  last-updated: '2026-10-16'
+  last-updated: '2026-10-24'
   keywords:
-  - Jetpack Compose
-  - Adaptive UI
-  - Navigation
-  - Multi-pane
-  - Layouts
-  - Responsive Design
+  - android
+  - ui
+  - adaptive
   - Grid
   - FlexBox
   - MediaQuery
-  - Android Development
+  - navigation
+  - foldables
+  - state
+  - resizability
+  - configuration-changes
 ---
 
 ## Prerequisites
@@ -45,6 +47,8 @@ task.
 - Step 4: Make vertical lists adaptive by changing the number of columns
 - Step 5: Hide app bars when scrolling
 - Step 6: Preserve UI state across configuration changes
+- Step 7: Add desktop experiences
+- Step 8: Support foldable devices
 
 ## Step 1. Verify current UI
 
@@ -413,6 +417,46 @@ private fun rememberExoPlayer(@RawRes videoResId: Int, fromUri: Unit.(Uri) -> Me
 ```
 
 <br />
+
+## Step 7: Add desktop experiences
+
+### Step 7.1: Identify the required desktop feature
+
+Look at the user's prompt, requirements, or uploaded files to determine which
+desktop feature needs to be implemented.
+
+### Step 7.2: Run feature-specific processing
+
+Based on the feature identified, you must read the corresponding reference file
+and follow its instructions:
+
+- **Keyboard Shortcuts** -\> read [`references/keyboard_shortcuts.md`](references/keyboard_shortcuts.md)
+- **Tooltips** -\> read [`references/tooltips.md`](references/tooltips.md)
+- **Custom Cursors** -\> read [`references/custom_cursors.md`](references/custom_cursors.md)
+
+Each reference starts by searching the whole app for the targets of that
+feature. Write that list down first, implement all of it (not only the first
+screen you open), and re-check the list before you finish.
+
+## Step 8. Support foldable devices
+
+Tabletop mode allows users to view and interact with content while their
+foldable device is placed on a flat surface. The top screen is angled at a
+convenient viewing angle and provides visual content. The bottom screen is flat
+on the surface and provides controls for that content.
+
+To support foldable devices, identify any screens that provide the following:
+
+- Media and audio playback or streaming: The video or audio content renders on the upright top display. Comments, details, and playback scrubber controls render on the flat bottom surface.
+- Video calls: Remote participants display on the upright screen. Microphone and camera toggles, participant lists, and chat controls sit on the flat bottom surface.
+- Camera capture: The camera viewfinder displays on the upright screen. The shutter button, zoom controls, and exposure sliders sit on the flat bottom surface for hands-free photography.
+- Photo editing: The image canvas displays unobstructed on the upright screen. Sliders, preset palettes, and curves remain accessible on the flat bottom surface.
+- Audio mixing: Waveforms and stem controls display on the upright screen. Turntable decks and pads sit on the flat bottom surface.
+- Cooking: Viewing recipe instructions hands-free on the upright screen while keeping timers or step navigation on the bottom screen.
+- Slide shows: Viewing presentation slides on the top screen with presenter notes or navigation on the bottom screen.
+
+To create layouts for foldables on these screens, you must read
+[tabletop posture](references/foldable-tabletop.md).
 
 ## Final step: Build and test
 
