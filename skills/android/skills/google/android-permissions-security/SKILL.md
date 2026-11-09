@@ -7,7 +7,7 @@ description: Audits, detects gaps, and remediates Android permissions and IPC co
 license: Complete terms in LICENSE.txt
 metadata:
   author: Google LLC
-  last-updated: '2026-09-25'
+  last-updated: '2026-10-29'
   keywords:
   - recipe
   - Android
@@ -60,9 +60,9 @@ vulnerabilities, systematically inspect each area:
 
 | Vulnerability Area | Search In / Pattern | Risk | Remediation Action |
 |---|---|---|---|
-| **Weak Custom Permission Protection** | `AndroidManifest.xml` with `android:protectionLevel="normal"`, `"dangerous"`, or `"signatureOrSystem"` | Unauthorized apps request or claim permission without restriction | Upgrade to `signature` or `signature|knownSigner` with `android:knownCerts`. |
+| **Weak Custom Permission Protection** | `AndroidManifest.xml` with `android:protectionLevel="normal"`, `"dangerous"`, or `"signatureOrSystem"` | Unauthorized apps request or claim permission without restriction | Upgrade to `signature` or `signature` with `knownSigner` and `android:knownCerts`. |
 | **Overly Broad URI Permission Grants** | `<grant-uri-permission android:pathPrefix="/" />` or `pathPrefix=""` in `<provider>` | Leaks all provider data to third parties | Replace with explicit scoped subpath (e.g. `android:pathPrefix="/shared/"`). Retain `android:grantUriPermissions="true"`. Remove any wildcard `pathPrefix="/"`. |
-| **Missing ContentProvider Split Permissions** | `<provider>` with only generic `android:permission` or missing `android:readPermission` and `android:writePermission` | Read-only callers execute write operations or write-only callers access read operations | Configure granular `android:readPermission="...READ_DATA"` and `android:writePermission="...WRITE_DATA"`, AND declare the custom `<permission>` tags with `android:protectionLevel="signature"` (or `signature|knownSigner`) at the `<manifest>` root. |
+| **Missing ContentProvider Split Permissions** | `<provider>` with only generic `android:permission` or missing `android:readPermission` and `android:writePermission` | Read-only callers execute write operations or write-only callers access read operations | Configure granular `android:readPermission="...READ_DATA"` and `android:writePermission="...WRITE_DATA"`, AND declare the custom `<permission>` tags with `android:protectionLevel="signature"` (or `signature` with `knownSigner`) at the `<manifest>` root. |
 | **Spoofable Caller Identity Checks** | `intent.getStringExtra("calling_package")`, `intent.getStringExtra("sender")`, `callingPackage == "..."` in Services | Malicious callers forge intent extras or strings | Remove string checks; authenticate caller UID cryptographically using `Binder.getCallingUid()` and `pm.hasSigningCertificate()`. |
 | **Bound Service Permission Bypass** | `checkCallingOrSelfPermission()` or `enforceCallingOrSelfPermission()` in Binder AIDL stubs | Falls back to host app UID outside IPC or when identity is cleared, causing Confused Deputy bypass | Replace with `enforceCallingPermission("...WRITE_DATA", ...)` or `checkCallingPermission("...WRITE_DATA")`. |
 | **Missing Method-Level Checks in Bound Services** | Bound Service AIDL methods mutating state without enforcing write permissions | Callers with read-only binding access invoke mutating write operations | Add `enforceCallingPermission("...WRITE_DATA", "Caller lacks WRITE_DATA permission")` inside mutating AIDL methods. |
@@ -142,9 +142,9 @@ certificate digests.
 - **Granular `UriPermission` Management** : Instead of broad manifest grants, use runtime `android.content.UriPermission` tokens for least-privilege per-URI sharing:
   - *Grant temporary access* : `context.grantUriPermission(targetPackage,
     uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)` or attach `Intent.FLAG_GRANT_READ_URI_PERMISSION` to outgoing intents.
-  - *Persist access* : The receiving app calls `contentResolver.takePersistableUriPermission(uri, modeFlags)` for durable access across reboots.
+  - *Persist and release access* : The receiving app calls `contentResolver.takePersistableUriPermission(uri, modeFlags)` for durable access across reboots, and `contentResolver.releasePersistableUriPermission(uri, modeFlags)` when durable access is no longer needed.
   - *Audit active grants* : Inspect `contentResolver.persistedUriPermissions` (`List<UriPermission>`) to verify granted URIs (`uriPermission.uri`, `uriPermission.isReadPermission()`, `uriPermission.isWritePermission()`).
-  - *Revoke access* : Call `context.revokeUriPermission(uri, modeFlags)` or `contentResolver.releasePersistableUriPermission(uri, modeFlags)` as soon as operations conclude.
+  - *Revoke temporary access* : Call `context.revokeUriPermission(targetPackage, uri, modeFlags)` (API 26+), falling back to `context.revokeUriPermission(uri, modeFlags)` on API 25 and lower so access fails closed as soon as operations conclude.
 
 ### Manifest snippet: Complete secure ContentProvider declaration
 
@@ -199,12 +199,20 @@ object UriPermissionManager {
         return context.contentResolver.persistedUriPermissions
     }
 
-    /** Revokes temporary URI access when data transfer completes. */
-    fun revokeScopedUriAccess(context: Context, uri: Uri) {
-        context.revokeUriPermission(
-            uri,
-            Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-        )
+    /** Revokes temporary URI access for a specific partner package when data transfer completes. */
+    fun revokeScopedUriAccess(context: Context, targetPackage: String, uri: Uri) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.revokeUriPermission(
+                targetPackage,
+                uri,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+            )
+        } else {
+            context.revokeUriPermission(
+                uri,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+            )
+        }
     }
 }
 ```
@@ -237,7 +245,7 @@ if (callingPackage != null && SignatureUtils.verifyPartnerPackage(this, callingP
 ### Secure pattern: Authenticate calling UID cryptographically
 
 1. **Completely remove** all `intent.getStringExtra("calling_package")`, `intent.getStringExtra("sender")`, and `callingPackage == "..."` checks.
-2. Obtain caller identity using `Binder.getCallingUid()`.
+2. Obtain caller identity using `Binder.getCallingUid()` inside an active Binder IPC transaction (such as an AIDL `Stub` method or `ContentProvider` method).
 3. Verify caller certificate using `PackageManager.hasSigningCertificate()` (API 28+) or `PackageManager.getPackagesForUid()`.
 
 ### Complete CallerVerifier implementation
@@ -245,6 +253,7 @@ if (callingPackage != null && SignatureUtils.verifyPartnerPackage(this, callingP
 Apply this to the service that currently performs the spoofable check.
 
 - **Placement** : declare `CallerVerifier` in the **same file** as the service you are fixing (for example inside `SecureDataService.kt`). Do not move the verification into a new file and leave the original service untouched.
+- **Active Binder IPC context** : `Binder.getCallingUid()` only returns the remote caller's UID during an active Binder transaction (never inside `Service.onStartCommand()` or `Service.onBind()`, where it returns `Process.myUid()`). Reject `callingUid == Process.myUid()` so calls outside an active IPC transaction or after `Binder.clearCallingIdentity()` fail closed instead of bypassing verification.
 - **Nullability** : `packageInfo.signatures` is `Array<Signature>?`. Copy the `?: return false` guard exactly as written below. Iterating `packageInfo.signatures` directly fails to compile with "Non-nullable value required to call an 'iterator()' method in a for-loop."
 
 
@@ -255,15 +264,13 @@ object CallerVerifier {
 
     fun isCallerAuthorized(context: Context): Boolean {
         val callingUid = Binder.getCallingUid()
-        if (callingUid == android.os.Process.myUid()) return true
+        if (callingUid == android.os.Process.myUid()) return false
 
         val pm = context.packageManager
         // Modern API 28+ check by UID:
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             val certBytes = hexStringToByteArray(TRUSTED_PARTNER_SHA256)
-            if (pm.hasSigningCertificate(callingUid, certBytes, PackageManager.CERT_INPUT_SHA256)) {
-                return true
-            }
+            return pm.hasSigningCertificate(callingUid, certBytes, PackageManager.CERT_INPUT_SHA256)
         }
 
         // Fallback for legacy APIs:
@@ -364,7 +371,7 @@ caching states or creating infinite retry loops:
 
 1. **Check Granted State** : `ContextCompat.checkSelfPermission(this,
    permission) == PackageManager.PERMISSION_GRANTED`.
-2. **Check Rationale** : `shouldShowRequestPermissionRationale(permission)` to present educational context before requesting.
+2. **Check Rationale** : When `shouldShowRequestPermissionRationale(permission)` returns `true`, show a rationale dialog and launch the permission request only from its Continue button.
 3. **Launch Contract** : `ActivityResultContracts.RequestPermission()`.
 4. **Handle Permanent Denial** : In the callback, if permission was denied and `!shouldShowRequestPermissionRationale(permission)`, guide the user to `Settings.ACTION_APPLICATION_DETAILS_SETTINGS`.
 
@@ -399,13 +406,23 @@ class RuntimePermissionsActivity : ComponentActivity() {
                 startCameraPreview()
             }
             shouldShowRequestPermissionRationale(permission) -> {
-                showSnackbar("Camera permission is needed to preview camera feed.")
-                cameraLauncher.launch(permission)
+                showRationaleDialog(permission)
             }
             else -> {
                 cameraLauncher.launch(permission)
             }
         }
+    }
+
+    private fun showRationaleDialog(permission: String) {
+        AlertDialog.Builder(this)
+            .setTitle("Camera permission required")
+            .setMessage("Camera permission is needed to preview the camera feed.")
+            .setPositiveButton("Continue") { _, _ ->
+                cameraLauncher.launch(permission)
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun startCameraPreview() {
@@ -564,9 +581,13 @@ class ProtectedReceiver : BroadcastReceiver() {
 
 <br />
 
-*Legacy compatibility (Pre-API 34)* : For apps targeting API 33 or lower,
-attach an immutable `PendingIntent` extra (`FLAG_IMMUTABLE`) to the broadcast
-and authenticate the sender using `pendingIntent.creatorPackage`.
+*Legacy compatibility (Pre-API 34)* : On API 33 and lower, **never** authenticate
+a broadcast sender using `PendingIntent.getCreatorPackage()` or
+`PendingIntent.getCreatorUid()`, because any app that acquires a trusted app's
+`PendingIntent` can attach and send it (see [Sender of Pending Intents](references/android/privacy-and-security/risks/sender-of-pending-intents.md)).
+Instead, restrict the `<receiver>` with a `signature` or `signature|knownSigner`
+(API 31+) permission in the manifest; if `minSdkVersion` is lower than 31, use a
+bound `Service` or `ContentProvider` and verify `Binder.getCallingUid()`.
 
 *** ** * ** ***
 
@@ -588,6 +609,7 @@ and authenticate the sender using `pendingIntent.creatorPackage`.
 ### NEVER
 
 - **NEVER** extract or verify package names from Intent extras (`intent.getStringExtra("calling_package")`, `intent.getStringExtra("sender")`, `intent.getStringExtra("package")`). Always authenticate using `Binder.getCallingUid()` and certificates.
+- **NEVER** authenticate a broadcast or IPC sender using `PendingIntent.getCreatorPackage()` or `PendingIntent.getCreatorUid()`.
 - **NEVER** remediate caller spoofing by merely adding manifest permissions while keeping spoofable intent extra checks.
 - **NEVER** use `checkCallingOrSelfPermission()` or `enforceCallingOrSelfPermission()` to guard external caller methods. Always use `enforceCallingPermission()` or `checkCallingPermission()`.
 - **NEVER** use deprecated `signatureOrSystem`.

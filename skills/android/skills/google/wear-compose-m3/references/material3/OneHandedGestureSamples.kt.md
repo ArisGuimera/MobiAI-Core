@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberOverscrollEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -40,6 +41,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onVisibilityChanged
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.foundation.AmbientMode
 import androidx.wear.compose.foundation.LocalAmbientModeManager
@@ -553,6 +556,98 @@ fun OneHandedGestureScalingLazyColumnScrollToNextItemSample() {
 
 @Sampled
 @Composable
+fun OneHandedGestureVisibilitySample() {
+    var label by remember { mutableStateOf("Double-pinch") }
+    val onClick = { label = "Gestured" }
+    val scrollState = rememberTransformingLazyColumnState()
+    val coroutineScope = rememberCoroutineScope()
+
+    val scrollGestureConfig =
+        rememberOneHandedGestureConfiguration(
+            action = OneHandedGestureAction.Primary,
+            priority = OneHandedGesturePriority.Scrollable,
+        )
+    val scrollIndicatorState =
+        remember(scrollGestureConfig) { OneHandedGestureScrollIndicatorState() }
+
+    ScreenScaffold(
+        scrollState = scrollState,
+        scrollIndicator = {
+            OneHandedGestureScrollIndicator(
+                gestureConfiguration = scrollGestureConfig,
+                indicatorState = scrollIndicatorState,
+                scrollState = scrollState,
+                modifier = Modifier.align(Alignment.CenterEnd),
+            )
+        },
+    ) { contentPadding ->
+        TransformingLazyColumn(
+            state = scrollState,
+            contentPadding = contentPadding,
+            modifier =
+                Modifier.fillMaxSize()
+                    .oneHandedGesture(
+                        gestureConfiguration = scrollGestureConfig,
+                        onGestureLabel = "scroll",
+                        onGestureAvailable = {
+                            coroutineScope.launch { scrollIndicatorState.showIndicator() }
+                        },
+                        onGesture = { OneHandedGestureDefaults.scrollDown(scrollState) },
+                    ),
+        ) {
+            items(10) { Text("Item $it") }
+            item {
+                var isButtonVisible by remember { mutableStateOf(false) }
+                val buttonInteractionSource = remember { MutableInteractionSource() }
+                val buttonGestureConfig =
+                    rememberOneHandedGestureConfiguration(
+                        action = OneHandedGestureAction.Primary,
+                        priority = OneHandedGesturePriority.Clickable,
+                    )
+                val buttonIndicatorState = remember { OneHandedGestureClickIndicatorState() }
+
+                Button(
+                    onClick = onClick,
+                    interactionSource = buttonInteractionSource,
+                    modifier =
+                        Modifier.onVisibilityChanged(minFractionVisible = 0.9f) {
+                                isButtonVisible = it
+                            }
+                            .then(
+                                if (isButtonVisible) {
+                                    // Apply the one-handed gesture modifier only when the button
+                                    // is at least 90% visible.
+                                    Modifier.oneHandedGesture(
+                                        gestureConfiguration = buttonGestureConfig,
+                                        interactionSource = buttonInteractionSource,
+                                        onGestureLabel = "activate the button",
+                                        onGestureAvailable = {
+                                            coroutineScope.launch {
+                                                buttonIndicatorState.showIndicator()
+                                            }
+                                        },
+                                        onGesture = onClick,
+                                    )
+                                } else {
+                                    Modifier
+                                }
+                            ),
+                ) {
+                    OneHandedGestureClickIndicator(buttonGestureConfig, buttonIndicatorState) {
+                        Text(
+                            label,
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Sampled
+@Composable
 fun OneHandedGestureHorizontalPagerSample() {
     val pagerState = rememberPagerState(pageCount = { 10 })
     val gestureConfig =
@@ -584,9 +679,9 @@ fun OneHandedGestureHorizontalPagerSample() {
                 },
         ) { page ->
             AnimatedPage(pageIndex = page, pagerState = pagerState) {
-                ScreenScaffold {
+                ScreenScaffold { contentPadding ->
                     Column(
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier.fillMaxSize().padding(contentPadding),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center,
                     ) {
@@ -633,9 +728,9 @@ fun OneHandedGestureVerticalPagerSample() {
                 },
         ) { page ->
             AnimatedPage(pageIndex = page, pagerState = pagerState) {
-                ScreenScaffold {
+                ScreenScaffold { contentPadding ->
                     Column(
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier.fillMaxSize().padding(contentPadding),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center,
                     ) {
