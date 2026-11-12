@@ -506,3 +506,37 @@ func TestScanSave_PreservesCreatedAtOnRescan(t *testing.T) {
 		t.Errorf("UpdatedAt = %q, want refreshed timestamp", got.UpdatedAt)
 	}
 }
+
+func TestScan_MainManifestMatchesWholePathSegment(t *testing.T) {
+	cases := []struct {
+		name      string
+		manifests []string
+		want      string
+	}{
+		{
+			name:      "dir ending in src is not src",
+			manifests: []string{"a/src/debug", "b/foosrc/main"},
+			want:      "a/src/debug/AndroidManifest.xml",
+		},
+		{
+			name:      "single module at repo root",
+			manifests: []string{"src/debug", "src/main"},
+			want:      "src/main/AndroidManifest.xml",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			root := t.TempDir()
+			for _, dir := range tc.manifests {
+				mustWrite(t, filepath.Join(root, filepath.FromSlash(dir), "AndroidManifest.xml"), `<manifest/>`)
+			}
+			s, err := ScanProject(root)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got := s.DetectedFiles["android_manifest"]; got != tc.want {
+				t.Errorf("android_manifest = %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
