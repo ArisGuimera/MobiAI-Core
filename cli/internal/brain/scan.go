@@ -66,9 +66,15 @@ func LoadScan(p BrainPaths) (*Scan, error) {
 }
 
 // Save writes scan.json atomically, refreshing UpdatedAt and seeding
-// CreatedAt the first time around.
+// CreatedAt the first time around. A re-scan keeps the CreatedAt of the
+// existing scan.json.
 func (s *Scan) Save(p BrainPaths) error {
 	now := nowISO()
+	if s.CreatedAt == "" {
+		if prev, err := LoadScan(p); err == nil && prev != nil {
+			s.CreatedAt = prev.CreatedAt
+		}
+	}
 	if s.CreatedAt == "" {
 		s.CreatedAt = now
 	}
