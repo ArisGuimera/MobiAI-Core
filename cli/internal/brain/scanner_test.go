@@ -390,6 +390,98 @@ func TestScan_AndroidManifestWithoutMainIsStable(t *testing.T) {
 	}
 }
 
+// In a multi-module repo every module has its own src/main manifest; the
+// one describing the app belongs to the module applying the Android
+// application plugin, which rarely sorts first (analytics/, api/ < app/).
+func TestScan_PrefersApplicationModuleManifest(t *testing.T) {
+	libraries := map[string]string{
+		"settings.gradle.kts":                    `include(":analytics", ":api", ":app")`,
+		"analytics/build.gradle.kts":             `plugins { alias(libs.plugins.android.library) }`,
+		"analytics/src/main/AndroidManifest.xml": `<manifest/>`,
+		"api/build.gradle":                       `apply plugin: 'com.android.library'`,
+		"api/src/main/AndroidManifest.xml":       `<manifest/>`,
+		"app/src/main/AndroidManifest.xml":       `<manifest/>`,
+		"app/src/debug/AndroidManifest.xml":      `<manifest/>`,
+	}
+	cases := []struct {
+		name      string
+		buildFile string
+		plugins   string
+	}{
+		{"plugin id", "build.gradle.kts", `plugins { id("com.android.application") }`},
+		{"groovy apply plugin", "build.gradle", `apply plugin: 'com.android.application'`},
+		{"version catalog alias", "build.gradle.kts", `plugins { alias(libs.plugins.android.application) }`},
+		{"camelCase catalog alias", "build.gradle.kts", `plugins { alias(libs.plugins.androidApplication) }`},
+		{"convention plugin", "build.gradle.kts", `plugins { id("miapp.android.application") }`},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			root := t.TempDir()
+			writeTree(t, root, libraries)
+			mustWrite(t, filepath.Join(root, "app", tc.buildFile), tc.plugins)
+			assertStableManifest(t, root, "app/src/main/AndroidManifest.xml")
+		})
+	}
+}
+
+func TestScan_PrefersFirstOfSeveralApplicationModules(t *testing.T) {
+	root := t.TempDir()
+	writeTree(t, root, map[string]string{
+		"analytics/build.gradle.kts":             `plugins { id("com.android.library") }`,
+		"analytics/src/main/AndroidManifest.xml": `<manifest/>`,
+		"wear/build.gradle.kts":                  `plugins { id("com.android.application") }`,
+		"wear/src/main/AndroidManifest.xml":      `<manifest/>`,
+		"mobile/build.gradle.kts":                `plugins { id("com.android.application") }`,
+		"mobile/src/main/AndroidManifest.xml":    `<manifest/>`,
+	})
+	assertStableManifest(t, root, "mobile/src/main/AndroidManifest.xml")
+}
+
+func TestScan_PrefersRootApplicationModuleManifest(t *testing.T) {
+	root := t.TempDir()
+	writeTree(t, root, map[string]string{
+		"build.gradle":                           `apply plugin: 'com.android.application'`,
+		"src/main/AndroidManifest.xml":           `<manifest/>`,
+		"analytics/build.gradle":                 `apply plugin: 'com.android.library'`,
+		"analytics/src/main/AndroidManifest.xml": `<manifest/>`,
+	})
+	assertStableManifest(t, root, "src/main/AndroidManifest.xml")
+}
+
+func TestScan_WithoutApplicationModuleKeepsFirstMainManifest(t *testing.T) {
+	root := t.TempDir()
+	writeTree(t, root, map[string]string{
+		"analytics/build.gradle.kts":             `plugins { id("com.android.library") }`,
+		"analytics/src/main/AndroidManifest.xml": `<manifest/>`,
+		"app/build.gradle.kts":                   `plugins { id("com.android.library") }`,
+		"app/src/main/AndroidManifest.xml":       `<manifest/>`,
+		"app/src/debug/AndroidManifest.xml":      `<manifest/>`,
+	})
+	assertStableManifest(t, root, "analytics/src/main/AndroidManifest.xml")
+}
+
+// assertStableManifest scans root repeatedly: map iteration order is
+// randomized per run, so a single scan could pick the right file by luck.
+func assertStableManifest(t *testing.T, root, want string) {
+	t.Helper()
+	for i := 0; i < 30; i++ {
+		s, err := ScanProject(root)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got := s.DetectedFiles["android_manifest"]; got != want {
+			t.Fatalf("run %d: android_manifest = %q, want %q", i, got, want)
+		}
+	}
+}
+
+func writeTree(t *testing.T, root string, files map[string]string) {
+	t.Helper()
+	for rel, content := range files {
+		mustWrite(t, filepath.Join(root, filepath.FromSlash(rel)), content)
+	}
+}
+
 func TestScanSave_PreservesCreatedAtOnRescan(t *testing.T) {
 	root := t.TempDir()
 	paths := NewBrainPaths(root)
