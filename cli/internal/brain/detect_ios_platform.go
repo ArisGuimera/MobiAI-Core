@@ -54,7 +54,18 @@ func detectIOS(idx *scanIndex, s *Scan, types, platforms map[string]struct{}) {
 	}
 	if len(xcworkspaces) > 0 {
 		hit = true
-		s.DetectedFiles["xcworkspace"] = firstSorted(xcworkspaces)
+		// Every .xcodeproj carries an internal project.xcworkspace. Prefer
+		// a standalone workspace (the one CocoaPods generates and users
+		// open), otherwise the first one in sorted order.
+		sort.Strings(xcworkspaces)
+		chosen := xcworkspaces[0]
+		for _, path := range xcworkspaces {
+			if !strings.Contains(path, ".xcodeproj/") {
+				chosen = path
+				break
+			}
+		}
+		s.DetectedFiles["xcworkspace"] = chosen
 	}
 	if !hit {
 		return

@@ -192,6 +192,41 @@ func TestScan_MultipleXcworkspaceIsStable(t *testing.T) {
 	}
 }
 
+func TestScan_PrefersStandaloneXcworkspaceOverProjectInternal(t *testing.T) {
+	root := t.TempDir()
+	// Every .xcodeproj carries an internal project.xcworkspace; CocoaPods
+	// adds the standalone App.xcworkspace that users actually open.
+	mustMkdir(t, filepath.Join(root, "App.xcodeproj", "project.xcworkspace"))
+	mustMkdir(t, filepath.Join(root, "App.xcworkspace"))
+
+	for i := 0; i < 30; i++ {
+		s, err := ScanProject(root)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got := s.DetectedFiles["xcworkspace"]; got != "App.xcworkspace" {
+			t.Fatalf("run %d: xcworkspace = %q, want App.xcworkspace", i, got)
+		}
+	}
+}
+
+func TestScan_ProjectInternalXcworkspaceIsFallback(t *testing.T) {
+	root := t.TempDir()
+	for _, dir := range []string{"Modules/Core.xcodeproj/project.xcworkspace", "App.xcodeproj/project.xcworkspace"} {
+		mustMkdir(t, filepath.Join(root, filepath.FromSlash(dir)))
+	}
+
+	for i := 0; i < 30; i++ {
+		s, err := ScanProject(root)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got := s.DetectedFiles["xcworkspace"]; got != "App.xcodeproj/project.xcworkspace" {
+			t.Fatalf("run %d: xcworkspace = %q, want App.xcodeproj/project.xcworkspace", i, got)
+		}
+	}
+}
+
 func TestScan_ReactNativeProject(t *testing.T) {
 	root := t.TempDir()
 	mustWrite(t, filepath.Join(root, "package.json"),
