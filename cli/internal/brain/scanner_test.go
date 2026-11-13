@@ -352,3 +352,65 @@ func contains(haystack []string, needle string) bool {
 	}
 	return false
 }
+
+func TestScan_PrefersMainAndroidManifestOverOverlays(t *testing.T) {
+	root := t.TempDir()
+	mustWrite(t, filepath.Join(root, "settings.gradle.kts"), `include(":app")`)
+	mustWrite(t, filepath.Join(root, "app", "build.gradle.kts"), `plugins { id("com.android.application") }`)
+	for _, v := range []string{"debug", "flavora", "flavorb", "main", "zeta"} {
+		mustWrite(t, filepath.Join(root, "app", "src", v, "AndroidManifest.xml"), `<manifest/>`)
+	}
+
+	// Map iteration order is randomized per run; repeat to catch it.
+	for i := 0; i < 30; i++ {
+		s, err := ScanProject(root)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got := s.DetectedFiles["android_manifest"]; got != "app/src/main/AndroidManifest.xml" {
+			t.Fatalf("run %d: android_manifest = %q, want app/src/main/AndroidManifest.xml", i, got)
+		}
+	}
+}
+
+func TestScan_AndroidManifestWithoutMainIsStable(t *testing.T) {
+	root := t.TempDir()
+	for _, v := range []string{"zeta", "debug", "flavora"} {
+		mustWrite(t, filepath.Join(root, "app", "src", v, "AndroidManifest.xml"), `<manifest/>`)
+	}
+
+	for i := 0; i < 30; i++ {
+		s, err := ScanProject(root)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got := s.DetectedFiles["android_manifest"]; got != "app/src/debug/AndroidManifest.xml" {
+			t.Fatalf("run %d: android_manifest = %q, want app/src/debug/AndroidManifest.xml", i, got)
+		}
+	}
+}
+
+func TestScanSave_PreservesCreatedAtOnRescan(t *testing.T) {
+	root := t.TempDir()
+	paths := NewBrainPaths(root)
+	first := newScan("app")
+	first.CreatedAt = "2026-08-07T10:00:00Z"
+	if err := first.Save(paths); err != nil {
+		t.Fatal(err)
+	}
+
+	// A re-scan builds a fresh Scan with empty CreatedAt.
+	if err := newScan("app").Save(paths); err != nil {
+		t.Fatal(err)
+	}
+	got, err := LoadScan(paths)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.CreatedAt != "2026-08-07T10:00:00Z" {
+		t.Errorf("CreatedAt = %q, want preserved 2026-08-07T10:00:00Z", got.CreatedAt)
+	}
+	if got.UpdatedAt == "" || got.UpdatedAt == got.CreatedAt {
+		t.Errorf("UpdatedAt = %q, want refreshed timestamp", got.UpdatedAt)
+	}
+}
