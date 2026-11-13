@@ -101,6 +101,13 @@ func registerTools(server *mcp.Server, paths brain.BrainPaths) {
 	}, handleBump(paths))
 
 	mcp.AddTool(server, &mcp.Tool{
+		Name: "mobile_get",
+		Description: "Return the full Markdown of one brain note by id. When mobile_context " +
+			"is in index mode it lists most notes as one line with their id and file; " +
+			"read the file directly if you can, or call this tool to get its text.",
+	}, handleGet(paths))
+
+	mcp.AddTool(server, &mcp.Tool{
 		Name: "mobile_save_decision",
 		Description: "Save an architecture decision to the brain (decisions.md). Use for " +
 			"library/pattern choices, project-wide conventions, or tradeoffs that took " +

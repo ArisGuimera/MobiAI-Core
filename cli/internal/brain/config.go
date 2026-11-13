@@ -31,6 +31,22 @@ type Config struct {
 	Rules       []string `json:"rules"`
 	CreatedAt   string   `json:"created_at"`
 	UpdatedAt   string   `json:"updated_at"`
+
+	// ContextMaxBytes is the size above which `context` switches to index
+	// mode. Zero means DefaultContextMaxBytes.
+	ContextMaxBytes int `json:"context_max_bytes,omitempty"`
+}
+
+// DefaultContextMaxBytes is the `context` size limit (25 KB) when
+// config.json doesn't set context_max_bytes.
+const DefaultContextMaxBytes = 25600
+
+// contextLimit returns the effective `context` size limit.
+func (c Config) contextLimit() int {
+	if c.ContextMaxBytes > 0 {
+		return c.ContextMaxBytes
+	}
+	return DefaultContextMaxBytes
 }
 
 // DefaultConfig returns the template used by `brain init` for a brand-new

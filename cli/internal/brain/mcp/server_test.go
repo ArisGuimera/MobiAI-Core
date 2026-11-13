@@ -70,6 +70,7 @@ func TestServer_ListsAllTools(t *testing.T) {
 		"mobile_review":        false,
 		"mobile_promote":       false,
 		"mobile_bump":          false,
+		"mobile_get":           false,
 		"mobile_save_decision": false,
 		"mobile_save_bugfix":   false,
 		"mobile_save_testing":  false,

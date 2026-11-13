@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 )
 
 // projectTypeLabel returns a human-friendly name for a project_type
@@ -45,6 +46,8 @@ type ContextOptions struct {
 	// Filter is applied to every memory entry. Stack/rules/warnings
 	// ignore the filter (those aren't entry-shaped).
 	Filter EntryFilter
+	// Now is "today" for relative ages in index mode. Zero = time.Now().
+	Now time.Time
 }
 
 // BuildContext assembles the Markdown context document consumed by AI
@@ -56,6 +59,11 @@ func BuildContext(cfg Config, scan *Scan, p BrainPaths) string {
 
 // BuildContextWith renders the Markdown context using opts. Section
 // names and order match the spec because skills/agents grep for them.
+//
+// The full document is built and measured first. Up to the configured
+// limit (context_max_bytes, 25 KB by default) it is returned as is; above
+// it, the document switches to index mode (see renderIndexed). Filters are
+// applied before measuring, so a narrow query still gets full texts.
 func BuildContextWith(cfg Config, scan *Scan, p BrainPaths, opts ContextOptions) string {
 	groups, err := ParseAllMemories(p)
 	if err != nil {
@@ -63,17 +71,34 @@ func BuildContextWith(cfg Config, scan *Scan, p BrainPaths, opts ContextOptions)
 		// fall back to an empty groups map so the document still renders.
 		groups = map[string][]MemoryEntry{}
 	}
-
+	filtered := !opts.Filter.Empty()
+	if filtered {
+		for section, entries := range groups {
+			groups[section] = FilterEntries(entries, opts.Filter)
+		}
+	}
 	include := includeMap(opts.Sections)
+
+	full := renderFull(cfg, scan, groups, include, filtered)
+	limit := cfg.contextLimit()
+	if len(full) <= limit {
+		return full
+	}
+	now := opts.Now
+	if now.IsZero() {
+		now = time.Now().UTC()
+	}
+	return renderIndexed(cfg, scan, groups, include, limit, now)
+}
+
+// renderFull renders every included section with the full text of every
+// note — the original `context` document.
+func renderFull(cfg Config, scan *Scan, groups map[string][]MemoryEntry, include map[string]struct{}, filtered bool) string {
 	var b strings.Builder
-
 	writeHeader(&b, cfg, scan)
-
 	for _, section := range renderOrder() {
-		if include != nil {
-			if _, ok := include[section]; !ok {
-				continue
-			}
+		if !included(include, section) {
+			continue
 		}
 		switch section {
 		case stackSection:
@@ -83,14 +108,19 @@ func BuildContextWith(cfg Config, scan *Scan, p BrainPaths, opts ContextOptions)
 		case warningsSection:
 			writeWarningsSection(&b, scan)
 		default: // memory section
-			entries := groups[section]
-			if !opts.Filter.Empty() {
-				entries = FilterEntries(entries, opts.Filter)
-			}
-			writeMemorySection(&b, section, entries, !opts.Filter.Empty())
+			writeMemorySection(&b, section, groups[section], filtered)
 		}
 	}
 	return b.String()
+}
+
+// included reports whether section is requested (nil include = all).
+func included(include map[string]struct{}, section string) bool {
+	if include == nil {
+		return true
+	}
+	_, ok := include[section]
+	return ok
 }
 
 // renderOrder returns the canonical section sequence for the context

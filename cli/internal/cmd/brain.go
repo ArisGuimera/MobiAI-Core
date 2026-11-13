@@ -37,6 +37,7 @@ func NewBrainCmd() *cobra.Command {
 		newBrainReviewCmd(),
 		newBrainPromoteCmd(),
 		newBrainBumpCmd(),
+		newBrainShowCmd(),
 		newBrainMCPCmd(),
 		newBrainInstallMCPCmd(),
 	)
@@ -579,6 +580,36 @@ func doBrainUpdate(c *cobra.Command, id string, opts brain.UpdateOptions) error 
 		}
 		fmt.Fprintf(out, "  review_after: %s → %s\n", from, to)
 	}
+	return nil
+}
+
+func newBrainShowCmd() *cobra.Command {
+	c := &cobra.Command{
+		Use:   "show <id>",
+		Short: i18n.T("Print the full text of one note"),
+		Long:  i18n.T("Prints the note with the given id as Markdown. When `brain context` lists a note in its index, use this to read it if you can't open the note file directly."),
+		Args:  cobra.ExactArgs(1),
+		RunE:  runBrainShow,
+	}
+	brainCommonFlags(c)
+	return c
+}
+
+func runBrainShow(c *cobra.Command, args []string) error {
+	info, err := resolveBrainRoot(c)
+	if err != nil {
+		return err
+	}
+	paths := brain.NewBrainPaths(info.Path)
+	if !paths.Exists() {
+		return fmt.Errorf("brain not initialized in %s — run `mobiai brain init` first", info.Path)
+	}
+	migrateBrain(c, paths)
+	view, err := brain.ShowNote(paths, args[0])
+	if err != nil {
+		return err
+	}
+	fmt.Fprint(c.OutOrStdout(), view.Markdown)
 	return nil
 }
 

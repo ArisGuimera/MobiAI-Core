@@ -474,6 +474,27 @@ func makeSaveHandler(paths brain.BrainPaths, saveType brain.SaveType, section st
 	}
 }
 
+// GetArgs are the inputs for mobile_get.
+type GetArgs struct {
+	ID string `json:"id" jsonschema:"the id of the note to return (from mobile_context's index or mobile_search)"`
+}
+
+func handleGet(paths brain.BrainPaths) func(context.Context, *mcp.CallToolRequest, GetArgs) (*mcp.CallToolResult, brain.NoteView, error) {
+	return func(_ context.Context, _ *mcp.CallToolRequest, args GetArgs) (*mcp.CallToolResult, brain.NoteView, error) {
+		if !paths.Exists() {
+			return nil, brain.NoteView{}, brainNotInitialized(paths)
+		}
+		prefix := migrate(paths)
+		view, err := brain.ShowNote(paths, args.ID)
+		if err != nil {
+			return nil, brain.NoteView{}, err
+		}
+		return &mcp.CallToolResult{
+			Content: []mcp.Content{&mcp.TextContent{Text: prefix + view.Markdown}},
+		}, view, nil
+	}
+}
+
 // migrate brings an old brain to the card format before a tool reads or
 // writes it (see brain.Migrate) and returns the line to put in front of the
 // tool's text output when files changed, so the agent can tell the user to
