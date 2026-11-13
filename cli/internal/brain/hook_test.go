@@ -215,6 +215,17 @@ func TestHook_MarksUnconfirmedOncePerSession(t *testing.T) {
 	}
 }
 
+func TestHook_SkipsSuperseded(t *testing.T) {
+	p := initBrainForTest(t)
+	writeCard(t, p, "bugfixes", "old-20260914-163044", authCard("old-20260914-163044", "Old workaround"))
+	replacement := strings.Replace(authCard("new-20260915-163044", "New fix"), "- verified: 2026-09-14\n", "- verified: 2026-09-14\n- supersedes: old-20260914-163044\n", 1)
+	writeCard(t, p, "bugfixes", "new-20260915-163044", replacement)
+	ctx := claudeContext(t, FileContextHook(claudeInput(t, "s1", filepath.Join(p.Root, "app", "src", "auth", "X.kt")), hookOpts(t)))
+	if strings.Contains(ctx, "Old workaround") || !strings.Contains(ctx, "New fix") {
+		t.Errorf("a superseded note is not delivered:\n%s", ctx)
+	}
+}
+
 func TestHook_BadInputIsSilent(t *testing.T) {
 	for _, in := range []string{"", "not json", `{"tool_input":{}}`, `{"tool_input":{"file_path":"relative/x.kt"}}`} {
 		if out := FileContextHook([]byte(in), hookOpts(t)); len(out) != 0 {

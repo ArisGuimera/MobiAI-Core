@@ -13,11 +13,14 @@ type EntryFilter struct {
 	Status   string // matches the `status:` meta field
 	Area     string // matches the `area:` meta field (substring)
 	Query    string // free-text, matches Title or Body (substring)
+	// Crash matches a crash signature: exactly one of the `crash:` values,
+	// or as text in the body.
+	Crash string
 }
 
 // Empty reports whether the filter would let everything through.
 func (f EntryFilter) Empty() bool {
-	return f.Platform == "" && f.Status == "" && f.Area == "" && f.Query == ""
+	return f.Platform == "" && f.Status == "" && f.Area == "" && f.Query == "" && f.Crash == ""
 }
 
 // Matches reports whether e satisfies every set condition.
@@ -38,7 +41,21 @@ func (f EntryFilter) Matches(e MemoryEntry) bool {
 			return false
 		}
 	}
+	if f.Crash != "" && !crashMatches(e, f.Crash) {
+		return false
+	}
 	return true
+}
+
+// crashMatches reports whether a crash signature is one of the note's
+// `crash:` values (case-insensitive) or appears in its body.
+func crashMatches(e MemoryEntry, crash string) bool {
+	for _, v := range splitList(e.Get("crash")) {
+		if eqFold(v, crash) {
+			return true
+		}
+	}
+	return containsFold(e.Body, crash)
 }
 
 // FilterEntries returns the subset of in for which f.Matches is true.

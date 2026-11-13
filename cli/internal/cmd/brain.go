@@ -304,10 +304,10 @@ func newBrainSearchCmd() *cobra.Command {
 		Use:   "search <query>",
 		Short: i18n.T("Free-text search across Brain memories"),
 		Long: i18n.T("Performs a case-insensitive match against the title and body of each memory entry. The --platform/--status/--area flags filter results with AND semantics."),
-		Args: cobra.MinimumNArgs(1),
 		RunE: runBrainSearch,
 	}
 	brainCommonFlags(c)
+	c.Flags().String("crash", "", i18n.T("find bugfixes for a crash signature (Crashlytics issue id, Sentry fingerprint or exception signature); the query becomes optional"))
 	c.Flags().String("platform", "", i18n.T("limit to entries with this platform"))
 	c.Flags().String("status", "", i18n.T("limit to entries with this status"))
 	c.Flags().String("area", "", i18n.T("limit to entries whose area contains this string"))
@@ -324,8 +324,13 @@ func runBrainSearch(c *cobra.Command, args []string) error {
 	if !paths.Exists() {
 		return fmt.Errorf("brain not initialized in %s — run `mobiai brain init` first", info.Path)
 	}
-	migrateBrain(c, paths)
 	query := strings.Join(args, " ")
+	crash, _ := c.Flags().GetString("crash")
+	crash = strings.TrimSpace(crash)
+	if strings.TrimSpace(query) == "" && crash == "" {
+		return fmt.Errorf("a query is required (or --crash)")
+	}
+	migrateBrain(c, paths)
 	platform, _ := c.Flags().GetString("platform")
 	status, _ := c.Flags().GetString("status")
 	area, _ := c.Flags().GetString("area")
@@ -333,9 +338,13 @@ func runBrainSearch(c *cobra.Command, args []string) error {
 		Platform: platform,
 		Status:   status,
 		Area:     area,
+		Crash:    crash,
 	})
 	if err != nil {
 		return err
+	}
+	if query == "" {
+		query = crash
 	}
 	if len(hits) == 0 {
 		fmt.Fprintf(out, i18n.T("No results for %q.\n"), query)
@@ -361,6 +370,9 @@ func runBrainSearch(c *cobra.Command, args []string) error {
 		}
 		if id := h.Entry.Get("id"); id != "" {
 			fmt.Fprintf(out, "    id: %s\n", id)
+		}
+		if h.Entry.Path != "" {
+			fmt.Fprintf(out, "    file: %s\n", h.Entry.Path)
 		}
 		fmt.Fprintln(out)
 	}
@@ -765,6 +777,11 @@ func newBrainSaveSubCmd(saveType brain.SaveType, use, short string) *cobra.Comma
 	c.Flags().String("review-after", "", i18n.T("YYYY-MM-DD date to review (optional)"))
 	c.Flags().String("body", "", i18n.T("Markdown body (if omitted, read from stdin)"))
 	c.Flags().StringSlice("files", nil, i18n.T("related files, comma-separated (optional)"))
+	c.Flags().StringSlice("supersedes", nil, i18n.T("ids of the notes this one replaces, comma-separated (optional)"))
+	c.Flags().Bool("new", false, i18n.T("save even if a note with a similar title already exists"))
+	if saveType == brain.SaveTypeBugfix {
+		c.Flags().StringSlice("crash", nil, i18n.T("crash signatures this fix solves: Crashlytics issue id, Sentry fingerprint or exception signature, comma-separated (optional)"))
+	}
 	_ = c.MarkFlagRequired("title")
 	return c
 }
@@ -788,6 +805,12 @@ func runBrainSave(c *cobra.Command, saveType brain.SaveType) error {
 	reviewAfter, _ := c.Flags().GetString("review-after")
 	body, _ := c.Flags().GetString("body")
 	files, _ := c.Flags().GetStringSlice("files")
+	supersedes, _ := c.Flags().GetStringSlice("supersedes")
+	isNew, _ := c.Flags().GetBool("new")
+	var crash []string
+	if saveType == brain.SaveTypeBugfix {
+		crash, _ = c.Flags().GetStringSlice("crash")
+	}
 
 	if body == "" {
 		// stdin fallback: lets the agent pipe a multi-line markdown body
@@ -808,6 +831,9 @@ func runBrainSave(c *cobra.Command, saveType brain.SaveType) error {
 		ReviewAfter: reviewAfter,
 		Body:        body,
 		Files:       files,
+		Supersedes:  supersedes,
+		New:         isNew,
+		Crash:       crash,
 	}
 	id, err := brain.AppendEntry(paths, entry)
 	if err != nil {

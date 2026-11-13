@@ -101,10 +101,11 @@ func (d contextDoc) composeIndexed(full []MemoryEntry, inFull map[string]bool) s
 }
 
 // isActiveDecision reports whether a decision counts as a project rule and
-// gets its full text in index mode. An unconfirmed decision doesn't: no one
-// else has reviewed it yet.
+// gets its full text in index mode. An unconfirmed decision doesn't (no one
+// else has reviewed it yet), nor does one a newer decision replaced.
 func isActiveDecision(e MemoryEntry) bool {
-	return strings.EqualFold(strings.TrimSpace(e.Get("status")), StatusActive) && !e.Flags.Unconfirmed
+	return strings.EqualFold(strings.TrimSpace(e.Get("status")), StatusActive) &&
+		!e.Flags.Unconfirmed && e.Flags.SupersededBy == ""
 }
 
 // indexLine renders one note as a single index line, e.g. "- [bug_fix]
@@ -121,6 +122,12 @@ func indexLine(e MemoryEntry, now time.Time) string {
 	}
 	if e.Flags.Unconfirmed {
 		parts = append(parts, "unconfirmed")
+	}
+	if e.Flags.SupersededBy != "" {
+		parts = append(parts, "superseded by "+e.Flags.SupersededBy)
+	}
+	if e.Flags.ReplacementProposed != "" {
+		parts = append(parts, "replacement proposed by "+e.Flags.ReplacementProposed+" (unconfirmed)")
 	}
 	for _, k := range []string{"platform", "area"} {
 		if v := e.Get(k); v != "" {

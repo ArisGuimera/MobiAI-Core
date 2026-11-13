@@ -2,6 +2,7 @@ package mcp
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -56,10 +57,11 @@ func handleContext(paths brain.BrainPaths) func(context.Context, *mcp.CallToolRe
 	}
 }
 
-// SearchArgs are the inputs for mobile_search. Query is required;
-// filters are optional and AND-composed with the query.
+// SearchArgs are the inputs for mobile_search. Query or crash is
+// required; filters are optional and AND-composed with them.
 type SearchArgs struct {
-	Query    string `json:"query" jsonschema:"free-text to match against entry title and body (case-insensitive substring)"`
+	Query    string `json:"query,omitempty" jsonschema:"free-text to match against entry title and body (case-insensitive substring)"`
+	Crash    string `json:"crash,omitempty" jsonschema:"crash signature (Crashlytics issue id, Sentry fingerprint or exception signature): matches a bugfix's crash field exactly, or text in a note body. Search with it before investigating a crash."`
 	Platform string `json:"platform,omitempty" jsonschema:"limit to entries with this platform"`
 	Status   string `json:"status,omitempty" jsonschema:"limit to entries with this status"`
 	Area     string `json:"area,omitempty" jsonschema:"limit to entries whose area contains this substring"`
@@ -76,6 +78,7 @@ type SearchHit struct {
 	Platform string `json:"platform,omitempty"`
 	Area     string `json:"area,omitempty"`
 	Snippet  string `json:"snippet,omitempty"`
+	Path     string `json:"path,omitempty"` // note file, relative to the project root
 }
 
 // SearchResult is the structured output of mobile_search. Returning
@@ -91,13 +94,14 @@ func handleSearch(paths brain.BrainPaths) func(context.Context, *mcp.CallToolReq
 			return nil, SearchResult{}, brainNotInitialized(paths)
 		}
 		prefix := migrate(paths)
-		if strings.TrimSpace(args.Query) == "" {
-			return nil, SearchResult{}, fmt.Errorf("query is required")
+		if strings.TrimSpace(args.Query) == "" && strings.TrimSpace(args.Crash) == "" {
+			return nil, SearchResult{}, fmt.Errorf("query is required (or crash)")
 		}
 		raw, err := brain.Search(paths, args.Query, brain.EntryFilter{
 			Platform: args.Platform,
 			Status:   args.Status,
 			Area:     args.Area,
+			Crash:    strings.TrimSpace(args.Crash),
 		})
 		if err != nil {
 			return nil, SearchResult{}, err
@@ -112,11 +116,16 @@ func handleSearch(paths brain.BrainPaths) func(context.Context, *mcp.CallToolReq
 				Platform: h.Entry.Get("platform"),
 				Area:     h.Entry.Get("area"),
 				Snippet:  h.Snippet,
+				Path:     h.Entry.Path,
 			})
 		}
 		// Also include a short text summary in Content so MCP clients
 		// that show tool output verbatim render something useful.
-		summary := formatSearchSummary(args.Query, out.Hits)
+		query := args.Query
+		if query == "" {
+			query = args.Crash
+		}
+		summary := formatSearchSummary(query, out.Hits)
 		return &mcp.CallToolResult{
 			Content: []mcp.Content{&mcp.TextContent{Text: prefix + summary}},
 		}, out, nil
@@ -499,6 +508,9 @@ type SaveArgs struct {
 	ReviewAfter string   `json:"review_after,omitempty" jsonschema:"YYYY-MM-DD — mostly meaningful for temporary status"`
 	Files       []string `json:"files,omitempty" jsonschema:"repo-relative file paths the entry refers to"`
 	Body        string   `json:"body" jsonschema:"Markdown body. Include sub-headings like ### Decision/Reason/Alternatives or ### Problem/Solution/Example as fits the entry type."`
+	Supersedes  []string `json:"supersedes,omitempty" jsonschema:"ids of notes this one replaces: they stop counting and their text is no longer delivered (the old notes are not modified)"`
+	New         bool     `json:"new,omitempty" jsonschema:"save even if a note with a similar title already exists in the section (otherwise the save is refused)"`
+	Crash       []string `json:"crash,omitempty" jsonschema:"bugfix only: crash signatures this fix solves (Crashlytics issue id, Sentry fingerprint or exception signature like NullPointerException at LoginViewModel.kt:42)"`
 }
 
 // SaveResult returns the persisted entry's id so the agent can echo
@@ -540,8 +552,17 @@ func makeSaveHandler(paths brain.BrainPaths, saveType brain.SaveType, section st
 			ReviewAfter: args.ReviewAfter,
 			Files:       args.Files,
 			Body:        args.Body,
+			Supersedes:  args.Supersedes,
+			New:         args.New,
+			Crash:       args.Crash,
 		}
 		id, err := brain.AppendEntry(paths, entry)
+		var similar *brain.SimilarNoteError
+		if errors.As(err, &similar) {
+			return nil, SaveResult{}, fmt.Errorf("A similar note already exists: %s %q. Ask the user which they prefer: edit that note file, "+
+				"save again with supersedes: [%q] to replace it, or save again with new: true to keep a separate note",
+				similar.ID, similar.Title, similar.ID)
+		}
 		if err != nil {
 			return nil, SaveResult{}, err
 		}

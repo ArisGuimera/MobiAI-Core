@@ -112,6 +112,9 @@ type SaveEntry struct {
 	ReviewAfter string   // optional, ISO date — meaningful for temporary entries
 	Body        string   // free-form Markdown (may include H3 subheadings)
 	Files       []string // optional list of repo-relative file paths
+	Supersedes  []string // ids of the notes this one replaces (optional)
+	Crash       []string // crash signatures, bugfix only (optional)
+	New         bool     // save even if a note with a similar title exists
 	now         func() time.Time
 }
 
@@ -138,19 +141,59 @@ func (e *SaveEntry) Validate() error {
 			return fmt.Errorf("--review-after must be YYYY-MM-DD: %w", err)
 		}
 	}
+	e.Supersedes = cleanList(e.Supersedes)
+	e.Crash = cleanList(e.Crash)
+	if len(e.Crash) > 0 && e.Type != SaveTypeBugfix {
+		return fmt.Errorf("--crash is only for bugfix notes")
+	}
 	return nil
+}
+
+// cleanList trims the items of a list flag and drops empty ones.
+func cleanList(in []string) []string {
+	var out []string
+	for _, s := range in {
+		if s = strings.TrimSpace(s); s != "" {
+			out = append(out, s)
+		}
+	}
+	return out
 }
 
 // AppendEntry validates the entry, ensures the brain exists at p, and
 // writes the note as its own card at memories/<section>/<id>.md. Returns
 // the generated id (slug + timestamp) so callers can echo it. Two saves
 // with the same title in the same second get "-2", "-3"... appended.
+//
+// It refuses to save (SimilarNoteError) when the section already has an
+// active note with a similar title, unless e.New is set or the entry
+// supersedes another note; the ids in e.Supersedes must exist.
 func AppendEntry(p BrainPaths, e *SaveEntry) (string, error) {
 	if !p.Exists() {
 		return "", fmt.Errorf("brain not initialized at %s — run `mobiai brain init` first", p.Root)
 	}
 	if err := e.Validate(); err != nil {
 		return "", err
+	}
+	if len(e.Supersedes) > 0 || !e.New {
+		notes, err := LoadNotes(p)
+		if err != nil {
+			return "", err
+		}
+		known := map[string]bool{}
+		for _, n := range notes {
+			known[n.Get("id")] = true
+		}
+		for _, id := range e.Supersedes {
+			if !known[id] {
+				return "", fmt.Errorf("--supersedes: no note with id %q in the brain", id)
+			}
+		}
+		if len(e.Supersedes) == 0 && !e.New {
+			if s := findSimilar(notes, e.Type.section(), e.Title); s != nil {
+				return "", &SimilarNoteError{ID: s.Get("id"), Title: s.Title}
+			}
+		}
 	}
 	if e.now == nil {
 		e.now = timeNow
@@ -222,6 +265,12 @@ func renderCard(id string, e *SaveEntry) string {
 	fmt.Fprintf(&b, "- verified: %s\n", date)
 	if e.ReviewAfter != "" {
 		fmt.Fprintf(&b, "- review_after: %s\n", e.ReviewAfter)
+	}
+	if len(e.Supersedes) > 0 {
+		fmt.Fprintf(&b, "- supersedes: %s\n", strings.Join(e.Supersedes, ", "))
+	}
+	if len(e.Crash) > 0 {
+		fmt.Fprintf(&b, "- crash: %s\n", strings.Join(e.Crash, ", "))
 	}
 
 	body := strings.TrimSpace(demoteBodyH2(normalizeNewlines(e.Body)))

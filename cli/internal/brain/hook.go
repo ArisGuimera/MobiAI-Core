@@ -148,8 +148,25 @@ func FileContextHook(input []byte, opts HookOptions) []byte {
 	for _, id := range state.Unconfirmed {
 		unconfirmed[id] = true
 	}
-	for i := range matches {
-		matches[i].note.Flags.Unconfirmed = unconfirmed[matches[i].note.Get("id")]
+	for i := range notes {
+		notes[i].Flags.Unconfirmed = unconfirmed[notes[i].Get("id")]
+	}
+	applySupersedes(notes)
+	flags := map[string]NoteFlags{}
+	for _, n := range notes {
+		flags[n.Get("id")] = n.Flags
+	}
+	live := matches[:0]
+	for _, m := range matches {
+		m.note.Flags = flags[m.note.Get("id")]
+		if m.note.Flags.SupersededBy == "" {
+			live = append(live, m)
+		}
+	}
+	matches = live
+	if len(matches) == 0 {
+		saveHookState(opts.stateDir(), session, state)
+		return nil
 	}
 
 	sort.SliceStable(matches, func(i, j int) bool {

@@ -194,6 +194,7 @@ var guardAllow = map[string]bool{
 	"  review_after: %s → %s\n": true,
 	"  verified: %s → %s\n":     true,
 	"  files: %s\n":             true,
+	"    file: %s\n":            true,
 
 	// Domain terms kept English across the whole product (pack/host are used
 	// untranslated everywhere, like "skills"). Headers in catalog/skills/status.

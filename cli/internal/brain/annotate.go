@@ -11,6 +11,12 @@ type NoteFlags struct {
 	// Warnings: why the note may be out of date, each starting with "⚠"
 	// (see checkVerification).
 	Warnings []string
+	// SupersededBy: id of the confirmed note that replaces this one; its
+	// text is no longer delivered (see applySupersedes).
+	SupersededBy string
+	// ReplacementProposed: id of an unconfirmed note that says it replaces
+	// this one; this note stays in force until that one is confirmed.
+	ReplacementProposed string
 }
 
 // annotation is what annotateNotes learned about the brain as a whole.
@@ -24,6 +30,7 @@ func annotateNotes(p BrainPaths, cfg Config, notes []MemoryEntry, now time.Time)
 	for i := range notes {
 		notes[i].Flags = NoteFlags{Unconfirmed: !conf.confirmed(notes[i])}
 	}
+	applySupersedes(notes)
 	checkVerification(p.Root, notes, now)
 	return annotation{Branch: conf.branch}
 }

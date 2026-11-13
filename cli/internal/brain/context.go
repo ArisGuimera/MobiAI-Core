@@ -289,6 +289,15 @@ func writeEntry(b *strings.Builder, e MemoryEntry) {
 	if e.Flags.Unconfirmed {
 		b.WriteString("- state: unconfirmed\n")
 	}
+	if e.Flags.SupersededBy != "" {
+		// A replaced note keeps its heading so the agent knows it existed,
+		// but not its text: the replacement is what holds now.
+		fmt.Fprintf(b, "- state: superseded by %s\n", e.Flags.SupersededBy)
+		return
+	}
+	if e.Flags.ReplacementProposed != "" {
+		fmt.Fprintf(b, "- state: replacement proposed by %s (unconfirmed)\n", e.Flags.ReplacementProposed)
+	}
 	for _, w := range e.Flags.Warnings {
 		fmt.Fprintf(b, "- check: %s\n", w)
 	}

@@ -99,7 +99,7 @@ func TestAppendEntry_IDCollisionGetsSuffix(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	id2, err := AppendEntry(p, &SaveEntry{Type: SaveTypeDecision, Title: "Same title", Body: "two", now: now})
+	id2, err := AppendEntry(p, &SaveEntry{Type: SaveTypeDecision, Title: "Same title", Body: "two", New: true, now: now})
 	if err != nil {
 		t.Fatal(err)
 	}

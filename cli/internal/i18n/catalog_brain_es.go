@@ -24,6 +24,12 @@ func init() {
 		"Print the Brain notes for the file in a hook payload (stdin)": "Imprime las notas del Brain para el archivo de un payload de hook (stdin)",
 		"Reads a PostToolUse hook payload (Claude Code or Cursor) on stdin and prints the hook output that hands the agent the Brain notes for that file's folder, each note once per session. Never migrates the Brain and never fails: on any problem it prints nothing.": "Lee por stdin un payload de hook PostToolUse (Claude Code o Cursor) e imprime la salida del hook que le entrega al agente las notas del Brain para la carpeta de ese archivo, cada nota una vez por sesión. Nunca migra el Brain y nunca falla: ante cualquier problema no imprime nada.",
 
+		// relations + crash
+		"ids of the notes this one replaces, comma-separated (optional)":                                                                    "ids de las notas que esta reemplaza, separados por coma (opcional)",
+		"save even if a note with a similar title already exists":                                                                           "guardar aunque ya exista una nota con un título parecido",
+		"crash signatures this fix solves: Crashlytics issue id, Sentry fingerprint or exception signature, comma-separated (optional)":     "firmas de los crashes que resuelve este fix: issue ID de Crashlytics, fingerprint de Sentry o firma de la excepción, separadas por coma (opcional)",
+		"find bugfixes for a crash signature (Crashlytics issue id, Sentry fingerprint or exception signature); the query becomes optional": "busca bugfixes por firma de crash (issue ID de Crashlytics, fingerprint de Sentry o firma de la excepción); la consulta pasa a ser opcional",
+
 		// migrateBrain
 		"⚠ Could not write the Brain's new format (%v); reading both formats.\n":                    "⚠ No se pudo escribir el formato nuevo del Brain (%v); se leen los dos formatos.\n",
 		"Brain migrated to the new format: %d notes. Include .mobiai/brain/ in your next commit.\n": "Brain migrado al formato nuevo: %d notas. Incluí .mobiai/brain/ en tu próximo commit.\n",
