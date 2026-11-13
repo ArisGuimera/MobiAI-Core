@@ -510,6 +510,7 @@ type SaveArgs struct {
 	Body        string   `json:"body" jsonschema:"Markdown body. Include sub-headings like ### Decision/Reason/Alternatives or ### Problem/Solution/Example as fits the entry type."`
 	Supersedes  []string `json:"supersedes,omitempty" jsonschema:"ids of notes this one replaces: they stop counting and their text is no longer delivered (the old notes are not modified)"`
 	New         bool     `json:"new,omitempty" jsonschema:"save even if a note with a similar title already exists in the section (otherwise the save is refused)"`
+	Until       []string `json:"until,omitempty" jsonschema:"<dependency>@<version> conditions, e.g. com.google.firebase:firebase-bom@34.0.0: the note holds while the project uses a lower version; once it reaches that version the note is flagged for review. Use it on every workaround tied to a library version."`
 	Crash       []string `json:"crash,omitempty" jsonschema:"bugfix only: crash signatures this fix solves (Crashlytics issue id, Sentry fingerprint or exception signature like NullPointerException at LoginViewModel.kt:42)"`
 }
 
@@ -553,6 +554,7 @@ func makeSaveHandler(paths brain.BrainPaths, saveType brain.SaveType, section st
 			Files:       args.Files,
 			Body:        args.Body,
 			Supersedes:  args.Supersedes,
+			Until:       args.Until,
 			New:         args.New,
 			Crash:       args.Crash,
 		}

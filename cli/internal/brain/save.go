@@ -113,6 +113,7 @@ type SaveEntry struct {
 	Body        string   // free-form Markdown (may include H3 subheadings)
 	Files       []string // optional list of repo-relative file paths
 	Supersedes  []string // ids of the notes this one replaces (optional)
+	Until       []string // <dependency>@<version> conditions (optional)
 	Crash       []string // crash signatures, bugfix only (optional)
 	New         bool     // save even if a note with a similar title exists
 	now         func() time.Time
@@ -142,6 +143,10 @@ func (e *SaveEntry) Validate() error {
 		}
 	}
 	e.Supersedes = cleanList(e.Supersedes)
+	e.Until = cleanList(e.Until)
+	if err := validateUntil(e.Until); err != nil {
+		return err
+	}
 	e.Crash = cleanList(e.Crash)
 	if len(e.Crash) > 0 && e.Type != SaveTypeBugfix {
 		return fmt.Errorf("--crash is only for bugfix notes")
@@ -268,6 +273,9 @@ func renderCard(id string, e *SaveEntry) string {
 	}
 	if len(e.Supersedes) > 0 {
 		fmt.Fprintf(&b, "- supersedes: %s\n", strings.Join(e.Supersedes, ", "))
+	}
+	if len(e.Until) > 0 {
+		fmt.Fprintf(&b, "- until: %s\n", strings.Join(e.Until, ", "))
 	}
 	if len(e.Crash) > 0 {
 		fmt.Fprintf(&b, "- crash: %s\n", strings.Join(e.Crash, ", "))

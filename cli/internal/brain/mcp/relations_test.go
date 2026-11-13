@@ -59,6 +59,20 @@ func TestMCP_SaveWithSupersedesAndNew(t *testing.T) {
 	}
 }
 
+func TestMCP_SaveUntil(t *testing.T) {
+	client, paths, cleanup := setupClient(t)
+	defer cleanup()
+	res, err := callTool(t, client, "mobile_save_bugfix", map[string]any{"title": "Firebase workaround", "body": "b",
+		"until": []string{"com.google.firebase:firebase-bom@34.0.0"}})
+	if err != nil || res.IsError {
+		t.Fatalf("save with until: %v %s", err, firstTextContent(res))
+	}
+	got, _ := readSectionCards(paths.MemoriesDir, "bugfixes")
+	if !strings.Contains(string(got), "- until: com.google.firebase:firebase-bom@34.0.0") {
+		t.Errorf("card:\n%s", got)
+	}
+}
+
 func TestMCP_SearchByCrash(t *testing.T) {
 	client, _, cleanup := setupClient(t)
 	defer cleanup()

@@ -30,6 +30,13 @@ func init() {
 		"crash signatures this fix solves: Crashlytics issue id, Sentry fingerprint or exception signature, comma-separated (optional)":     "firmas de los crashes que resuelve este fix: issue ID de Crashlytics, fingerprint de Sentry o firma de la excepción, separadas por coma (opcional)",
 		"find bugfixes for a crash signature (Crashlytics issue id, Sentry fingerprint or exception signature); the query becomes optional": "busca bugfixes por firma de crash (issue ID de Crashlytics, fingerprint de Sentry o firma de la excepción); la consulta pasa a ser opcional",
 
+		// until + doctor
+		"<dependency>@<version>: the note holds while the project uses a lower version, comma-separated (optional)": "<dependencia>@<versión>: la nota vale mientras el proyecto use una versión menor, separadas por coma (opcional)",
+		"Brain:":                             "Brain:",
+		"  ⚠ could not read the Brain: %v\n": "  ⚠ no se pudo leer el Brain: %v\n",
+		"  ✓ every until condition can be checked":                                     "  ✓ todas las condiciones until se pueden verificar",
+		"  ⚠ %d until condition(s) can't be checked and will never flag their note:\n": "  ⚠ %d condición(es) until no se pueden verificar y nunca van a marcar su nota:\n",
+
 		// migrateBrain
 		"⚠ Could not write the Brain's new format (%v); reading both formats.\n":                    "⚠ No se pudo escribir el formato nuevo del Brain (%v); se leen los dos formatos.\n",
 		"Brain migrated to the new format: %d notes. Include .mobiai/brain/ in your next commit.\n": "Brain migrado al formato nuevo: %d notas. Incluí .mobiai/brain/ en tu próximo commit.\n",

@@ -779,6 +779,7 @@ func newBrainSaveSubCmd(saveType brain.SaveType, use, short string) *cobra.Comma
 	c.Flags().StringSlice("files", nil, i18n.T("related files, comma-separated (optional)"))
 	c.Flags().StringSlice("supersedes", nil, i18n.T("ids of the notes this one replaces, comma-separated (optional)"))
 	c.Flags().Bool("new", false, i18n.T("save even if a note with a similar title already exists"))
+	c.Flags().StringSlice("until", nil, i18n.T("<dependency>@<version>: the note holds while the project uses a lower version, comma-separated (optional)"))
 	if saveType == brain.SaveTypeBugfix {
 		c.Flags().StringSlice("crash", nil, i18n.T("crash signatures this fix solves: Crashlytics issue id, Sentry fingerprint or exception signature, comma-separated (optional)"))
 	}
@@ -807,6 +808,7 @@ func runBrainSave(c *cobra.Command, saveType brain.SaveType) error {
 	files, _ := c.Flags().GetStringSlice("files")
 	supersedes, _ := c.Flags().GetStringSlice("supersedes")
 	isNew, _ := c.Flags().GetBool("new")
+	until, _ := c.Flags().GetStringSlice("until")
 	var crash []string
 	if saveType == brain.SaveTypeBugfix {
 		crash, _ = c.Flags().GetStringSlice("crash")
@@ -832,6 +834,7 @@ func runBrainSave(c *cobra.Command, saveType brain.SaveType) error {
 		Body:        body,
 		Files:       files,
 		Supersedes:  supersedes,
+		Until:       until,
 		New:         isNew,
 		Crash:       crash,
 	}

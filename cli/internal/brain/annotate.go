@@ -32,6 +32,7 @@ func annotateNotes(p BrainPaths, cfg Config, notes []MemoryEntry, now time.Time)
 	}
 	applySupersedes(notes)
 	checkVerification(p.Root, notes, now)
+	checkUntil(p.Root, notes)
 	return annotation{Branch: conf.branch}
 }
 
