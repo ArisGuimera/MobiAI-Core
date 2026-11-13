@@ -40,6 +40,7 @@ func NewBrainCmd() *cobra.Command {
 		newBrainBumpCmd(),
 		newBrainShowCmd(),
 		newBrainVerifyCmd(),
+		newBrainHookCmd(),
 		newBrainMCPCmd(),
 		newBrainInstallMCPCmd(),
 	)
@@ -685,6 +686,33 @@ func runBrainVerify(c *cobra.Command, args []string) error {
 		fmt.Fprintf(out, "  files: %s\n", strings.Join(res.Files, ", "))
 	}
 	return nil
+}
+
+// newBrainHookCmd groups the commands that agent hooks call. They are
+// hidden: people don't run them by hand.
+func newBrainHookCmd() *cobra.Command {
+	root := &cobra.Command{
+		Use:    "hook",
+		Short:  i18n.T("Commands called by agent hooks (internal)"),
+		Hidden: true,
+	}
+	root.AddCommand(&cobra.Command{
+		Use:   "file-context",
+		Short: i18n.T("Print the Brain notes for the file in a hook payload (stdin)"),
+		Long:  i18n.T("Reads a PostToolUse hook payload (Claude Code or Cursor) on stdin and prints the hook output that hands the agent the Brain notes for that file's folder, each note once per session. Never migrates the Brain and never fails: on any problem it prints nothing."),
+		Args:  cobra.NoArgs,
+		RunE: func(c *cobra.Command, _ []string) error {
+			input, err := io.ReadAll(io.LimitReader(c.InOrStdin(), 1<<20))
+			if err != nil {
+				return nil
+			}
+			if out := brain.FileContextHook(input, brain.HookOptions{}); len(out) > 0 {
+				fmt.Fprintln(c.OutOrStdout(), string(out))
+			}
+			return nil
+		},
+	})
+	return root
 }
 
 // daysOverdueLabel renders a human-readable "N days" / "1 day" / "today"

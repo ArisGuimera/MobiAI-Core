@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# MobiAI-Core — PostToolUse hook (Claude Code and Cursor)
+# Hands the agent the MobiAI Brain notes that apply to the folder of the file
+# it just read or edited, each note once per session. The work happens in
+# `mobiai brain hook file-context`, which reads the hook payload on stdin and
+# prints the hook output for the client that sent it.
+#
+# Stays silent when mobiai is not installed, is older than 0.3 (no
+# `brain hook` command) or the project has no Brain: only JSON is passed on.
+
+command -v mobiai >/dev/null 2>&1 || exit 0
+out="$(mobiai brain hook file-context 2>/dev/null)" || exit 0
+case "$out" in
+  "{"*) printf '%s\n' "$out" ;;
+esac
+exit 0

@@ -19,6 +19,11 @@ func init() {
 		"✓ %s verified (%s)\n": "✓ %s verificada (%s)\n",
 		"\n⚠ %d note(s) may be out of date. Check them against the code, then run `mobiai brain verify <id>` (or fix or deprecate them):\n\n": "\n⚠ %d nota(s) pueden estar desactualizadas. Revisalas contra el código y después corré `mobiai brain verify <id>` (o corregilas o pasalas a deprecated):\n\n",
 
+		// hook
+		"Commands called by agent hooks (internal)":                    "Comandos que llaman los hooks de los agentes (uso interno)",
+		"Print the Brain notes for the file in a hook payload (stdin)": "Imprime las notas del Brain para el archivo de un payload de hook (stdin)",
+		"Reads a PostToolUse hook payload (Claude Code or Cursor) on stdin and prints the hook output that hands the agent the Brain notes for that file's folder, each note once per session. Never migrates the Brain and never fails: on any problem it prints nothing.": "Lee por stdin un payload de hook PostToolUse (Claude Code o Cursor) e imprime la salida del hook que le entrega al agente las notas del Brain para la carpeta de ese archivo, cada nota una vez por sesión. Nunca migra el Brain y nunca falla: ante cualquier problema no imprime nada.",
+
 		// migrateBrain
 		"⚠ Could not write the Brain's new format (%v); reading both formats.\n":                    "⚠ No se pudo escribir el formato nuevo del Brain (%v); se leen los dos formatos.\n",
 		"Brain migrated to the new format: %d notes. Include .mobiai/brain/ in your next commit.\n": "Brain migrado al formato nuevo: %d notas. Incluí .mobiai/brain/ en tu próximo commit.\n",

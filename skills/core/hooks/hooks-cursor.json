@@ -8,6 +8,12 @@
       {
         "command": "./hooks/run-hook.cmd update-banner"
       }
+    ],
+    "postToolUse": [
+      {
+        "command": "./hooks/run-hook.cmd brain-file-context",
+        "matcher": "Read|Write"
+      }
     ]
   }
 }
