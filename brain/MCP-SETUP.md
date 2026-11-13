@@ -8,17 +8,22 @@ Sin MCP, el agente solo conoce el Brain si la skill `mobiai-brain` se lo dice �
 
 | Tool | Equivalente CLI | Salida |
 |---|---|---|
-| `mobile_context` | `mobiai brain context` (con filtros) | Markdown completo del contexto |
-| `mobile_search` | `mobiai brain search` | JSON estructurado `{hits: [{section, title, id, status, platform, area, snippet}]}` |
+| `mobile_context` | `mobiai brain context` (con filtros) | Markdown del contexto: completo hasta 25 KB, con índice por encima |
+| `mobile_get` | `mobiai brain show` | Markdown de una nota + `{id, section, path, markdown}` |
+| `mobile_search` | `mobiai brain search` | JSON estructurado `{hits: [{section, title, id, status, platform, area, snippet, path}]}`; acepta `crash` para buscar por firma de crash |
 | `mobile_scan` | `mobiai brain scan` | JSON del stack detectado (project_type, platforms, libs, integraciones, ...) |
-| `mobile_review` | `mobiai brain review` | JSON `{overdue: [...], no_date: [...]}` con entradas `temporary` cuyo `review_after` ya pasó |
+| `mobile_review` | `mobiai brain review` | JSON `{overdue: [...], no_date: [...], stale: [...]}`: temporales vencidas y notas que pueden estar desactualizadas (⚠) |
+| `mobile_verify` | `mobiai brain verify` | `{section, file, title, prev_verified, new_verified, files}` |
 | `mobile_promote` | `mobiai brain promote` | `{section, file, title, prev_status, new_status, prev_review_after, new_review_after}` |
 | `mobile_bump` | `mobiai brain bump` | Mismo schema que `mobile_promote`; bumpea solo `review_after` |
-| `mobile_save_decision` | `mobiai brain save decision` | `{id, section}` de la entrada creada |
-| `mobile_save_bugfix` | `mobiai brain save bugfix` | `{id, section}` |
-| `mobile_save_testing` | `mobiai brain save testing` | `{id, section}` |
+| `mobile_save_decision` | `mobiai brain save decision` | `{id, section, path}` de la nota creada |
+| `mobile_save_bugfix` | `mobiai brain save bugfix` | `{id, section, path}` |
+| `mobile_save_testing` | `mobiai brain save testing` | `{id, section, path}` |
+| `mobile_save_knowledge` | `mobiai brain save knowledge` | `{id, section, path}` |
 
-Todas requieren un brain inicializado (`mobiai brain init`). Si no existe, la tool falla con un error claro indicando cómo arreglar.
+Las tools `mobile_save_*` aceptan, además de los campos de siempre, `supersedes` (ids que esta nota reemplaza), `until` (`<dependencia>@<versión>`), `new` (guardar aunque haya un título parecido) y, solo en bugfix, `crash` (firmas de crash).
+
+Todas requieren un brain inicializado (`mobiai brain init`). Si no existe, la tool falla con un error claro indicando cómo arreglar. Todas, menos la del hook, migran un Brain del formato 0.2 la primera vez que lo tocan y lo avisan al principio de su salida.
 
 ## Registro automático (recomendado)
 

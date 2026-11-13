@@ -2,7 +2,7 @@
 
 > **Leer en otro idioma:** [English](README.md) · **Español**
 
-> La **memoria viva por proyecto** del ecosistema MobiAI. Mientras las skills enseñan a la IA *cómo* trabajar, el Brain guarda el *conocimiento específico* de cada proyecto mobile: decisiones, bugfixes, workarounds, patrones de testing e integraciones.
+> La **memoria viva por proyecto** del ecosistema MobiAI. Mientras las skills enseñan a la IA *cómo* trabajar, el Brain guarda el *conocimiento específico* de cada proyecto mobile: decisiones, bugfixes, workarounds, patrones de testing y conocimiento sobre cómo se comportan la app y sus servicios.
 
 **Tabla de contenidos**
 
@@ -106,11 +106,14 @@ mobiai brain context               # Imprime Markdown con config + scan + memori
 mobiai brain save decision ...     # Guarda una decisión de arquitectura
 mobiai brain save bugfix ...       # Guarda un bugfix o workaround
 mobiai brain save testing ...      # Guarda un patrón de testing reusable
+mobiai brain save knowledge ...    # Guarda cómo se comporta la app o un servicio externo
 
-mobiai brain search <query>        # Busca texto libre en las memorias
-mobiai brain review                # Lista entradas temporales cuyo review_after ya pasó
+mobiai brain search <query>        # Busca texto libre en las memorias (o --crash <firma>)
+mobiai brain show <id>             # Imprime una nota completa
+mobiai brain review                # Temporales vencidas + notas que pueden estar desactualizadas
 mobiai brain promote <id> ...      # Cambia el status de una entrada existente
 mobiai brain bump <id> ...         # Extiende review_after de una entrada existente
+mobiai brain verify <id>           # Marca una nota como revisada contra el código actual
 
 mobiai brain mcp                   # Arranca un server MCP que expone el Brain como tools
 mobiai brain install-mcp           # Registra el server MCP en clientes IA (Claude Code, Cursor)
@@ -126,14 +129,16 @@ Crea la estructura local:
 <repo>/.mobiai/brain/
 ├── config.json
 └── memories/
-    ├── decisions.md
+    ├── decisions/       ← un archivo por nota
+    ├── bugfixes/
+    ├── testing/
+    ├── knowledge/
+    ├── decisions.md     ← formato viejo: solo el aviso para mobiai < 0.3
     ├── bugfixes.md
-    ├── testing.md
-    ├── integrations.md
-    └── releases.md
+    └── testing.md
 ```
 
-Es idempotente: si `config.json` o cualquier `memories/*.md` ya existe, no se sobrescribe.
+Es idempotente: si `config.json` o cualquier archivo de memoria ya existe, no se sobrescribe. Los tres `.md` existen solo para que un compañero con un mobiai anterior vea un aviso que le pide actualizar (ver [Actualizar desde 0.2](#actualizar-desde-02)) en vez de un Brain vacío.
 
 Para localizar la raíz del proyecto, sube por los ancestros del cwd buscando, en este orden de prioridad:
 
@@ -147,6 +152,20 @@ Para localizar la raíz del proyecto, sube por los ancestros del cwd buscando, e
 8. `package.json` con dependencia `react-native`.
 
 Si nada coincide, usa el directorio actual y avisa con un warning.
+
+### Actualizar desde 0.2
+
+Hasta 0.2.x, cada nota de un tipo se agregaba al final de un único archivo (`decisions.md`, `bugfixes.md`, …). Dos ramas que guardaban notas chocaban siempre al final de ese archivo. Desde 0.3 cada nota es su propio archivo en `memories/<sección>/<id>.md`, así que las notas nuevas nunca chocan.
+
+**No hay que correr nada.** La primera vez que un comando (o una tool MCP) de 0.3 toca un Brain viejo:
+
+1. crea un archivo por cada entrada vieja, conservando su id (las entradas escritas a mano sin id reciben uno que sale de su texto);
+2. agrega un aviso justo debajo del título de `decisions.md`, `bugfixes.md` y `testing.md`;
+3. lo avisa: `Brain migrated to the new format: N notes. Include .mobiai/brain/ in your next commit.`
+
+Las entradas viejas quedan donde estaban. El resultado depende solo del texto de los archivos, así que dos personas que migran en dos ramas generan archivos idénticos y git los junta sin conflicto. Nunca hace commit. También repara las entradas cuyo cuerpo usaba títulos `##`, que 0.2 partía en entradas vacías.
+
+**Los compañeros que siguen en 0.2.x** solo leen los archivos viejos. Su `brain context` y su `brain review` muestran el aviso, y su agente les pide actualizar. Una nota que guardan se agrega al archivo viejo, y 0.3 la convierte en archivo la próxima vez que corre. Un `promote` o `bump` hecho con 0.2.x sobre una nota migrada cambia solo la copia vieja y se ignora: primero hay que actualizar. Ojo: en 0.2.x, `brain review` sale con exit 1 por el aviso (tiene forma de entrada temporal vencida), salvo que pases `--no-fail`.
 
 ### `mobiai brain scan`
 
@@ -165,7 +184,7 @@ Recorre el árbol del proyecto (profundidad máx. 6, ignorando `.git`, `node_mod
 
 ### `mobiai brain save <type>`
 
-Tres subcomandos: `decision`, `bugfix`, `testing`. Todos comparten los mismos flags:
+Cuatro subcomandos: `decision`, `bugfix`, `testing`, `knowledge`. Cada uno escribe la nota como su propio archivo, `memories/<sección>/<id>.md`. Todos comparten los mismos flags:
 
 | Flag | ¿Requerido? | Notas |
 |---|---|---|
@@ -174,8 +193,16 @@ Tres subcomandos: `decision`, `bugfix`, `testing`. Todos comparten los mismos fl
 | `--area <str>` | no | Libre (`firebase_auth`, `dependency_injection`, `datastore`, ...) |
 | `--status <s>` | no | `active` (default) \| `temporary` \| `deprecated` |
 | `--review-after YYYY-MM-DD` | no | Sentido sobre todo en `temporary` |
-| `--files a,b,c` | no | Lista de paths relevantes |
-| `--body <md>` | no | Cuerpo Markdown. Si se omite, lee de stdin (útil para pipear contenido multilínea). |
+| `--files a,b,c` | no | Lista de paths relevantes. Dicen a qué carpetas aplica la nota, y la nota se marca cuando cambian (ver `verify`) |
+| `--body <md>` | no | Cuerpo Markdown. Si se omite, lee de stdin (útil para pipear contenido multilínea). Los títulos `##` pasan a `###` |
+| `--supersedes <id>,…` | no | Esta nota reemplaza a esas: dejan de contar y su texto ya no se entrega. Las notas viejas no se modifican |
+| `--until <dep>@<versión>,…` | no | La nota vale mientras el proyecto use una versión menor (por ejemplo `com.google.firebase:firebase-bom@34.0.0`). Cuando el proyecto llega a esa versión, la nota se marca para revisar |
+| `--crash <firma>,…` | no | Solo `bugfix`: issue ID de Crashlytics, fingerprint de Sentry o firma de la excepción que resuelve este fix (se encuentra después con `search --crash`) |
+| `--new` | no | Guarda aunque exista una nota con un título parecido (ver abajo) |
+
+**`knowledge`** guarda cómo se comportan la app y los servicios con los que habla: happy paths, respuestas y códigos de error del servidor, comportamiento de SDKs y de terceros. Guarda solo lo que no se ve leyendo el código: "el servidor devuelve 409 si el pedido está cerrado" va; "la función X hace Y" no va.
+
+**Un título parecido frena el guardado.** Si en la sección ya hay una nota activa cuyo título comparte el 60% o más de sus palabras, `save` no escribe nada y responde `A similar note already exists: <id> "<title>". Edit that note file, pass --supersedes <id> to replace it, or pass --new to save a separate note.`
 
 Ejemplo:
 
@@ -200,21 +227,27 @@ El tipo interno (`type:` en la entrada renderizada) se deriva del subcomando + s
 - `bugfix` + `temporary` → `platform_workaround`
 - `bugfix` + `active`/`deprecated` → `bug_fix`
 - `testing` → `testing_pattern`
+- `knowledge` → `knowledge`
 
 Cada entrada recibe un `id` estable basado en el slug del título + timestamp UTC, así dos saves con el mismo título no colisionan.
 
 ### `mobiai brain search <query>`
 
-Búsqueda case-insensitive sobre el título y el cuerpo de cada entrada de las memorias. Devuelve por sección, con título, status/platform y un snippet de la primera línea que contiene la query.
+Búsqueda case-insensitive sobre el título y el cuerpo de cada entrada de las memorias. Devuelve por sección, con título, status/platform, un snippet de la primera línea que contiene la query y el archivo de la nota.
 
 ```bash
 mobiai brain search koin
 mobiai brain search --platform ios firebase
 mobiai brain search --status temporary
 mobiai brain search --area firebase_auth keystore
+mobiai brain search --crash 6a1b2c3d4e5f        # bugfixes para una firma de crash
 ```
 
-Acepta los mismos filtros que `context` (`--platform`, `--status`, `--area`) con semántica **AND**. La query se combina con los filtros: `--platform ios firebase` devuelve solo entradas iOS que mencionen "firebase".
+Acepta los mismos filtros que `context` (`--platform`, `--status`, `--area`) con semántica **AND**. La query se combina con los filtros: `--platform ios firebase` devuelve solo entradas iOS que mencionen "firebase". Con `--crash` la query es opcional: busca coincidencias exactas en el campo `crash` de los bugfixes y el texto en el cuerpo de las notas.
+
+### `mobiai brain show <id>`
+
+Imprime una nota completa. Cuando `context` lista una nota en su índice, el agente abre el archivo de la nota; esto es para clientes que no pueden leer archivos (MCP: `mobile_get`).
 
 ### `mobiai brain review`
 
@@ -265,6 +298,25 @@ El exit 1 por defecto está pensado para usarse como **gate en CI o pre-commit**
 | `deprecated` | cualquiera | No (ya está cerrada) |
 
 `review` **no edita ni borra** nada — solo informa. Para bajar una entrada del listado, edita el `.md` y cambia `review_after`, el `status` a `active`/`deprecated`, o elimina el bloque.
+
+**Notas que pueden estar desactualizadas.** `review` también lista, en una sección aparte, las notas marcadas con ⚠ (ver `verify`): sus archivos cambiaron o desaparecieron, llevan más de 3 meses sin verificar o se cumplió una condición `until`. Nunca cambian el código de salida, así que los gates de CI siguen fallando solo por temporales vencidas.
+
+### `mobiai brain verify <id>`
+
+Una nota que se apoya en el código puede quedar vieja sin que nadie lo note. El Brain la revisa contra git cada vez que lee las notas, con un solo `git log` para todo el Brain, y la marca con ⚠ cuando:
+
+- alguno de sus `### Files` tiene commits de un día posterior a su `verified` (`⚠ LoginViewModel.kt changed since verification`), o ya no existe;
+- no tiene archivos y no se verificó en los últimos 3 meses (`⚠ not verified in 3+ months`);
+- se cumplió una condición `until` (`⚠ firebase-bom is now 34.1.0 (note valid until 34.0.0): check whether this workaround is still needed`) o esa dependencia ya no está. Las versiones se leen de los catálogos y build files de Gradle, `Podfile.lock`, `Package.resolved`, `pubspec.lock` y `package-lock.json`/`package.json`.
+
+Nada vence ni se borra. Cuando tú (o el agente) revisas una nota marcada y sigue siendo cierta:
+
+```bash
+mobiai brain verify <id>                          # verified = hoy
+mobiai brain verify <id> --files a/New.kt,b/X.kt  # además reemplaza sus archivos
+```
+
+Si ya no es cierta, corrige la nota o pásala a `deprecated` con `promote`. Una condición `until` que no se puede interpretar nunca marca nada; `mobiai doctor` las lista.
 
 ### `mobiai brain promote <id>`
 
@@ -333,7 +385,7 @@ Platforms: android, ios, shared
 ## Testing Patterns
 ...
 
-## Integrations
+## Knowledge
 ...
 
 ## Release Notes
@@ -343,11 +395,25 @@ Platforms: android, ios, shared
 - archivo sensible detectado: .env (no leído)
 ```
 
+**Hasta 25 KB, todo; por encima, un índice.** Se arma el documento completo y se mide. Si supera `context_max_bytes` (25600 por defecto, configurable en `config.json`), el agente recibe el stack, las reglas y los warnings, el texto completo de las decisiones activas (de la más nueva a la más vieja, mientras entren) y una línea por cada otra nota:
+
+```
+- [bug_fix] Login crash on screen rotation · android · auth · created 2026-09-14 (3 months ago) · verified 2026-09-14 · ⚠ LoginViewModel.kt changed since verification · applies to app/src/main/java/com/example/auth/ → memories/bugfixes/login-crash-on-screen-rotation-20260914-163044.md
+```
+
+El agente abre las notas que necesita (o usa `show` / `mobile_get`). Los filtros se aplican antes de medir, así que una consulta acotada sigue recibiendo los textos completos.
+
+**Marcas que vas a ver** (en modo completo como líneas `- state:` / `- check:`, en el índice dentro de la línea):
+
+- `unconfirmed`: la nota la escribió otra persona y su archivo todavía no llegó a la rama principal, así que nadie la revisó en un PR. Tus propias notas (sin commit todavía, o commiteadas con tu `git config user.email`) cuentan como confirmadas para ti. Una decisión sin confirmar no se toma como regla del proyecto. La rama principal es `origin/HEAD` (por ejemplo `develop` en equipos con git-flow), después `origin/main`, `origin/master`, `main`, `master`; se puede forzar con `"confirmed_branch"` en `config.json`. Sin git, todo cuenta como confirmado.
+- `⚠ …`: la nota puede estar desactualizada (ver `verify`).
+- `superseded by <id>`: una nota más nueva la reemplaza; su texto ya no se entrega. Si el reemplazo todavía está sin confirmar, la nota vieja sigue vigente y muestra `replacement proposed by <id> (unconfirmed)`.
+
 **Filtros disponibles**:
 
 | Flag | Notas |
 |---|---|
-| `--section` | Coma-separado o repetible. Nombres canónicos: `stack`, `rules`, `decisions`, `bugfixes`, `testing`, `integrations`, `releases`, `warnings`. |
+| `--section` | Coma-separado o repetible. Nombres canónicos: `stack`, `rules`, `decisions`, `bugfixes`, `testing`, `knowledge`, `releases`, `warnings` (`integrations` es un alias de `knowledge`). |
 | `--platform` | Filtra entradas por `platform:` (exacto, case-insensitive). |
 | `--status` | Filtra por `status:` (exacto). |
 | `--area` | Filtra por `area:` (substring). |
@@ -398,7 +464,7 @@ mobiai brain save bugfix \
 
 **Brainstorm de arquitectura** — Necesitas elegir framework de DI para tu app KMP nueva. Lanzas `mobiai-mobile-brainstorming`, comparas Koin vs Hilt+Dagger vs manual, llegas a una conclusión.
 
-Tras el User Review Gate, la skill propone guardar la decisión. Confirmas y se guarda como `architecture_decision` en `decisions.md` con el razonamiento, los trade-offs descartados y los archivos donde vive.
+Tras el User Review Gate, la skill propone guardar la decisión. Confirmas y se guarda como `architecture_decision` en `memories/decisions/` con el razonamiento, los trade-offs descartados y los archivos donde vive.
 
 **Dos meses después** — Llega un dev nuevo, abre el repo en Cursor. Pregunta "¿por qué Koin y no Hilt?". El agente invoca `mobile_search "DI"` y le responde con la decisión completa, fecha y motivos. No tiene que reabrir el debate.
 
@@ -412,7 +478,7 @@ Al final, la skill propone:
 
 > *Este patrón parece reutilizable para otros tests de DataStore. ¿Lo guardo como testing pattern?*
 
-Confirmas. Se guarda en `testing.md`. La próxima vez que alguien (o tú) escriba un test contra DataStore, `mobile_context --section testing` se lo va a mostrar antes de que tropiece con el mismo flake.
+Confirmas. Se guarda en `memories/testing/`. La próxima vez que alguien (o tú) escriba un test contra DataStore, `mobile_context --section testing` se lo va a mostrar antes de que tropiece con el mismo flake.
 
 ---
 
@@ -427,18 +493,22 @@ Todo lo que sabe el Brain vive en `<repo>/.mobiai/brain/`:
 ├── config.json          ← metadatos del proyecto + reglas custom
 ├── scan.json            ← stack detectado (regenerable con `scan`)
 └── memories/
-    ├── decisions.md     ← architecture_decision
-    ├── bugfixes.md      ← bug_fix + platform_workaround
-    ├── testing.md       ← testing_pattern
-    ├── integrations.md  ← reservado (futuro `save integration`)
-    └── releases.md      ← reservado (futuro `save release`)
+    ├── decisions/<id>.md   ← architecture_decision
+    ├── bugfixes/<id>.md    ← bug_fix + platform_workaround
+    ├── testing/<id>.md     ← testing_pattern
+    ├── knowledge/<id>.md   ← knowledge
+    ├── decisions.md        ← formato viejo (0.2): entradas viejas + aviso
+    ├── bugfixes.md         ← ídem
+    ├── testing.md          ← ídem
+    ├── integrations.md     ← formato viejo: las notas escritas a mano migran a knowledge/
+    └── releases.md         ← reservado
 ```
 
-Solo `config.json` es obligatorio. El resto se crea durante `init` y se va llenando con el uso.
+Solo `config.json` es obligatorio. El resto se crea durante `init` y se va llenando con el uso. No hay un archivo de índice en el repo: el CLI lo arma al leer las notas, así que no puede generar conflictos de merge. Las notas se ordenan por `date` y después por `id`.
 
 ### Formato de las entradas
 
-Las memorias son Markdown plano legible a ojo. Cada entrada es un H2 (`##`) seguido de metadata YAML-ish y un cuerpo libre:
+Las memorias son Markdown plano legible a ojo. Cada archivo de nota tiene un título H2 (`##`) seguido de metadata YAML-ish y un cuerpo libre:
 
 ```markdown
 ## Podfile composeApp en minúsculas hasta CocoaPods 1.16
@@ -449,6 +519,7 @@ Las memorias son Markdown plano legible a ojo. Cada entrada es un H2 (`##`) segu
 - platform: ios
 - area: cocoapods
 - date: 2026-05-12
+- verified: 2026-05-12
 - review_after: 2026-08-15
 
 ### Reason
@@ -458,7 +529,7 @@ CocoaPods 1.15.x se rompe con módulos en CamelCase cuando ...
 - iosApp/Podfile
 ```
 
-El parser es indulgente: lee cada bloque H2 como una entrada y captura los metadata pairs del listado inicial. El cuerpo es Markdown arbitrario.
+Solo la primera línea `##` es el título: un `##` dentro del cuerpo queda en el cuerpo. Campos opcionales: `verified` (arranca igual a `date`; lo actualiza `verify`), `supersedes`, `until`, `crash` y `paths` (globs separados por coma, como `feature/**/checkout/*.kt`, que reemplazan a las carpetas que salen de `### Files` para el hook por archivo). Las marcas `unconfirmed`, `⚠` o `superseded by` no se escriben en los archivos: se calculan al leer las notas.
 
 ### IDs estables
 
@@ -475,7 +546,7 @@ Esto permite dos cosas:
 
 ### Atomicidad de writes
 
-Las escrituras a `config.json`, `scan.json` y a los `memories/*.md` usan el patrón **temp + rename**: escribimos primero a un archivo temporal en el mismo directorio y luego hacemos `rename` atómico al destino. Si el proceso se mata a media escritura, no quedan archivos corruptos.
+Las escrituras a `config.json`, `scan.json` y a los archivos de nota usan el patrón **temp + rename**: escribimos primero a un archivo temporal en el mismo directorio y luego hacemos `rename` atómico al destino. Si el proceso se mata a media escritura, no quedan archivos corruptos.
 
 ### Scanner: alcance y límites
 
@@ -493,7 +564,7 @@ La detección de librerías funciona por substring search (case-insensitive) sob
 A escala de 1-100 entradas por proyecto (el rango realista hoy), Markdown gana en todas las dimensiones que importan:
 
 - **Legible a ojo**: puedes abrir `decisions.md` en cualquier editor y entender el contenido.
-- **Diff-friendly**: cada save es un commit limpio en git, fácil de revisar en PR.
+- **Diff-friendly**: cada save es un archivo nuevo, fácil de revisar en un PR, y dos ramas que guardan notas nunca chocan.
 - **Sin runtime**: no requiere base de datos, no hay schema migrations.
 - **Editable manualmente**: si necesitas corregir algo, edita el `.md` directamente.
 
@@ -526,7 +597,11 @@ Las mismas 4 skills, al **arrancar**, invocan `mobile_review` (CLI fallback: `mo
 
 No pausa el flujo. El usuario decide si quiere ir a `brain promote` / `brain bump` antes o continuar y revisarlo después. `mobile-debugging` y `write-tests` skipean el pre-flight cuando se invocan anidadas desde `fix-issue` (que ya hizo el suyo) para no doble-promptear.
 
-**Doble path MCP / CLI**: cada uno de los hooks documenta dos rutas equivalentes. Si el cliente tiene `mobiai-brain` registrado como server MCP, el agente invoca la tool `mobile_save_*` directamente — más rápido, sin spawn de proceso, output estructurado. Si no, cae al `mobiai brain save ...` de siempre. Ambas terminan escribiendo exactamente la misma entrada en el `.md`.
+**Doble path MCP / CLI**: cada uno de los hooks documenta dos rutas equivalentes. Si el cliente tiene `mobiai-brain` registrado como server MCP, el agente invoca la tool `mobile_save_*` directamente — más rápido, sin spawn de proceso, output estructurado. Si no, cae al `mobiai brain save ...` de siempre. Ambas terminan escribiendo exactamente el mismo archivo de nota.
+
+### Entrega por archivo: el hook `PostToolUse`
+
+El plugin `core` también registra un hook que corre después de que el agente lee o edita un archivo (Claude Code: `PostToolUse` sobre `Read|Edit|Write`; Cursor: `postToolUse` sobre `Read|Write`). Llama a `mobiai brain hook file-context`, que le entrega al agente, junto al resultado de la tool, las notas cuyas carpetas contienen ese archivo (las de `### Files`, o las de `paths:`). Cada nota se entrega como mucho una vez por sesión, hasta unos 4 KB por llamada; las que no entran se listan por id. Nunca escribe el Brain, y no dice nada si no hay Brain o si mobiai es anterior a 0.3. El resto de las herramientas se apoya en las carpetas `applies to` del índice de `context`.
 
 Otras skills que podrían integrarse en el futuro: `mobiai-crashlytics` (crashes recurrentes → `save bugfix`), `mobiai-mobile-planning` (planes con decisiones embebidas → `save decision`).
 
@@ -544,12 +619,12 @@ La única excepción razonable sería un proyecto experimental donde solo tú us
 
 No tiene sincronización nativa. La sincronización pasa por git: si lo commiteas, tus compañeros lo tienen al hacer `git pull`. No hay servidor central, no hay cuenta, no hay nube. Simple por diseño.
 
-### ¿Qué pasa si edito un `memories/*.md` a mano?
+### ¿Qué pasa si edito un archivo de nota a mano?
 
 Está permitido y soportado. El parser re-lee los archivos en cada `context` / `search`, así que cualquier edición manual se refleja inmediatamente. Las únicas restricciones son:
 
 - Mantén la estructura `## Título` + lista de metadata + cuerpo.
-- No dupliques `id:` entre entradas (rompe deduplicación).
+- Mantén el nombre del archivo igual al `id:` (una nota por archivo).
 - Si añades metadata custom, no la garantizamos para filtros futuros.
 
 ### ¿Cómo borro o modifico una entrada?
@@ -558,7 +633,13 @@ Está permitido y soportado. El parser re-lee los archivos en cada `context` / `
 
 **Para extender el plazo de revisión** de un workaround vigente: usa `mobiai brain bump <id> --review-after YYYY-MM-DD`.
 
-**Para borrado real**: edita el `.md` y borra el bloque del H2 correspondiente. No hay `mobiai brain delete` por diseño — preferimos marcar como `deprecated` para preservar la historia. Pero si de verdad necesitas eliminar la entrada (por ejemplo, datos sensibles guardados por error), edita el archivo.
+**Para reemplazar una nota** por otra más nueva: guarda la nueva con `--supersedes <id>`.
+
+**Para borrado real**: borra el archivo de la nota. No hay `mobiai brain delete` por diseño — preferimos marcar como `deprecated` para preservar la historia. Cuidado con las notas que vinieron del formato 0.2: su copia vieja sigue en `decisions.md`/`bugfixes.md`/`testing.md`, así que si borras el archivo de la nota vuelve a aparecer en la próxima corrida. Pásalas a `deprecated`, o borra también su bloque del archivo viejo (por ejemplo, datos sensibles guardados por error).
+
+### ¿Qué significa `unconfirmed`?
+
+La nota la escribió otra persona y todavía no llegó a la rama principal, así que nadie la revisó en un PR. El agente la usa con cautela en vez de tomarla como regla del proyecto. Se confirma sola cuando se mergea el PR que la agrega (después de un `git fetch`). Si una nota tuya aparece sin confirmar, probablemente tu `git config user.email` es distinto del email del commit que la agregó.
 
 ### ¿Por qué el scanner no detecta mi librería X?
 
@@ -611,12 +692,14 @@ Probablemente estás en un subdirectorio y la detección de raíz no encuentra e
 **Fase 8** — los 4 hooks de skills (`mobiai-fix-issue`, `mobiai-write-tests`, `mobiai-mobile-debugging`, `mobiai-mobile-brainstorming`) ahora documentan la tool MCP equivalente como ruta preferida, manteniendo el CLI como fallback explícito. Cuando el cliente tiene `mobiai-brain` registrado como server MCP, el agente invoca `mobile_save_*` directamente; si no, cae al `mobiai brain save ...` de siempre. ✓
 **Fase 9** — pre-flight automático en las 4 skills: antes de empezar el trabajo, el agente invoca `mobile_review` (o `mobiai brain review --no-fail`), filtra por platform/area del trabajo en curso, y menciona al usuario cualquier workaround vencido relevante. No pausa: el usuario decide si quiere revisarlo primero. Cierra el bucle "memoria con caducidad" al hacer la deuda **proactivamente visible** en el momento exacto en que importa. ✓
 **Fase 10** — `mobiai brain install-mcp` registra el server MCP en clientes soportados (Claude Code y Cursor en v1) con un solo comando. Detecta automáticamente qué clientes tiene instalados el usuario, preserva el resto del config, es idempotente y reversible (`--uninstall`). Path absoluto al binario vía `os.Executable()` para que el cliente AI lo encuentre incluso con `$PATH` distinto al del shell. Eliminamos la fricción de tener que editar JSON a mano. ✓
+**Brain 0.3** — una nota por archivo (se terminan los conflictos de merge) con migración automática y un aviso para las versiones anteriores; `context` pasa a índice por encima de 25 KB; tipo `knowledge`; notas `unconfirmed` hasta que llegan a la rama principal; verificación contra git (`verify`, marcas ⚠); hook de entrega por archivo; `supersedes` y freno por títulos parecidos; condiciones `until` atadas a versiones de dependencias; firmas de `crash` y `search --crash`. ✓
 
 **Próximos pasos**:
 
 - **`install-mcp` para Copilot CLI, Codex y Gemini CLI** — el v1 cubre Claude Code y Cursor (mismo shape de JSON). Los otros tres tienen formatos distintos (Copilot/Gemini JSON con shape propia, Codex TOML) y se añaden cuando haya demanda.
 
 - **`brain review --upcoming N`** — además de las vencidas, listar entradas temporales que vencen en los próximos N días (default propuesto: 30). Da margen de planning para sprints/retros sin esperar a que algo esté ya vencido. Pendiente.
-- **`save integration`** y **`save release`** (categorías de menor volumen, baja prioridad).
+- **`save release`** (categoría de menor volumen, baja prioridad).
+- **`mobiai brain lint`**: validar los archivos de nota y buscar instrucciones sospechosas, para CI.
 
 **Fase futura** — migración a SQLite + FTS5 si Markdown se queda corto (>~500 entradas por proyecto). Para el rango actual (1-100 entradas) los filtros sobre Markdown bastan.

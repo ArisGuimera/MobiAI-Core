@@ -2,7 +2,7 @@
 
 > **Read in another language:** **English** · [Español](README.es.md)
 
-> The **per-project living memory** of the MobiAI ecosystem. While skills teach the AI *how* to work, Brain stores the *project-specific knowledge* of each mobile codebase: decisions, bugfixes, workarounds, testing patterns, and integrations.
+> The **per-project living memory** of the MobiAI ecosystem. While skills teach the AI *how* to work, Brain stores the *project-specific knowledge* of each mobile codebase: decisions, bugfixes, workarounds, testing patterns, and knowledge about how the app and its services behave.
 
 **Table of contents**
 
@@ -106,11 +106,14 @@ mobiai brain context               # Prints Markdown with config + scan + memori
 mobiai brain save decision ...     # Save an architecture decision
 mobiai brain save bugfix ...       # Save a bugfix or workaround
 mobiai brain save testing ...      # Save a reusable testing pattern
+mobiai brain save knowledge ...    # Save how the app or an external service behaves
 
-mobiai brain search <query>        # Free-text search across memories
-mobiai brain review                # Lists temporary entries whose review_after has passed
+mobiai brain search <query>        # Free-text search across memories (or --crash <signature>)
+mobiai brain show <id>             # Print one note in full
+mobiai brain review                # Overdue temporary entries + notes that may be out of date
 mobiai brain promote <id> ...      # Change the status of an existing entry
 mobiai brain bump <id> ...         # Extend review_after on an existing entry
+mobiai brain verify <id>           # Mark a note as checked against the current code
 
 mobiai brain mcp                   # Starts an MCP server that exposes Brain as tools
 mobiai brain install-mcp           # Registers the MCP server in AI clients (Claude Code, Cursor)
@@ -126,14 +129,16 @@ Creates the local structure:
 <repo>/.mobiai/brain/
 ├── config.json
 └── memories/
-    ├── decisions.md
+    ├── decisions/       ← one file per note
+    ├── bugfixes/
+    ├── testing/
+    ├── knowledge/
+    ├── decisions.md     ← old format: only the notice for mobiai < 0.3
     ├── bugfixes.md
-    ├── testing.md
-    ├── integrations.md
-    └── releases.md
+    └── testing.md
 ```
 
-It's idempotent: if `config.json` or any `memories/*.md` already exists, it is not overwritten.
+It's idempotent: if `config.json` or any memory file already exists, it is not overwritten. The three `.md` files exist only so a teammate on an older mobiai sees a notice asking them to update (see [Upgrading from 0.2](#upgrading-from-02)) instead of an empty Brain.
 
 To locate the project root, it walks the cwd's ancestors looking, in this order of priority, for:
 
@@ -147,6 +152,20 @@ To locate the project root, it walks the cwd's ancestors looking, in this order 
 8. `package.json` with a `react-native` dependency.
 
 If none match, it uses the current directory and warns.
+
+### Upgrading from 0.2
+
+Up to 0.2.x, every note of a type was appended to one file (`decisions.md`, `bugfixes.md`, …). Two branches that saved notes always conflicted at the end of that file. Since 0.3 each note is its own file under `memories/<section>/<id>.md`, so new notes never collide.
+
+**There's nothing to run.** The first time any 0.3 command (or MCP tool) touches an old Brain, it:
+
+1. creates one note file per old entry, keeping its id (entries written by hand without an id get one derived from their text);
+2. adds a notice right below the heading of `decisions.md`, `bugfixes.md` and `testing.md`;
+3. says so: `Brain migrated to the new format: N notes. Include .mobiai/brain/ in your next commit.`
+
+The old entries stay where they were. The result depends only on the files' text, so two people migrating on two branches produce identical files and git merges them cleanly. It never commits. It also repairs entries whose body used `##` headings, which 0.2 split into empty entries.
+
+**Teammates still on 0.2.x** only read the old files. Their `brain context` and `brain review` show the notice, so their agent tells them to update. A note they save is appended to the old file, and 0.3 turns it into a note file the next time it runs. A `promote` or `bump` done with 0.2.x on a migrated note changes only the old copy and is ignored: update first. Note that `brain review` on 0.2.x exits 1 because of the notice (it's shaped as an overdue temporary entry) unless you pass `--no-fail`.
 
 ### `mobiai brain scan`
 
@@ -165,7 +184,7 @@ Walks the project tree (max depth 6, ignoring `.git`, `node_modules`, `build`, `
 
 ### `mobiai brain save <type>`
 
-Three subcommands: `decision`, `bugfix`, `testing`. All share the same flags:
+Four subcommands: `decision`, `bugfix`, `testing`, `knowledge`. Each writes the note as its own file, `memories/<section>/<id>.md`. All share the same flags:
 
 | Flag | Required? | Notes |
 |---|---|---|
@@ -174,8 +193,16 @@ Three subcommands: `decision`, `bugfix`, `testing`. All share the same flags:
 | `--area <str>` | no | Free-form (`firebase_auth`, `dependency_injection`, `datastore`, …) |
 | `--status <s>` | no | `active` (default) \| `temporary` \| `deprecated` |
 | `--review-after YYYY-MM-DD` | no | Mostly meaningful with `temporary` |
-| `--files a,b,c` | no | List of relevant paths |
-| `--body <md>` | no | Markdown body. If omitted, reads from stdin (useful for piping multi-line content). |
+| `--files a,b,c` | no | List of relevant paths. They tell which folders the note applies to, and the note is flagged when they change (see `verify`) |
+| `--body <md>` | no | Markdown body. If omitted, reads from stdin (useful for piping multi-line content). `##` headings become `###` |
+| `--supersedes <id>,…` | no | This note replaces those: they stop counting and their text is no longer delivered. The old notes are not modified |
+| `--until <dep>@<version>,…` | no | The note holds while the project uses a lower version (e.g. `com.google.firebase:firebase-bom@34.0.0`). Once the project reaches it, the note is flagged for review |
+| `--crash <signature>,…` | no | `bugfix` only: Crashlytics issue id, Sentry fingerprint or exception signature this fix solves (found later with `search --crash`) |
+| `--new` | no | Save even if a note with a similar title exists (see below) |
+
+**`knowledge`** stores how the app and the services it talks to behave: happy paths, server answers and error codes, SDK and third-party behavior. Save only what you can't learn by reading the code: "the server returns 409 when the order is closed" belongs here; "function X does Y" does not.
+
+**Similar titles stop the save.** If the section already has an active note whose title shares 60% or more of its words, `save` writes nothing and answers `A similar note already exists: <id> "<title>". Edit that note file, pass --supersedes <id> to replace it, or pass --new to save a separate note.`
 
 Example:
 
@@ -200,21 +227,27 @@ The internal type (`type:` in the rendered entry) is derived from the subcommand
 - `bugfix` + `temporary` → `platform_workaround`
 - `bugfix` + `active`/`deprecated` → `bug_fix`
 - `testing` → `testing_pattern`
+- `knowledge` → `knowledge`
 
 Every entry gets a stable `id` based on the title slug + UTC timestamp, so two saves with the same title don't collide.
 
 ### `mobiai brain search <query>`
 
-Case-insensitive search across the title and body of every memory entry. Returns results grouped by section, with title, status/platform, and a snippet from the first line that contains the query.
+Case-insensitive search across the title and body of every memory entry. Returns results grouped by section, with title, status/platform, a snippet from the first line that contains the query, and the note's file.
 
 ```bash
 mobiai brain search koin
 mobiai brain search --platform ios firebase
 mobiai brain search --status temporary
 mobiai brain search --area firebase_auth keystore
+mobiai brain search --crash 6a1b2c3d4e5f        # bugfixes for a crash signature
 ```
 
-Accepts the same filters as `context` (`--platform`, `--status`, `--area`) with **AND** semantics. The query combines with the filters: `--platform ios firebase` returns only iOS entries mentioning "firebase".
+Accepts the same filters as `context` (`--platform`, `--status`, `--area`) with **AND** semantics. The query combines with the filters: `--platform ios firebase` returns only iOS entries mentioning "firebase". With `--crash`, the query is optional: it matches a bugfix's `crash` value exactly, or the text in a note's body.
+
+### `mobiai brain show <id>`
+
+Prints one note in full. When `context` lists a note in its index, agents read the note file directly; this is for clients that can't read files (MCP: `mobile_get`).
 
 ### `mobiai brain review`
 
@@ -265,6 +298,25 @@ The default exit 1 is meant to be used as a **CI or pre-commit gate**: the build
 | `deprecated` | any | No (already closed) |
 
 `review` **does not edit or delete** anything — it only reports. To drop an entry from the list, edit the `.md` and change `review_after`, set `status` to `active`/`deprecated`, or remove the block.
+
+**Notes that may be out of date.** `review` also lists, in their own section, the notes flagged with ⚠ (see `verify`): their files changed or disappeared, they haven't been verified in 3+ months, or an `until` condition was met. They never change the exit code, so CI gates keep failing only on overdue temporary entries.
+
+### `mobiai brain verify <id>`
+
+A note that relies on code can go stale without anyone noticing. Brain checks it against git every time it reads the notes, with a single `git log` for the whole Brain, and flags a note with ⚠ when:
+
+- one of its `### Files` has commits on a later day than its `verified` date (`⚠ LoginViewModel.kt changed since verification`), or no longer exists;
+- it has no files and wasn't verified in the last 3 months (`⚠ not verified in 3+ months`);
+- an `until` condition is met (`⚠ firebase-bom is now 34.1.0 (note valid until 34.0.0): check whether this workaround is still needed`) or that dependency is gone. Versions are read from Gradle catalogs and build files, `Podfile.lock`, `Package.resolved`, `pubspec.lock` and `package-lock.json`/`package.json`.
+
+Nothing expires or gets deleted. When you (or the agent) check a flagged note and it still holds:
+
+```bash
+mobiai brain verify <id>                          # verified = today
+mobiai brain verify <id> --files a/New.kt,b/X.kt  # also replace its files
+```
+
+If it no longer holds, fix the note or `promote --status deprecated` it. An `until` condition that can't be interpreted never flags anything; `mobiai doctor` lists those.
 
 ### `mobiai brain promote <id>`
 
@@ -333,7 +385,7 @@ Platforms: android, ios, shared
 ## Testing Patterns
 ...
 
-## Integrations
+## Knowledge
 ...
 
 ## Release Notes
@@ -343,11 +395,25 @@ Platforms: android, ios, shared
 - sensitive file detected: .env (not read)
 ```
 
+**Up to 25 KB, everything; above that, an index.** The full document is built and measured. If it's over `context_max_bytes` (25600 by default, set in `config.json`), the agent gets the stack, rules and warnings, the full text of the active decisions (newest first, while they fit), and one line per every other note:
+
+```
+- [bug_fix] Login crash on screen rotation · android · auth · created 2026-09-14 (3 months ago) · verified 2026-09-14 · ⚠ LoginViewModel.kt changed since verification · applies to app/src/main/java/com/example/auth/ → memories/bugfixes/login-crash-on-screen-rotation-20260914-163044.md
+```
+
+The agent opens the note files it needs (or uses `show` / `mobile_get`). Filters apply before measuring, so a narrow query still gets full texts.
+
+**Marks you'll see** (in full mode as `- state:` / `- check:` lines, in the index inline):
+
+- `unconfirmed`: the note was written by someone else and its file hasn't reached the main branch yet, so nobody reviewed it in a PR. Your own notes (not committed yet, or committed with your `git config user.email`) count as confirmed for you. An unconfirmed decision is not treated as a project rule. The main branch is `origin/HEAD` (e.g. `develop` in git-flow teams), then `origin/main`, `origin/master`, `main`, `master`; force one with `"confirmed_branch"` in `config.json`. Without git, everything counts as confirmed.
+- `⚠ …`: the note may be out of date (see `verify`).
+- `superseded by <id>`: a newer note replaces it; its text is no longer delivered. If the replacement is itself unconfirmed, the old note stays in force and shows `replacement proposed by <id> (unconfirmed)`.
+
 **Available filters**:
 
 | Flag | Notes |
 |---|---|
-| `--section` | Comma-separated or repeatable. Canonical names: `stack`, `rules`, `decisions`, `bugfixes`, `testing`, `integrations`, `releases`, `warnings`. |
+| `--section` | Comma-separated or repeatable. Canonical names: `stack`, `rules`, `decisions`, `bugfixes`, `testing`, `knowledge`, `releases`, `warnings` (`integrations` is an alias of `knowledge`). |
 | `--platform` | Filter entries by `platform:` (exact, case-insensitive). |
 | `--status` | Filter by `status:` (exact). |
 | `--area` | Filter by `area:` (substring). |
@@ -398,7 +464,7 @@ mobiai brain save bugfix \
 
 **Architecture brainstorm** — You need to pick a DI framework for your new KMP app. You launch `mobiai-mobile-brainstorming`, compare Koin vs Hilt+Dagger vs manual, reach a conclusion.
 
-After the User Review Gate, the skill proposes saving the decision. You confirm and it's stored as an `architecture_decision` in `decisions.md` with the reasoning, rejected trade-offs, and files where it lives.
+After the User Review Gate, the skill proposes saving the decision. You confirm and it's stored as an `architecture_decision` in `memories/decisions/` with the reasoning, rejected trade-offs, and files where it lives.
 
 **Two months later** — A new dev joins, opens the repo in Cursor. They ask "why Koin and not Hilt?". The agent invokes `mobile_search "DI"` and answers with the full decision, date, and reasons. No need to reopen the debate.
 
@@ -412,7 +478,7 @@ At the end, the skill proposes:
 
 > *This pattern looks reusable for other DataStore tests. Should I save it as a testing pattern?*
 
-You confirm. It's stored in `testing.md`. The next time someone (or you) writes a test against DataStore, `mobile_context --section testing` will surface it before they hit the same flake.
+You confirm. It's stored in `memories/testing/`. The next time someone (or you) writes a test against DataStore, `mobile_context --section testing` will surface it before they hit the same flake.
 
 ---
 
@@ -427,18 +493,22 @@ Everything Brain knows lives under `<repo>/.mobiai/brain/`:
 ├── config.json          ← project metadata + custom rules
 ├── scan.json            ← detected stack (regenerable with `scan`)
 └── memories/
-    ├── decisions.md     ← architecture_decision
-    ├── bugfixes.md      ← bug_fix + platform_workaround
-    ├── testing.md       ← testing_pattern
-    ├── integrations.md  ← reserved (future `save integration`)
-    └── releases.md      ← reserved (future `save release`)
+    ├── decisions/<id>.md   ← architecture_decision
+    ├── bugfixes/<id>.md    ← bug_fix + platform_workaround
+    ├── testing/<id>.md     ← testing_pattern
+    ├── knowledge/<id>.md   ← knowledge
+    ├── decisions.md        ← old format (0.2): old entries + notice
+    ├── bugfixes.md         ← idem
+    ├── testing.md          ← idem
+    ├── integrations.md     ← old format: hand-written notes migrate to knowledge/
+    └── releases.md         ← reserved
 ```
 
-Only `config.json` is mandatory. The rest is created during `init` and fills in with use.
+Only `config.json` is mandatory. The rest is created during `init` and fills in with use. There's no index file in the repo: the CLI builds it when it reads the notes, so it can't cause merge conflicts. Notes are ordered by `date`, then `id`.
 
 ### Entry format
 
-Memories are plain Markdown, readable by eye. Each entry is an H2 (`##`) followed by YAML-ish metadata and a free-form body:
+Memories are plain Markdown, readable by eye. Each note file holds one H2 (`##`) title followed by YAML-ish metadata and a free-form body:
 
 ```markdown
 ## Podfile composeApp lowercase until CocoaPods 1.16
@@ -449,6 +519,7 @@ Memories are plain Markdown, readable by eye. Each entry is an H2 (`##`) followe
 - platform: ios
 - area: cocoapods
 - date: 2026-05-12
+- verified: 2026-05-12
 - review_after: 2026-08-15
 
 ### Reason
@@ -458,7 +529,7 @@ CocoaPods 1.15.x breaks with CamelCase modules when ...
 - iosApp/Podfile
 ```
 
-The parser is forgiving: it reads each H2 block as an entry and captures the metadata pairs from the initial bullet list. The body is arbitrary Markdown.
+Only the first `##` line is the title: a `##` inside the body stays in the body. Optional fields: `verified` (starts equal to `date`; set by `verify`), `supersedes`, `until`, `crash`, and `paths` (comma-separated globs such as `feature/**/checkout/*.kt` that replace the folders taken from `### Files`, for the per-file hook). Notes with `unconfirmed`, `⚠` or `superseded by` marks keep their files untouched: those marks are computed when the notes are read.
 
 ### Stable IDs
 
@@ -475,7 +546,7 @@ This gives us two things:
 
 ### Write atomicity
 
-Writes to `config.json`, `scan.json`, and the `memories/*.md` files use the **temp + rename** pattern: we write first to a temp file in the same directory, then atomically `rename` to the destination. If the process dies mid-write, you never end up with a corrupted file.
+Writes to `config.json`, `scan.json`, and the note files use the **temp + rename** pattern: we write first to a temp file in the same directory, then atomically `rename` to the destination. If the process dies mid-write, you never end up with a corrupted file.
 
 ### Scanner: scope and limits
 
@@ -493,7 +564,7 @@ Library detection runs by case-insensitive substring search over config files (`
 At the realistic scale of 1–100 entries per project (today's range), Markdown wins on every dimension that matters:
 
 - **Eye-readable**: you can open `decisions.md` in any editor and understand the contents.
-- **Diff-friendly**: every save is a clean git commit, easy to review in PR.
+- **Diff-friendly**: every save is a new file, easy to review in a PR, and two branches that save notes never conflict.
 - **Zero runtime**: no database required, no schema migrations.
 - **Hand-editable**: if you need to correct something, edit the `.md` directly.
 
@@ -526,7 +597,11 @@ The same four skills, on **startup**, invoke `mobile_review` (CLI fallback: `mob
 
 It doesn't pause the flow. The user decides whether to detour into `brain promote` / `brain bump` first or continue and revisit later. `mobile-debugging` and `write-tests` skip the pre-flight when invoked nested from `fix-issue` (which already did its own) to avoid double-prompting.
 
-**Dual MCP / CLI path**: every hook documents two equivalent routes. If the client has `mobiai-brain` registered as an MCP server, the agent invokes the `mobile_save_*` tool directly — faster, no process spawn, structured output. Otherwise it falls back to the same `mobiai brain save ...`. Both end up writing the exact same entry in the `.md`.
+**Dual MCP / CLI path**: every hook documents two equivalent routes. If the client has `mobiai-brain` registered as an MCP server, the agent invokes the `mobile_save_*` tool directly — faster, no process spawn, structured output. Otherwise it falls back to the same `mobiai brain save ...`. Both end up writing the exact same note file.
+
+### Per-file delivery: the `PostToolUse` hook
+
+The `core` plugin also registers a hook that runs after the agent reads or edits a file (Claude Code: `PostToolUse` on `Read|Edit|Write`; Cursor: `postToolUse` on `Read|Write`). It calls `mobiai brain hook file-context`, which hands the agent, next to the tool result, the notes whose folders contain that file (taken from `### Files`, or from `paths:`). Each note is delivered at most once per session, up to about 4 KB per call; notes that don't fit are listed by id. It never writes the Brain, and it stays silent when there's no Brain or mobiai is older than 0.3. Other tools rely on the `applies to` folders in `context`'s index.
 
 Other skills that could integrate in the future: `mobiai-crashlytics` (recurrent crashes → `save bugfix`), `mobiai-mobile-planning` (plans with embedded decisions → `save decision`).
 
@@ -544,12 +619,12 @@ The only reasonable exception is an experimental project where only you use Brai
 
 There's no native sync. Sync happens through git: if you commit it, your teammates have it after `git pull`. No central server, no account, no cloud. Simple by design.
 
-### What happens if I edit a `memories/*.md` by hand?
+### What happens if I edit a note file by hand?
 
 It's allowed and supported. The parser re-reads the files on every `context` / `search`, so any manual edit is reflected immediately. The only restrictions are:
 
 - Keep the `## Title` + metadata list + body structure.
-- Don't duplicate `id:` between entries (breaks deduplication).
+- Keep the file name equal to the `id:` (one note per file).
 - If you add custom metadata, we don't guarantee it for future filters.
 
 ### How do I delete or modify an entry?
@@ -558,7 +633,13 @@ It's allowed and supported. The parser re-reads the files on every `context` / `
 
 **To extend the review deadline** of a still-valid workaround: use `mobiai brain bump <id> --review-after YYYY-MM-DD`.
 
-**For actual deletion**: edit the `.md` and remove the H2 block. There's no `mobiai brain delete` by design — we prefer marking entries as `deprecated` to preserve history. But if you really need to remove an entry (for example, sensitive data saved by accident), edit the file.
+**To replace a note** with a newer one: save the new one with `--supersedes <id>`.
+
+**For actual deletion**: delete the note file. There's no `mobiai brain delete` by design — we prefer marking entries as `deprecated` to preserve history. Careful with notes that came from the 0.2 format: their old copy still lives in `decisions.md`/`bugfixes.md`/`testing.md`, so deleting the note file brings it back on the next run. Deprecate those, or also remove their block from the old file (for example, sensitive data saved by accident).
+
+### What does `unconfirmed` mean?
+
+The note was written by someone else and hasn't reached the main branch yet, so nobody reviewed it in a PR. The agent uses it with caution instead of as a project rule. It becomes confirmed by itself once the PR that adds it is merged (after a `git fetch`). If a note of yours shows as unconfirmed, your `git config user.email` probably differs from the email of the commit that added it.
 
 ### Why doesn't the scanner detect my library X?
 
@@ -611,12 +692,14 @@ You're probably in a subdirectory and root detection isn't finding the expected 
 **Phase 8** — the 4 skill hooks (`mobiai-fix-issue`, `mobiai-write-tests`, `mobiai-mobile-debugging`, `mobiai-mobile-brainstorming`) now document the equivalent MCP tool as the preferred route, keeping the CLI as the explicit fallback. When the client has `mobiai-brain` registered as an MCP server, the agent invokes `mobile_save_*` directly; otherwise it falls back to the usual `mobiai brain save ...`. ✓
 **Phase 9** — automatic pre-flight in the 4 skills: before starting work, the agent invokes `mobile_review` (or `mobiai brain review --no-fail`), filters by platform/area of the current work, and surfaces any relevant expired workarounds. It doesn't pause: the user decides whether to look at them first. Closes the "memory with an expiration date" loop by making debt **proactively visible** at the exact moment it matters. ✓
 **Phase 10** — `mobiai brain install-mcp` registers the MCP server in supported clients (Claude Code and Cursor in v1) with a single command. It auto-detects which clients the user has installed, preserves the rest of the config, is idempotent and reversible (`--uninstall`). Absolute path to the binary via `os.Executable()` so the AI client finds it even with a different `$PATH` than the shell. We eliminate the friction of editing JSON by hand. ✓
+**Brain 0.3** — one file per note (no more merge conflicts) with automatic migration and a notice for older versions; `context` switches to an index above 25 KB; `knowledge` type; `unconfirmed` notes until they reach the main branch; verification against git (`verify`, ⚠ marks); per-file delivery hook; `supersedes` and a brake for similar titles; `until` conditions tied to dependency versions; `crash` signatures and `search --crash`. ✓
 
 **Next steps**:
 
 - **`install-mcp` for Copilot CLI, Codex, and Gemini CLI** — v1 covers Claude Code and Cursor (same JSON shape). The other three have different formats (Copilot/Gemini JSON with their own shape, Codex TOML) and will be added when there's demand.
 
 - **`brain review --upcoming N`** — in addition to the expired ones, list temporary entries that expire in the next N days (proposed default: 30). Gives planning margin for sprints/retros without waiting until something is already overdue. Pending.
-- **`save integration`** and **`save release`** (lower-volume categories, low priority).
+- **`save release`** (lower-volume category, low priority).
+- **`mobiai brain lint`**: validate note files and look for suspicious instructions, for CI.
 
 **Future phase** — migration to SQLite + FTS5 if Markdown falls short (>~500 entries per project). For the current range (1–100 entries), filters over Markdown are enough.
