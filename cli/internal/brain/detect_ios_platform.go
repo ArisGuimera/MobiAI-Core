@@ -22,8 +22,8 @@ func detectIOS(idx *scanIndex, s *Scan, types, platforms map[string]struct{}) {
 		s.BuildSystems = append(s.BuildSystems, "cocoapods")
 	}
 	// allPaths is a map, so its iteration order is random. Collect every
-	// candidate and pick the first in sorted order so repeated scans
-	// record the same file.
+	// candidate and pick with shallowest so repeated scans record the
+	// same file.
 	var podfiles, xcodeprojs, xcworkspaces []string
 	for path, isDir := range idx.allPaths {
 		if strings.HasSuffix(path, "/Podfile") {
@@ -39,7 +39,7 @@ func detectIOS(idx *scanIndex, s *Scan, types, platforms map[string]struct{}) {
 	if len(podfiles) > 0 {
 		hit = true
 		if _, set := s.DetectedFiles["podfile"]; !set {
-			s.DetectedFiles["podfile"] = firstSorted(podfiles)
+			s.DetectedFiles["podfile"] = shallowest(podfiles, nil)
 		}
 		s.BuildSystems = append(s.BuildSystems, "cocoapods")
 	}
@@ -50,22 +50,17 @@ func detectIOS(idx *scanIndex, s *Scan, types, platforms map[string]struct{}) {
 	}
 	if len(xcodeprojs) > 0 {
 		hit = true
-		s.DetectedFiles["xcodeproj"] = firstSorted(xcodeprojs)
+		s.DetectedFiles["xcodeproj"] = shallowest(xcodeprojs, nil)
 	}
 	if len(xcworkspaces) > 0 {
 		hit = true
-		// Every .xcodeproj carries an internal project.xcworkspace. Prefer
-		// a standalone workspace (the one CocoaPods generates and users
-		// open), otherwise the first one in sorted order.
-		sort.Strings(xcworkspaces)
-		chosen := xcworkspaces[0]
-		for _, path := range xcworkspaces {
-			if !strings.Contains(path, ".xcodeproj/") {
-				chosen = path
-				break
-			}
-		}
-		s.DetectedFiles["xcworkspace"] = chosen
+		// Every .xcodeproj carries an internal project.xcworkspace, one
+		// level below the standalone workspace CocoaPods generates next to
+		// it, so depth already prefers the standalone one. On equal depth,
+		// prefer a standalone workspace too.
+		s.DetectedFiles["xcworkspace"] = shallowest(xcworkspaces, func(path string) bool {
+			return !strings.Contains(path, ".xcodeproj/")
+		})
 	}
 	if !hit {
 		return
@@ -74,8 +69,23 @@ func detectIOS(idx *scanIndex, s *Scan, types, platforms map[string]struct{}) {
 	platforms[PlatformIOS] = struct{}{}
 }
 
-// firstSorted returns the lexicographically smallest path in paths.
-func firstSorted(paths []string) string {
-	sort.Strings(paths)
+// shallowest returns the path closest to the repo root. Dependency
+// checkouts (Carthage/Checkouts/...) and sample apps (Example/...) sit
+// deeper than the app's own project but often sort first. Ties go to a
+// path for which preferred reports true (nil means no preference), then
+// to sorted order, so repeated scans pick the same path.
+func shallowest(paths []string, preferred func(string) bool) string {
+	sort.Slice(paths, func(i, j int) bool {
+		a, b := paths[i], paths[j]
+		if da, db := strings.Count(a, "/"), strings.Count(b, "/"); da != db {
+			return da < db
+		}
+		if preferred != nil {
+			if pa, pb := preferred(a), preferred(b); pa != pb {
+				return pa
+			}
+		}
+		return a < b
+	})
 	return paths[0]
 }

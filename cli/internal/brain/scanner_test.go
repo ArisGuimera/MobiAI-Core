@@ -129,13 +129,14 @@ func TestScan_NestedPodfileIsStable(t *testing.T) {
 	}
 
 	// Map iteration order is randomized per run; repeat to catch it.
+	// The shallowest Podfile wins, and ties go to sorted order.
 	for i := 0; i < 30; i++ {
 		s, err := ScanProject(root)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if got := s.DetectedFiles["podfile"]; got != "apps/a/Podfile" {
-			t.Fatalf("run %d: podfile = %q, want apps/a/Podfile", i, got)
+		if got := s.DetectedFiles["podfile"]; got != "ios/Podfile" {
+			t.Fatalf("run %d: podfile = %q, want ios/Podfile", i, got)
 		}
 	}
 }
@@ -224,6 +225,60 @@ func TestScan_ProjectInternalXcworkspaceIsFallback(t *testing.T) {
 		if got := s.DetectedFiles["xcworkspace"]; got != "App.xcodeproj/project.xcworkspace" {
 			t.Fatalf("run %d: xcworkspace = %q, want App.xcodeproj/project.xcworkspace", i, got)
 		}
+	}
+}
+
+// Dependency checkouts (Carthage/Checkouts/...) and sample apps
+// (Example/...) sit deeper than the app's own project but often sort
+// first, so the project closest to the repo root has to win.
+func TestScan_PrefersShallowestIOSProject(t *testing.T) {
+	cases := []struct {
+		name string
+		dirs []string
+		key  string
+		want string
+	}{
+		{
+			name: "xcodeproj over carthage checkout",
+			dirs: []string{"MyApp.xcodeproj", "Carthage/Checkouts/Alamofire/Alamofire.xcodeproj"},
+			key:  "xcodeproj",
+			want: "MyApp.xcodeproj",
+		},
+		{
+			name: "xcodeproj over example app",
+			dirs: []string{"MyLib.xcodeproj", "Example/Example.xcodeproj"},
+			key:  "xcodeproj",
+			want: "MyLib.xcodeproj",
+		},
+		{
+			name: "project internal xcworkspace over deeper standalone one",
+			dirs: []string{"MyApp.xcodeproj/project.xcworkspace", "Carthage/Checkouts/Alamofire/Alamofire.xcworkspace"},
+			key:  "xcworkspace",
+			want: "MyApp.xcodeproj/project.xcworkspace",
+		},
+		{
+			name: "standalone xcworkspace breaks a depth tie",
+			dirs: []string{"App.xcodeproj/project.xcworkspace", "ios/App.xcworkspace"},
+			key:  "xcworkspace",
+			want: "ios/App.xcworkspace",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			root := t.TempDir()
+			for _, dir := range tc.dirs {
+				mustMkdir(t, filepath.Join(root, filepath.FromSlash(dir)))
+			}
+			for i := 0; i < 30; i++ {
+				s, err := ScanProject(root)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if got := s.DetectedFiles[tc.key]; got != tc.want {
+					t.Fatalf("run %d: %s = %q, want %q", i, tc.key, got, tc.want)
+				}
+			}
+		})
 	}
 }
 
