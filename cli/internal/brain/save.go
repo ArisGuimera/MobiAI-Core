@@ -20,6 +20,30 @@ const (
 	SaveTypeTesting  SaveType = "testing"
 )
 
+// section returns the canonical section a SaveType writes to.
+func (t SaveType) section() string {
+	switch t {
+	case SaveTypeDecision:
+		return "decisions"
+	case SaveTypeBugfix:
+		return "bugfixes"
+	case SaveTypeTesting:
+		return "testing"
+	}
+	return ""
+}
+
+// CardDir returns the directory under memories/ where cards of this type
+// live (e.g. "decisions").
+func (t SaveType) CardDir() string {
+	for _, mf := range MemoryFiles {
+		if canonicalSection(mf.Name) == t.section() {
+			return mf.Dir
+		}
+	}
+	return ""
+}
+
 // memoryFileFor returns the basename inside memories/ for a SaveType.
 func (t SaveType) memoryFileFor() (string, error) {
 	switch t {
@@ -108,8 +132,9 @@ func (e *SaveEntry) Validate() error {
 }
 
 // AppendEntry validates the entry, ensures the brain exists at p, and
-// appends a Markdown section to the relevant memories/<file>.md. Returns
-// the generated id (slug + timestamp) so callers can echo it.
+// writes the note as its own card at memories/<section>/<id>.md. Returns
+// the generated id (slug + timestamp) so callers can echo it. Two saves
+// with the same title in the same second get "-2", "-3"... appended.
 func AppendEntry(p BrainPaths, e *SaveEntry) (string, error) {
 	if !p.Exists() {
 		return "", fmt.Errorf("brain not initialized at %s — run `mobiai brain init` first", p.Root)
@@ -120,12 +145,19 @@ func AppendEntry(p BrainPaths, e *SaveEntry) (string, error) {
 	if e.now == nil {
 		e.now = timeNow
 	}
-	id := makeID(e.Title, e.now())
-	rendered := renderEntry(id, e)
-
-	fileBase, _ := e.Type.memoryFileFor()
-	target := filepath.Join(p.MemoriesDir, fileBase)
-	if err := appendToFile(target, rendered); err != nil {
+	dir := filepath.Join(p.MemoriesDir, e.Type.CardDir())
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return "", fmt.Errorf("create %s: %w", dir, err)
+	}
+	base := makeID(e.Title, e.now())
+	id := base
+	for n := 2; ; n++ {
+		if _, err := os.Stat(filepath.Join(dir, id+".md")); os.IsNotExist(err) {
+			break
+		}
+		id = fmt.Sprintf("%s-%d", base, n)
+	}
+	if err := atomicWrite(filepath.Join(dir, id+".md"), []byte(renderCard(id, e))); err != nil {
 		return "", err
 	}
 	return id, nil
@@ -156,18 +188,17 @@ func slugify(s string) string {
 	return s
 }
 
-// renderEntry produces the Markdown section appended to memories/<file>.md.
-// Layout matches the spec: H2 title, metadata bullet list, body as-is,
-// optional Files list. Empty optional fields are omitted entirely (no
-// `platform: ` lines with trailing whitespace).
-func renderEntry(id string, e *SaveEntry) string {
+// renderCard produces the content of a card file. Layout matches the
+// 0.2 entries (H2 title, metadata bullets, body, optional Files list) plus
+// `verified`, which starts equal to `date`. Empty optional fields are
+// omitted entirely (no `platform: ` lines with trailing whitespace).
+func renderCard(id string, e *SaveEntry) string {
 	var b strings.Builder
-	// Always start with a blank line so we don't fuse with whatever was
-	// previously the last line of the file.
-	b.WriteString("\n## ")
+	b.WriteString("## ")
 	b.WriteString(strings.TrimSpace(e.Title))
 	b.WriteString("\n\n")
 
+	date := e.now().UTC().Format("2006-01-02")
 	fmt.Fprintf(&b, "- id: %s\n", id)
 	fmt.Fprintf(&b, "- type: %s\n", e.Type.fullTypeLabel(e.Status))
 	fmt.Fprintf(&b, "- status: %s\n", e.Status)
@@ -177,12 +208,13 @@ func renderEntry(id string, e *SaveEntry) string {
 	if e.Area != "" {
 		fmt.Fprintf(&b, "- area: %s\n", e.Area)
 	}
-	fmt.Fprintf(&b, "- date: %s\n", e.now().UTC().Format("2006-01-02"))
+	fmt.Fprintf(&b, "- date: %s\n", date)
+	fmt.Fprintf(&b, "- verified: %s\n", date)
 	if e.ReviewAfter != "" {
 		fmt.Fprintf(&b, "- review_after: %s\n", e.ReviewAfter)
 	}
 
-	body := strings.TrimSpace(e.Body)
+	body := strings.TrimSpace(demoteBodyH2(normalizeNewlines(e.Body)))
 	if body != "" {
 		b.WriteString("\n")
 		b.WriteString(body)
@@ -202,20 +234,31 @@ func renderEntry(id string, e *SaveEntry) string {
 	return b.String()
 }
 
-// appendToFile opens target in append mode (creating it if needed) and
-// writes content. Used instead of write-temp+rename because Markdown
-// memories are append-only — we never need atomic full-file replacement.
-func appendToFile(target, content string) error {
-	if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
-		return fmt.Errorf("create %s: %w", filepath.Dir(target), err)
+// demoteBodyH2 turns `## ` headings in a note body into `### ` so the card
+// also reads correctly with tools that split on H2. Lines inside fenced
+// code blocks (``` or ~~~) are left alone: there `##` is code, not Markdown.
+func demoteBodyH2(body string) string {
+	lines := strings.Split(body, "\n")
+	fence := ""
+	for i, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if fence != "" {
+			if strings.HasPrefix(trimmed, fence) {
+				fence = ""
+			}
+			continue
+		}
+		if strings.HasPrefix(trimmed, "```") {
+			fence = "```"
+			continue
+		}
+		if strings.HasPrefix(trimmed, "~~~") {
+			fence = "~~~"
+			continue
+		}
+		if strings.HasPrefix(line, "## ") {
+			lines[i] = "#" + line
+		}
 	}
-	f, err := os.OpenFile(target, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
-	if err != nil {
-		return fmt.Errorf("open %s: %w", target, err)
-	}
-	defer f.Close()
-	if _, err := f.WriteString(content); err != nil {
-		return fmt.Errorf("write %s: %w", target, err)
-	}
-	return nil
+	return strings.Join(lines, "\n")
 }

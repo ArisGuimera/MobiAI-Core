@@ -25,7 +25,7 @@ type UpdateOptions struct {
 // can show "active → deprecated" style diffs).
 type UpdateResult struct {
 	Section         string // canonical section (e.g. "bugfixes")
-	File            string // basename (e.g. "bugfixes.md")
+	File            string // under memories/: "bugfixes/<id>.md" (card) or "bugfixes.md" (old format)
 	Title           string
 	PrevStatus      string
 	NewStatus       string
@@ -69,8 +69,38 @@ func UpdateEntry(p BrainPaths, id string, opts UpdateOptions) (*UpdateResult, er
 		return nil, fmt.Errorf("nothing to update: pass at least --status, --review-after or --clear-review-after")
 	}
 
-	// Walk every memory file in canonical order until we find a `## `
-	// section whose meta block contains `- id: <id>`.
+	// A card holds the note: rewrite its metadata block in place. Cards are
+	// written back with LF only, whatever the checkout's line endings.
+	notes, err := LoadNotes(p)
+	if err != nil {
+		return nil, err
+	}
+	for _, n := range notes {
+		if n.Legacy || n.Get("id") != id {
+			continue
+		}
+		fpath := filepath.Join(p.Root, filepath.FromSlash(n.Path))
+		data, err := os.ReadFile(fpath)
+		if err != nil {
+			return nil, fmt.Errorf("read %s: %w", fpath, err)
+		}
+		updated, res, found, err := rewriteEntryByID(normalizeNewlines(string(data)), id, n.Section, opts)
+		if err != nil {
+			return nil, err
+		}
+		if !found {
+			break
+		}
+		if err := atomicWrite(fpath, []byte(updated)); err != nil {
+			return nil, err
+		}
+		res.Section = n.Section
+		res.File = strings.TrimPrefix(n.Path, ".mobiai/brain/memories/")
+		return res, nil
+	}
+
+	// Otherwise walk the old single-file memories in canonical order until
+	// we find a `## ` section whose meta block contains `- id: <id>`.
 	for _, mf := range MemoryFiles {
 		fpath := filepath.Join(p.MemoriesDir, mf.Name)
 		data, err := os.ReadFile(fpath)
@@ -80,7 +110,7 @@ func UpdateEntry(p BrainPaths, id string, opts UpdateOptions) (*UpdateResult, er
 			}
 			return nil, fmt.Errorf("read %s: %w", fpath, err)
 		}
-		updated, res, found, err := rewriteEntryByID(string(data), id, mf.Name, opts)
+		updated, res, found, err := rewriteEntryByID(string(data), id, canonicalSection(mf.Name), opts)
 		if err != nil {
 			return nil, err
 		}
@@ -106,7 +136,7 @@ func UpdateEntry(p BrainPaths, id string, opts UpdateOptions) (*UpdateResult, er
 // Operates on strings rather than bytes to keep newline handling simple
 // — Go's bufio splits on `\n`, and we preserve a trailing newline iff
 // the original ended with one.
-func rewriteEntryByID(content, id, basename string, opts UpdateOptions) (string, *UpdateResult, bool, error) {
+func rewriteEntryByID(content, id, section string, opts UpdateOptions) (string, *UpdateResult, bool, error) {
 	lines := splitLinesPreserve(content)
 
 	// Phase 1: locate the entry header (`## Title`) whose meta block
@@ -161,7 +191,7 @@ func rewriteEntryByID(content, id, basename string, opts UpdateOptions) (string,
 
 		// Found it. Apply mutations + render new meta block.
 		res := &UpdateResult{Title: title}
-		newMetas, err := applyUpdate(metas, basename, opts, res)
+		newMetas, err := applyUpdate(metas, section, opts, res)
 		if err != nil {
 			return "", nil, true, err
 		}
@@ -218,7 +248,7 @@ type metaLine struct {
 //  2. Apply Status mutation (recompute type if appropriate).
 //  3. Apply ReviewAfter mutation (or clear).
 //  4. Re-read final values into res.New*.
-func applyUpdate(metas []metaLine, basename string, opts UpdateOptions, res *UpdateResult) ([]metaLine, error) {
+func applyUpdate(metas []metaLine, section string, opts UpdateOptions, res *UpdateResult) ([]metaLine, error) {
 	get := func(key string) string {
 		for _, m := range metas {
 			if m.key == key {
@@ -253,8 +283,8 @@ func applyUpdate(metas []metaLine, basename string, opts UpdateOptions, res *Upd
 	if opts.Status != "" {
 		metas = set("status", opts.Status)
 		// For bugfix entries, keep the type: field consistent with
-		// status. We can derive SaveType from the file name.
-		if st := saveTypeForFile(basename); st == SaveTypeBugfix {
+		// status. We can derive SaveType from the section.
+		if st := saveTypeForSection(section); st == SaveTypeBugfix {
 			metas = set("type", st.fullTypeLabel(opts.Status))
 		}
 	}
@@ -270,12 +300,11 @@ func applyUpdate(metas []metaLine, basename string, opts UpdateOptions, res *Upd
 }
 
 // renderMetaLines turns the meta slice back into bullet lines, ordered
-// canonically (id, type, status, platform, area, date, review_after,
-// then anything else in original order). Matches the layout produced
-// by save.renderEntry so updated entries look indistinguishable from
-// freshly saved ones.
+// canonically (canonicalMetaKeys, then anything else in original order).
+// Matches the layout produced by save.renderCard so updated entries look
+// indistinguishable from freshly saved ones.
 func renderMetaLines(metas []metaLine) []string {
-	canonical := []string{"id", "type", "status", "platform", "area", "date", "review_after"}
+	canonical := canonicalMetaKeys
 	byKey := make(map[string]metaLine, len(metas))
 	order := make([]string, 0, len(metas))
 	for _, m := range metas {
@@ -301,17 +330,14 @@ func renderMetaLines(metas []metaLine) []string {
 	return out
 }
 
-// saveTypeForFile maps a memory file basename back to its SaveType. We
+// saveTypeForSection maps a canonical section back to its SaveType. We
 // need this to re-derive the `type:` label on status changes. Returns
 // empty SaveType for non-save sections (integrations, releases).
-func saveTypeForFile(basename string) SaveType {
-	switch basename {
-	case "decisions.md":
-		return SaveTypeDecision
-	case "bugfixes.md":
-		return SaveTypeBugfix
-	case "testing.md":
-		return SaveTypeTesting
+func saveTypeForSection(section string) SaveType {
+	for _, t := range []SaveType{SaveTypeDecision, SaveTypeBugfix, SaveTypeTesting} {
+		if t.section() == section {
+			return t
+		}
 	}
 	return ""
 }

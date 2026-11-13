@@ -1,8 +1,6 @@
 package brain
 
 import (
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -43,7 +41,7 @@ func TestAppendEntry_DecisionWritesAllFields(t *testing.T) {
 		t.Errorf("id = %q, want %q", id, wantID)
 	}
 
-	got, err := os.ReadFile(filepath.Join(p.MemoriesDir, "decisions.md"))
+	got, err := readSectionCards(p.MemoriesDir, "decisions")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -78,7 +76,7 @@ func TestAppendEntry_TemporaryBugfixUsesPlatformWorkaround(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	got, err := os.ReadFile(filepath.Join(p.MemoriesDir, "bugfixes.md"))
+	got, err := readSectionCards(p.MemoriesDir, "bugfixes")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -101,7 +99,7 @@ func TestAppendEntry_PermanentBugfixUsesBugFix(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	got, _ := os.ReadFile(filepath.Join(p.MemoriesDir, "bugfixes.md"))
+	got, _ := readSectionCards(p.MemoriesDir, "bugfixes")
 	if !strings.Contains(string(got), "- type: bug_fix") {
 		t.Errorf("active bugfix should map to bug_fix:\n%s", got)
 	}
@@ -117,7 +115,7 @@ func TestAppendEntry_TestingDefaultsStatusToActive(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	got, _ := os.ReadFile(filepath.Join(p.MemoriesDir, "testing.md"))
+	got, _ := readSectionCards(p.MemoriesDir, "testing")
 	if !strings.Contains(string(got), "- status: active") {
 		t.Errorf("default status should be active:\n%s", got)
 	}
@@ -138,7 +136,7 @@ func TestAppendEntry_AppendsDoNotOverwrite(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	got, _ := os.ReadFile(filepath.Join(p.MemoriesDir, "decisions.md"))
+	got, _ := readSectionCards(p.MemoriesDir, "decisions")
 	for _, want := range []string{"## First decision", "## Second decision"} {
 		if !strings.Contains(string(got), want) {
 			t.Errorf("missing %q after two saves; file:\n%s", want, got)

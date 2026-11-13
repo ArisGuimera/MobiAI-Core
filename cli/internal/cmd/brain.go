@@ -651,12 +651,7 @@ func runBrainSave(c *cobra.Command, saveType brain.SaveType) error {
 		return err
 	}
 
-	fileBase := map[brain.SaveType]string{
-		brain.SaveTypeDecision: "decisions.md",
-		brain.SaveTypeBugfix:   "bugfixes.md",
-		brain.SaveTypeTesting:  "testing.md",
-	}[saveType]
-	rel := filepath.Join(".mobiai", "brain", "memories", fileBase)
+	rel := filepath.Join(".mobiai", "brain", "memories", saveType.CardDir(), id+".md")
 	fmt.Fprintf(out, i18n.T("✓ saved to %s\n  id: %s\n"), rel, id)
 	return nil
 }

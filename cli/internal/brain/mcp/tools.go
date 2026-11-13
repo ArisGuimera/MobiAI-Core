@@ -425,6 +425,7 @@ type SaveArgs struct {
 type SaveResult struct {
 	ID      string `json:"id"`
 	Section string `json:"section"`
+	Path    string `json:"path"` // card path relative to the project root
 }
 
 func handleSaveDecision(paths brain.BrainPaths) func(context.Context, *mcp.CallToolRequest, SaveArgs) (*mcp.CallToolResult, SaveResult, error) {
@@ -458,10 +459,11 @@ func makeSaveHandler(paths brain.BrainPaths, saveType brain.SaveType, section st
 		if err != nil {
 			return nil, SaveResult{}, err
 		}
-		text := fmt.Sprintf("✓ saved to %s.md (id: %s)", section, id)
+		path := ".mobiai/brain/memories/" + saveType.CardDir() + "/" + id + ".md"
+		text := fmt.Sprintf("✓ saved to %s (id: %s)", path, id)
 		return &mcp.CallToolResult{
 			Content: []mcp.Content{&mcp.TextContent{Text: text}},
-		}, SaveResult{ID: id, Section: section}, nil
+		}, SaveResult{ID: id, Section: section, Path: path}, nil
 	}
 }
 

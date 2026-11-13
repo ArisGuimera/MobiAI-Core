@@ -13,6 +13,14 @@ import (
 // file holds a single note, only the FIRST `## ` line is the title — any
 // later `## ` line belongs to the body (fixes C5 for cards).
 
+// canonicalMetaKeys is the order in which metadata is written to a card
+// (and rendered by `context`). Keys outside this list follow, in their
+// original order.
+var canonicalMetaKeys = []string{
+	"id", "type", "status", "platform", "area", "date", "verified", "review_after",
+	"supersedes", "until", "crash", "paths",
+}
+
 // ParseCard reads a card file. A card without an `id` metadata line takes
 // its id from the filename, which is the id by construction.
 func ParseCard(path string) (MemoryEntry, error) {

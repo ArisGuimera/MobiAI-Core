@@ -2,8 +2,6 @@ package cmd
 
 import (
 	"bytes"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -45,7 +43,7 @@ func TestBrainSave_DecisionAppendsToFile(t *testing.T) {
 		t.Errorf("expected success message, got:\n%s", out)
 	}
 
-	got, err := os.ReadFile(filepath.Join(root, ".mobiai", "brain", "memories", "decisions.md"))
+	got, err := readSectionCards(root, "decisions")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -79,7 +77,7 @@ func TestBrainSave_BugfixTemporaryWritesReviewAfter(t *testing.T) {
 		"--body", "### Problem\n...\n\n### Solution\n...",
 	})
 
-	got, err := os.ReadFile(filepath.Join(root, ".mobiai", "brain", "memories", "bugfixes.md"))
+	got, err := readSectionCards(root, "bugfixes")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -107,7 +105,7 @@ func TestBrainSave_MultipleSavesDoNotOverwrite(t *testing.T) {
 			"--body", "body for " + title,
 		})
 	}
-	got, err := os.ReadFile(filepath.Join(root, ".mobiai", "brain", "memories", "testing.md"))
+	got, err := readSectionCards(root, "testing")
 	if err != nil {
 		t.Fatal(err)
 	}

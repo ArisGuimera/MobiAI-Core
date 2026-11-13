@@ -231,7 +231,7 @@ func writeEntry(b *strings.Builder, e MemoryEntry) {
 // `save`. Unknown keys are appended sorted at the end so user-added
 // fields render deterministically.
 func metaOrder(m map[string]string) []string {
-	canonical := []string{"id", "type", "status", "platform", "area", "date", "review_after"}
+	canonical := canonicalMetaKeys
 	seen := map[string]bool{}
 	out := make([]string, 0, len(m))
 	for _, k := range canonical {

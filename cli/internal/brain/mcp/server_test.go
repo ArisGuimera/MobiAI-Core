@@ -203,7 +203,7 @@ func TestTool_SaveDecision_WritesEntry(t *testing.T) {
 	if res.IsError {
 		t.Fatalf("save failed: %v", firstTextContent(res))
 	}
-	got, err := os.ReadFile(filepath.Join(paths.MemoriesDir, "decisions.md"))
+	got, err := readSectionCards(paths.MemoriesDir, "decisions")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -238,7 +238,7 @@ func TestTool_SaveBugfix_TemporaryStatusMapsCorrectly(t *testing.T) {
 	if res.IsError {
 		t.Fatalf("save failed: %v", firstTextContent(res))
 	}
-	got, _ := os.ReadFile(filepath.Join(paths.MemoriesDir, "bugfixes.md"))
+	got, _ := readSectionCards(paths.MemoriesDir, "bugfixes")
 	if !strings.Contains(string(got), "- type: platform_workaround") {
 		t.Errorf("temporary bugfix should map to platform_workaround:\n%s", got)
 	}
@@ -365,7 +365,7 @@ func TestTool_Promote_ChangesStatusAndType(t *testing.T) {
 		t.Errorf("review_after should be cleared; got %q", out.NewReviewAfter)
 	}
 	// Confirm on disk that the bugfix type was re-derived.
-	data, _ := os.ReadFile(filepath.Join(paths.MemoriesDir, "bugfixes.md"))
+	data, _ := readSectionCards(paths.MemoriesDir, "bugfixes")
 	if !strings.Contains(string(data), "- type: bug_fix") {
 		t.Errorf("type should flip to bug_fix:\n%s", data)
 	}
