@@ -13,6 +13,9 @@ type MemoryFile struct {
 	Title       string // human-readable section title
 	ContextHead string // section heading printed by `brain context`
 	Template    string // initial content written by `brain init`
+	// Dir is the card directory under memories/ (one file per note).
+	// Empty for sections that only exist in the old single-file format.
+	Dir string
 }
 
 // MemoryFiles is the canonical list of memory categories. Phase 1 ships
@@ -23,18 +26,21 @@ var MemoryFiles = []MemoryFile{
 		Title:       "Architecture Decisions",
 		ContextHead: "## Architecture Decisions",
 		Template:    decisionsTemplate,
+		Dir:         "decisions",
 	},
 	{
 		Name:        "bugfixes.md",
 		Title:       "Known Bugfixes",
 		ContextHead: "## Known Bugfixes",
 		Template:    bugfixesTemplate,
+		Dir:         "bugfixes",
 	},
 	{
 		Name:        "testing.md",
 		Title:       "Testing Patterns",
 		ContextHead: "## Testing Patterns",
 		Template:    testingTemplate,
+		Dir:         "testing",
 	},
 	{
 		Name:        "integrations.md",

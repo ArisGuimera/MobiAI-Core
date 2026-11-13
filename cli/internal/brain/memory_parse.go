@@ -17,10 +17,15 @@ import (
 // shape, parsed back. Used by `context` filtering and `search` so we
 // don't have to grep raw markdown.
 type MemoryEntry struct {
-	File  string            // basename, e.g. "decisions.md"
+	File  string            // basename: "decisions.md" (old format) or "<id>.md" (card)
 	Title string            // H2 text (without the leading "## ")
 	Meta  map[string]string // id/type/status/platform/area/date/review_after/...
 	Body  string            // everything after metadata, before next entry
+
+	Section string   // canonical section (decisions, bugfixes, ...)
+	Path    string   // path relative to the project root, with "/" separators
+	Legacy  bool     // true when the note comes from an old single-file memory
+	Files   []string // paths listed under "### Files" in the body
 }
 
 // Get returns the metadata value for key, or "" if missing.
@@ -135,19 +140,21 @@ func parseMetaLine(line string) (string, string, bool) {
 	return key, val, true
 }
 
-// ParseAllMemories returns the parsed entries for every memory file
-// known to the brain, keyed by canonical section name (decisions,
-// bugfixes, testing, integrations, releases). Files that don't exist
-// resolve to empty slices.
+// ParseAllMemories returns every note known to the brain (cards plus
+// old single-file entries, see LoadNotes), keyed by canonical section name
+// (decisions, bugfixes, testing, integrations, releases). Sections without
+// notes resolve to empty slices.
 func ParseAllMemories(p BrainPaths) (map[string][]MemoryEntry, error) {
+	notes, err := LoadNotes(p)
+	if err != nil {
+		return nil, err
+	}
 	out := make(map[string][]MemoryEntry, len(MemoryFiles))
 	for _, mf := range MemoryFiles {
-		section := canonicalSection(mf.Name)
-		entries, err := ParseMemoryFile(filepath.Join(p.MemoriesDir, mf.Name))
-		if err != nil {
-			return nil, err
-		}
-		out[section] = entries
+		out[canonicalSection(mf.Name)] = nil
+	}
+	for _, n := range notes {
+		out[n.Section] = append(out[n.Section], n)
 	}
 	return out, nil
 }
