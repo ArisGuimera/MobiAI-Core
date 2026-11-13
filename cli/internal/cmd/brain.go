@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/spf13/cobra"
@@ -38,6 +39,7 @@ func NewBrainCmd() *cobra.Command {
 		newBrainPromoteCmd(),
 		newBrainBumpCmd(),
 		newBrainShowCmd(),
+		newBrainVerifyCmd(),
 		newBrainMCPCmd(),
 		newBrainInstallMCPCmd(),
 	)
@@ -416,21 +418,34 @@ func runBrainReview(c *cobra.Command, _ []string) error {
 
 	overdue, noDate := splitReviewItems(items)
 
-	if len(overdue) == 0 && len(noDate) == 0 {
+	switch {
+	case len(overdue) == 0 && len(noDate) == 0:
 		fmt.Fprintln(out, i18n.T("✓ No overdue temporary entries."))
-		return nil
-	}
-
-	if len(overdue) > 0 {
+	case len(overdue) > 0:
 		fmt.Fprintf(out, i18n.T("⚠ %d overdue temporary entry(ies):\n\n"), len(overdue))
 		printOverdueItems(out, overdue)
-	} else {
+	default:
 		fmt.Fprintln(out, i18n.T("✓ No overdue entries."))
 	}
 
 	if len(noDate) > 0 {
 		fmt.Fprintf(out, i18n.T("\n%d temporary entry(ies) without review_after:\n\n"), len(noDate))
 		printNoDateItems(out, noDate)
+	}
+
+	// Possibly out-of-date notes are reported but never change the exit
+	// code: CI gates keep failing only on overdue temporary entries.
+	cfg, err := brain.LoadConfig(paths)
+	if err != nil {
+		cfg = brain.DefaultConfig(info.Path)
+	}
+	stale, err := brain.StaleNotes(paths, cfg, time.Now())
+	if err != nil {
+		return err
+	}
+	if len(stale) > 0 {
+		fmt.Fprintf(out, i18n.T("\n⚠ %d note(s) may be out of date. Check them against the code, then run `mobiai brain verify <id>` (or fix or deprecate them):\n\n"), len(stale))
+		printStaleNotes(out, stale)
 	}
 
 	// Non-zero exit when there's actually overdue debt and the caller
@@ -441,6 +456,21 @@ func runBrainReview(c *cobra.Command, _ []string) error {
 		os.Exit(1)
 	}
 	return nil
+}
+
+// printStaleNotes lists notes flagged as possibly out of date, with the
+// reasons.
+func printStaleNotes(out io.Writer, notes []brain.MemoryEntry) {
+	for _, n := range notes {
+		fmt.Fprintf(out, "  ⚠ %s\n", n.Title)
+		for _, w := range n.Flags.Warnings {
+			fmt.Fprintf(out, "    %s\n", w)
+		}
+		if id := n.Get("id"); id != "" {
+			fmt.Fprintf(out, "    id: %s\n", id)
+		}
+		fmt.Fprintln(out)
+	}
 }
 
 // splitReviewItems separates dated/overdue entries from no-date ones so
@@ -610,6 +640,50 @@ func runBrainShow(c *cobra.Command, args []string) error {
 		return err
 	}
 	fmt.Fprint(c.OutOrStdout(), view.Markdown)
+	return nil
+}
+
+func newBrainVerifyCmd() *cobra.Command {
+	c := &cobra.Command{
+		Use:   "verify <id>",
+		Short: i18n.T("Mark a note as checked against the current code"),
+		Long:  i18n.T("Sets the note's verified date to today, after you checked that it still matches the code. Use it on notes that `brain context` or `brain review` flag with ⚠. With --files, also replaces the note's list of files."),
+		Args:  cobra.ExactArgs(1),
+		RunE:  runBrainVerify,
+	}
+	brainCommonFlags(c)
+	c.Flags().StringSlice("files", nil, i18n.T("replace the note's files with these, comma-separated (optional)"))
+	return c
+}
+
+func runBrainVerify(c *cobra.Command, args []string) error {
+	out := c.OutOrStdout()
+	info, err := resolveBrainRoot(c)
+	if err != nil {
+		return err
+	}
+	paths := brain.NewBrainPaths(info.Path)
+	if !paths.Exists() {
+		return fmt.Errorf("brain not initialized in %s — run `mobiai brain init` first", info.Path)
+	}
+	migrateBrain(c, paths)
+	var files []string
+	if c.Flags().Changed("files") {
+		files, _ = c.Flags().GetStringSlice("files")
+	}
+	res, err := brain.VerifyEntry(paths, args[0], files, time.Now())
+	if err != nil {
+		return err
+	}
+	fmt.Fprintf(out, i18n.T("✓ %s verified (%s)\n"), res.Title, res.File)
+	from := res.PrevVerified
+	if from == "" {
+		from = "(none)"
+	}
+	fmt.Fprintf(out, "  verified: %s → %s\n", from, res.NewVerified)
+	if res.Files != nil {
+		fmt.Fprintf(out, "  files: %s\n", strings.Join(res.Files, ", "))
+	}
 	return nil
 }
 

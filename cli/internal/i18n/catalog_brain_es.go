@@ -12,6 +12,13 @@ func init() {
 		"Print the full text of one note": "Imprime el texto completo de una nota",
 		"Prints the note with the given id as Markdown. When `brain context` lists a note in its index, use this to read it if you can't open the note file directly.": "Imprime como Markdown la nota con el id dado. Cuando `brain context` lista una nota en su índice, usalo para leerla si no podés abrir el archivo de la nota.",
 
+		// verify
+		"Mark a note as checked against the current code": "Marca una nota como revisada contra el código actual",
+		"Sets the note's verified date to today, after you checked that it still matches the code. Use it on notes that `brain context` or `brain review` flag with ⚠. With --files, also replaces the note's list of files.": "Pone la fecha verified de la nota en hoy, después de revisar que sigue coincidiendo con el código. Usalo en las notas que `brain context` o `brain review` marcan con ⚠. Con --files también reemplaza la lista de archivos de la nota.",
+		"replace the note's files with these, comma-separated (optional)": "reemplaza los archivos de la nota por estos, separados por coma (opcional)",
+		"✓ %s verified (%s)\n": "✓ %s verificada (%s)\n",
+		"\n⚠ %d note(s) may be out of date. Check them against the code, then run `mobiai brain verify <id>` (or fix or deprecate them):\n\n": "\n⚠ %d nota(s) pueden estar desactualizadas. Revisalas contra el código y después corré `mobiai brain verify <id>` (o corregilas o pasalas a deprecated):\n\n",
+
 		// migrateBrain
 		"⚠ Could not write the Brain's new format (%v); reading both formats.\n":                    "⚠ No se pudo escribir el formato nuevo del Brain (%v); se leen los dos formatos.\n",
 		"Brain migrated to the new format: %d notes. Include .mobiai/brain/ in your next commit.\n": "Brain migrado al formato nuevo: %d notas. Incluí .mobiai/brain/ en tu próximo commit.\n",

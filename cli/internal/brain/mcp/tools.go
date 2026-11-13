@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
@@ -253,6 +254,17 @@ type ReviewItem struct {
 type ReviewResult struct {
 	Overdue []ReviewItem `json:"overdue"`
 	NoDate  []ReviewItem `json:"no_date,omitempty"`
+	Stale   []StaleItem  `json:"stale,omitempty"`
+}
+
+// StaleItem is a note flagged as possibly out of date: check it against
+// the code before relying on it, then call mobile_verify (or fix it, or
+// deprecate it with mobile_promote).
+type StaleItem struct {
+	Section  string   `json:"section"`
+	Title    string   `json:"title"`
+	ID       string   `json:"id,omitempty"`
+	Warnings []string `json:"warnings"`
 }
 
 func handleReview(paths brain.BrainPaths) func(context.Context, *mcp.CallToolRequest, ReviewArgs) (*mcp.CallToolResult, ReviewResult, error) {
@@ -286,6 +298,18 @@ func handleReview(paths brain.BrainPaths) func(context.Context, *mcp.CallToolReq
 				out.NoDate = append(out.NoDate, item)
 			}
 		}
+		stale, err := brain.StaleNotes(paths, loadConfig(paths), time.Now())
+		if err != nil {
+			return nil, ReviewResult{}, err
+		}
+		for _, n := range stale {
+			out.Stale = append(out.Stale, StaleItem{
+				Section:  n.Section,
+				Title:    n.Title,
+				ID:       n.Get("id"),
+				Warnings: n.Flags.Warnings,
+			})
+		}
 		// Short text summary for MCP clients that show tool output
 		// verbatim. Structured data lives on the second return value.
 		return &mcp.CallToolResult{
@@ -295,10 +319,10 @@ func handleReview(paths brain.BrainPaths) func(context.Context, *mcp.CallToolReq
 }
 
 func formatReviewSummary(r ReviewResult) string {
-	if len(r.Overdue) == 0 && len(r.NoDate) == 0 {
-		return "✓ No expired temporary entries."
-	}
 	var b strings.Builder
+	if len(r.Overdue) == 0 && len(r.NoDate) == 0 {
+		b.WriteString("✓ No expired temporary entries.\n")
+	}
 	if len(r.Overdue) > 0 {
 		fmt.Fprintf(&b, "⚠ %d expired entry(ies):\n", len(r.Overdue))
 		for _, it := range r.Overdue {
@@ -312,7 +336,58 @@ func formatReviewSummary(r ReviewResult) string {
 			fmt.Fprintf(&b, "  [%s] %s\n", it.Section, it.Title)
 		}
 	}
-	return b.String()
+	if len(r.Stale) > 0 {
+		fmt.Fprintf(&b, "\n⚠ %d note(s) may be out of date (check them against the code, then mobile_verify, fix or deprecate):\n", len(r.Stale))
+		for _, it := range r.Stale {
+			fmt.Fprintf(&b, "  [%s] %s (%s) — %s\n", it.Section, it.Title, it.ID, strings.Join(it.Warnings, "; "))
+		}
+	}
+	return strings.TrimRight(b.String(), "\n")
+}
+
+// loadConfig reads config.json, falling back to the defaults.
+func loadConfig(paths brain.BrainPaths) brain.Config {
+	cfg, err := brain.LoadConfig(paths)
+	if err != nil {
+		return brain.DefaultConfig(paths.Root)
+	}
+	return cfg
+}
+
+// VerifyArgs are the inputs for mobile_verify.
+type VerifyArgs struct {
+	ID    string   `json:"id" jsonschema:"the id of the note you checked against the code"`
+	Files []string `json:"files,omitempty" jsonschema:"optional: replace the note's files with these repo-relative paths"`
+}
+
+// VerifyResult is the JSON view of brain.VerifyResult.
+type VerifyResult struct {
+	Section      string   `json:"section"`
+	File         string   `json:"file"`
+	Title        string   `json:"title"`
+	PrevVerified string   `json:"prev_verified,omitempty"`
+	NewVerified  string   `json:"new_verified"`
+	Files        []string `json:"files,omitempty"`
+}
+
+func handleVerify(paths brain.BrainPaths) func(context.Context, *mcp.CallToolRequest, VerifyArgs) (*mcp.CallToolResult, VerifyResult, error) {
+	return func(_ context.Context, _ *mcp.CallToolRequest, args VerifyArgs) (*mcp.CallToolResult, VerifyResult, error) {
+		if !paths.Exists() {
+			return nil, VerifyResult{}, brainNotInitialized(paths)
+		}
+		prefix := migrate(paths)
+		res, err := brain.VerifyEntry(paths, args.ID, args.Files, time.Now())
+		if err != nil {
+			return nil, VerifyResult{}, err
+		}
+		text := fmt.Sprintf("✓ %s verified (%s)\n  verified: %s → %s", res.Title, res.File, res.PrevVerified, res.NewVerified)
+		return &mcp.CallToolResult{
+				Content: []mcp.Content{&mcp.TextContent{Text: prefix + text}},
+			}, VerifyResult{
+				Section: res.Section, File: res.File, Title: res.Title,
+				PrevVerified: res.PrevVerified, NewVerified: res.NewVerified, Files: res.Files,
+			}, nil
+	}
 }
 
 // PromoteArgs configures mobile_promote. Status is required (the whole

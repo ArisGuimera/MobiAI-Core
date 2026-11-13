@@ -133,6 +133,7 @@ func indexLine(e MemoryEntry, now time.Time) string {
 	if v := e.Get("verified"); v != "" {
 		parts = append(parts, "verified "+v)
 	}
+	parts = append(parts, e.Flags.Warnings...)
 	if at := appliesTo(e); len(at) > 0 {
 		parts = append(parts, "applies to "+strings.Join(at, ", "))
 	}

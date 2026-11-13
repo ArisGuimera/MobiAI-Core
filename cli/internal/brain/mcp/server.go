@@ -101,6 +101,16 @@ func registerTools(server *mcp.Server, paths brain.BrainPaths) {
 	}, handleBump(paths))
 
 	mcp.AddTool(server, &mcp.Tool{
+		Name: "mobile_verify",
+		Description: "Mark a brain note as checked against the current code: sets its " +
+			"`verified` date to today, and optionally replaces its files. Use it when " +
+			"mobile_context or mobile_review flags a note with ⚠ (its files changed, " +
+			"no longer exist, or it wasn't verified in 3+ months) and you confirmed it " +
+			"still holds. If it no longer holds, fix the note or deprecate it with " +
+			"mobile_promote instead.",
+	}, handleVerify(paths))
+
+	mcp.AddTool(server, &mcp.Tool{
 		Name: "mobile_get",
 		Description: "Return the full Markdown of one brain note by id. When mobile_context " +
 			"is in index mode it lists most notes as one line with their id and file; " +

@@ -289,6 +289,9 @@ func writeEntry(b *strings.Builder, e MemoryEntry) {
 	if e.Flags.Unconfirmed {
 		b.WriteString("- state: unconfirmed\n")
 	}
+	for _, w := range e.Flags.Warnings {
+		fmt.Fprintf(b, "- check: %s\n", w)
+	}
 	body := strings.TrimSpace(e.Body)
 	if body != "" {
 		b.WriteString("\n")

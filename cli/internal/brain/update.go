@@ -17,6 +17,7 @@ type UpdateOptions struct {
 	Status           string // new status: active|temporary|deprecated
 	ReviewAfter      string // new review_after (YYYY-MM-DD)
 	ClearReviewAfter bool   // if true, drop the review_after line
+	Verified         string // new verified (YYYY-MM-DD); set by `verify`
 }
 
 // UpdateResult bundles the data callers need to confirm a successful
@@ -31,6 +32,8 @@ type UpdateResult struct {
 	NewStatus       string
 	PrevReviewAfter string
 	NewReviewAfter  string
+	PrevVerified    string
+	NewVerified     string
 }
 
 // UpdateEntry locates the entry with id across all memory files and
@@ -279,6 +282,10 @@ func applyUpdate(metas []metaLine, section string, opts UpdateOptions, res *Upda
 
 	res.PrevStatus = get("status")
 	res.PrevReviewAfter = get("review_after")
+	res.PrevVerified = get("verified")
+	if opts.Verified != "" {
+		metas = set("verified", opts.Verified)
+	}
 
 	if opts.Status != "" {
 		metas = set("status", opts.Status)
@@ -296,6 +303,7 @@ func applyUpdate(metas []metaLine, section string, opts UpdateOptions, res *Upda
 
 	res.NewStatus = get("status")
 	res.NewReviewAfter = get("review_after")
+	res.NewVerified = get("verified")
 	return metas, nil
 }
 

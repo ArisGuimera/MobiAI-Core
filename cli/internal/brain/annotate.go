@@ -8,6 +8,9 @@ type NoteFlags struct {
 	// Unconfirmed: written by someone else and not on the main branch yet
 	// (see confirmation).
 	Unconfirmed bool
+	// Warnings: why the note may be out of date, each starting with "⚠"
+	// (see checkVerification).
+	Warnings []string
 }
 
 // annotation is what annotateNotes learned about the brain as a whole.
@@ -19,8 +22,9 @@ type annotation struct {
 func annotateNotes(p BrainPaths, cfg Config, notes []MemoryEntry, now time.Time) annotation {
 	conf := loadConfirmation(p, cfg)
 	for i := range notes {
-		notes[i].Flags.Unconfirmed = !conf.confirmed(notes[i])
+		notes[i].Flags = NoteFlags{Unconfirmed: !conf.confirmed(notes[i])}
 	}
+	checkVerification(p.Root, notes, now)
 	return annotation{Branch: conf.branch}
 }
 
