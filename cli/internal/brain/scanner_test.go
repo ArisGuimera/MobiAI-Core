@@ -122,6 +122,111 @@ func TestScan_IOSWithPodfile(t *testing.T) {
 	}
 }
 
+func TestScan_NestedPodfileIsStable(t *testing.T) {
+	root := t.TempDir()
+	for _, dir := range []string{"zeta", "ios", "apps/b", "apps/a"} {
+		mustWrite(t, filepath.Join(root, filepath.FromSlash(dir), "Podfile"), "platform :ios, '15.0'\n")
+	}
+
+	// Map iteration order is randomized per run; repeat to catch it.
+	for i := 0; i < 30; i++ {
+		s, err := ScanProject(root)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got := s.DetectedFiles["podfile"]; got != "apps/a/Podfile" {
+			t.Fatalf("run %d: podfile = %q, want apps/a/Podfile", i, got)
+		}
+	}
+}
+
+func TestScan_RootPodfileWinsOverNested(t *testing.T) {
+	root := t.TempDir()
+	mustWrite(t, filepath.Join(root, "Podfile"), "platform :ios, '15.0'\n")
+	for _, dir := range []string{"apps/a", "ios"} {
+		mustWrite(t, filepath.Join(root, filepath.FromSlash(dir), "Podfile"), "platform :ios, '15.0'\n")
+	}
+
+	for i := 0; i < 30; i++ {
+		s, err := ScanProject(root)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got := s.DetectedFiles["podfile"]; got != "Podfile" {
+			t.Fatalf("run %d: podfile = %q, want Podfile", i, got)
+		}
+	}
+}
+
+func TestScan_MultipleXcodeprojIsStable(t *testing.T) {
+	root := t.TempDir()
+	for _, dir := range []string{"Modules/Core.xcodeproj", "Examples/Demo.xcodeproj", "App.xcodeproj"} {
+		mustMkdir(t, filepath.Join(root, filepath.FromSlash(dir)))
+	}
+
+	for i := 0; i < 30; i++ {
+		s, err := ScanProject(root)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got := s.DetectedFiles["xcodeproj"]; got != "App.xcodeproj" {
+			t.Fatalf("run %d: xcodeproj = %q, want App.xcodeproj", i, got)
+		}
+	}
+}
+
+func TestScan_MultipleXcworkspaceIsStable(t *testing.T) {
+	root := t.TempDir()
+	for _, dir := range []string{"Modules/Core.xcworkspace", "Examples/Demo.xcworkspace", "App.xcworkspace"} {
+		mustMkdir(t, filepath.Join(root, filepath.FromSlash(dir)))
+	}
+
+	for i := 0; i < 30; i++ {
+		s, err := ScanProject(root)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got := s.DetectedFiles["xcworkspace"]; got != "App.xcworkspace" {
+			t.Fatalf("run %d: xcworkspace = %q, want App.xcworkspace", i, got)
+		}
+	}
+}
+
+func TestScan_PrefersStandaloneXcworkspaceOverProjectInternal(t *testing.T) {
+	root := t.TempDir()
+	// Every .xcodeproj carries an internal project.xcworkspace; CocoaPods
+	// adds the standalone App.xcworkspace that users actually open.
+	mustMkdir(t, filepath.Join(root, "App.xcodeproj", "project.xcworkspace"))
+	mustMkdir(t, filepath.Join(root, "App.xcworkspace"))
+
+	for i := 0; i < 30; i++ {
+		s, err := ScanProject(root)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got := s.DetectedFiles["xcworkspace"]; got != "App.xcworkspace" {
+			t.Fatalf("run %d: xcworkspace = %q, want App.xcworkspace", i, got)
+		}
+	}
+}
+
+func TestScan_ProjectInternalXcworkspaceIsFallback(t *testing.T) {
+	root := t.TempDir()
+	for _, dir := range []string{"Modules/Core.xcodeproj/project.xcworkspace", "App.xcodeproj/project.xcworkspace"} {
+		mustMkdir(t, filepath.Join(root, filepath.FromSlash(dir)))
+	}
+
+	for i := 0; i < 30; i++ {
+		s, err := ScanProject(root)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got := s.DetectedFiles["xcworkspace"]; got != "App.xcodeproj/project.xcworkspace" {
+			t.Fatalf("run %d: xcworkspace = %q, want App.xcodeproj/project.xcworkspace", i, got)
+		}
+	}
+}
+
 func TestScan_ReactNativeProject(t *testing.T) {
 	root := t.TempDir()
 	mustWrite(t, filepath.Join(root, "package.json"),

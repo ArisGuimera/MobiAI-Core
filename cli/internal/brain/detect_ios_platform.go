@@ -1,6 +1,9 @@
 package brain
 
-import "strings"
+import (
+	"sort"
+	"strings"
+)
 
 // detectIOS registers iOS signals. Triggered by any of:
 //   - Podfile
@@ -18,37 +21,61 @@ func detectIOS(idx *scanIndex, s *Scan, types, platforms map[string]struct{}) {
 		s.DetectedFiles["podfile"] = "Podfile"
 		s.BuildSystems = append(s.BuildSystems, "cocoapods")
 	}
-	for path := range idx.allPaths {
+	// allPaths is a map, so its iteration order is random. Collect every
+	// candidate and pick the first in sorted order so repeated scans
+	// record the same file.
+	var podfiles, xcodeprojs, xcworkspaces []string
+	for path, isDir := range idx.allPaths {
 		if strings.HasSuffix(path, "/Podfile") {
-			hit = true
-			if _, set := s.DetectedFiles["podfile"]; !set {
-				s.DetectedFiles["podfile"] = path
-			}
-			s.BuildSystems = append(s.BuildSystems, "cocoapods")
-			break
+			podfiles = append(podfiles, path)
 		}
+		if isDir && strings.HasSuffix(path, ".xcodeproj") {
+			xcodeprojs = append(xcodeprojs, path)
+		}
+		if isDir && strings.HasSuffix(path, ".xcworkspace") {
+			xcworkspaces = append(xcworkspaces, path)
+		}
+	}
+	if len(podfiles) > 0 {
+		hit = true
+		if _, set := s.DetectedFiles["podfile"]; !set {
+			s.DetectedFiles["podfile"] = firstSorted(podfiles)
+		}
+		s.BuildSystems = append(s.BuildSystems, "cocoapods")
 	}
 	if _, ok := idx.files["Package.swift"]; ok {
 		hit = true
 		s.DetectedFiles["package_swift"] = "Package.swift"
 		s.BuildSystems = append(s.BuildSystems, "spm")
 	}
-	for path, isDir := range idx.allPaths {
-		if !isDir {
-			continue
+	if len(xcodeprojs) > 0 {
+		hit = true
+		s.DetectedFiles["xcodeproj"] = firstSorted(xcodeprojs)
+	}
+	if len(xcworkspaces) > 0 {
+		hit = true
+		// Every .xcodeproj carries an internal project.xcworkspace. Prefer
+		// a standalone workspace (the one CocoaPods generates and users
+		// open), otherwise the first one in sorted order.
+		sort.Strings(xcworkspaces)
+		chosen := xcworkspaces[0]
+		for _, path := range xcworkspaces {
+			if !strings.Contains(path, ".xcodeproj/") {
+				chosen = path
+				break
+			}
 		}
-		if strings.HasSuffix(path, ".xcodeproj") {
-			hit = true
-			s.DetectedFiles["xcodeproj"] = path
-		}
-		if strings.HasSuffix(path, ".xcworkspace") {
-			hit = true
-			s.DetectedFiles["xcworkspace"] = path
-		}
+		s.DetectedFiles["xcworkspace"] = chosen
 	}
 	if !hit {
 		return
 	}
 	types[ProjectTypeIOS] = struct{}{}
 	platforms[PlatformIOS] = struct{}{}
+}
+
+// firstSorted returns the lexicographically smallest path in paths.
+func firstSorted(paths []string) string {
+	sort.Strings(paths)
+	return paths[0]
 }
