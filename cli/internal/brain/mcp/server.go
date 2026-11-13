@@ -49,7 +49,7 @@ func registerTools(server *mcp.Server, paths brain.BrainPaths) {
 		Name: "mobile_context",
 		Description: "Read the per-project MobiAI Brain context: project rules, detected " +
 			"mobile stack (Android/iOS/KMP/Flutter/RN + libraries), and saved memories " +
-			"(decisions, bugfixes, testing patterns, integrations, releases). " +
+			"(decisions, bugfixes, testing patterns, knowledge, releases). " +
 			"Optional filters narrow which sections and entries appear so you don't " +
 			"have to dump the whole brain. Call this before proposing architecture, " +
 			"integration or testing changes.",
@@ -129,4 +129,13 @@ func registerTools(server *mcp.Server, paths brain.BrainPaths) {
 			"for non-obvious mobile-specific patterns: async/lifecycle timing, " +
 			"platform quirks, flaky-test workarounds, fixture setups.",
 	}, handleSaveTesting(paths))
+
+	mcp.AddTool(server, &mcp.Tool{
+		Name: "mobile_save_knowledge",
+		Description: "Save knowledge about how the app and the services it talks to behave " +
+			"(memories/knowledge/): happy paths of the flows, server answers and error codes, " +
+			"SDK and third-party behavior. Save only what you can't learn by reading the code: " +
+			"\"the server returns 409 when the order is closed\" belongs here; \"function X " +
+			"does Y\" does not.",
+	}, handleSaveKnowledge(paths))
 }

@@ -14,7 +14,7 @@ import (
 // optional — the zero value renders the full document. Field names and
 // semantics mirror the corresponding CLI flags.
 type ContextArgs struct {
-	Sections []string `json:"sections,omitempty" jsonschema:"limit which sections to render (stack, rules, decisions, bugfixes, testing, integrations, releases, warnings). Empty = render all."`
+	Sections []string `json:"sections,omitempty" jsonschema:"limit which sections to render (stack, rules, decisions, bugfixes, testing, knowledge, releases, warnings; integrations = knowledge). Empty = render all."`
 	Platform string   `json:"platform,omitempty" jsonschema:"filter memory entries by platform (android|ios|shared|kmp|flutter|react-native). Exact, case-insensitive match."`
 	Status   string   `json:"status,omitempty" jsonschema:"filter memory entries by status (active|temporary|deprecated). Exact match."`
 	Area     string   `json:"area,omitempty" jsonschema:"filter memory entries whose area contains this substring."`
@@ -444,6 +444,10 @@ func handleSaveBugfix(paths brain.BrainPaths) func(context.Context, *mcp.CallToo
 
 func handleSaveTesting(paths brain.BrainPaths) func(context.Context, *mcp.CallToolRequest, SaveArgs) (*mcp.CallToolResult, SaveResult, error) {
 	return makeSaveHandler(paths, brain.SaveTypeTesting, "testing")
+}
+
+func handleSaveKnowledge(paths brain.BrainPaths) func(context.Context, *mcp.CallToolRequest, SaveArgs) (*mcp.CallToolResult, SaveResult, error) {
+	return makeSaveHandler(paths, brain.SaveTypeKnowledge, "knowledge")
 }
 
 // makeSaveHandler is shared across the three save_* tools — every save

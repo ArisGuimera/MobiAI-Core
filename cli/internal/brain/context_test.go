@@ -57,7 +57,7 @@ func TestBuildContext_FullDocument(t *testing.T) {
 		"## Known Bugfixes",
 		"_No entries yet._",
 		"## Testing Patterns",
-		"## Integrations",
+		"## Knowledge",
 		"## Release Notes",
 		"## Warnings",
 		"archivo sensible detectado: .env",

@@ -26,7 +26,7 @@ func NewBrainCmd() *cobra.Command {
 	root := &cobra.Command{
 		Use:   "brain",
 		Short: i18n.T("Per-project memory for mobile agents"),
-		Long: i18n.T("MobiAI Brain stores living per-project context: detected stack, decisions, bugfixes, testing patterns and integrations. Lives at <repo>/.mobiai/brain/ — separate from the CLI's global state."),
+		Long: i18n.T("MobiAI Brain stores living per-project context: detected stack, decisions, bugfixes, testing patterns and knowledge about how the app and its services behave. Lives at <repo>/.mobiai/brain/ — separate from the CLI's global state."),
 	}
 	root.AddCommand(
 		newBrainInitCmd(),
@@ -252,7 +252,7 @@ func newBrainContextCmd() *cobra.Command {
 	}
 	brainCommonFlags(c)
 	c.Flags().StringSlice("section", nil,
-		i18n.T("limit sections to render (stack,rules,decisions,bugfixes,testing,integrations,releases,warnings). Repeatable or comma-separated."))
+		i18n.T("limit sections to render (stack,rules,decisions,bugfixes,testing,knowledge,releases,warnings; integrations = knowledge). Repeatable or comma-separated."))
 	c.Flags().String("platform", "",
 		i18n.T("filter entries by platform (android|ios|shared|kmp|flutter|react-native)"))
 	c.Flags().String("status", "",
@@ -630,8 +630,11 @@ func newBrainSaveCmd() *cobra.Command {
 	root := &cobra.Command{
 		Use:   "save",
 		Short: i18n.T("Save an entry into the Brain's memories"),
-		Long: i18n.T("Appends a structured entry to the matching memory file. Requires the Brain to be initialized in the project (run `mobiai brain init` first)."),
+		Long: i18n.T("Writes a structured entry as its own note file under .mobiai/brain/memories/<section>/. Requires the Brain to be initialized in the project (run `mobiai brain init` first)."),
 	}
+	knowledge := newBrainSaveSubCmd(brain.SaveTypeKnowledge, "knowledge",
+		i18n.T("Save how the app or an external service behaves"))
+	knowledge.Long = i18n.T("Saves knowledge about how the app and the services it talks to behave: happy paths of the flows, server answers and error codes, SDK and third-party behavior. Save only what you can't learn by reading the code: \"the server returns 409 when the order is closed\" belongs here; \"function X does Y\" does not.")
 	root.AddCommand(
 		newBrainSaveSubCmd(brain.SaveTypeDecision, "decision",
 			i18n.T("Save an architecture decision")),
@@ -639,6 +642,7 @@ func newBrainSaveCmd() *cobra.Command {
 			i18n.T("Save a bugfix or workaround")),
 		newBrainSaveSubCmd(brain.SaveTypeTesting, "testing",
 			i18n.T("Save a reusable testing pattern")),
+		knowledge,
 	)
 	return root
 }

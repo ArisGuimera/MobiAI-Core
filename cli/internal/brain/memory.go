@@ -16,6 +16,9 @@ type MemoryFile struct {
 	// Dir is the card directory under memories/ (one file per note).
 	// Empty for sections that only exist in the old single-file format.
 	Dir string
+	// Section is the canonical section name when it differs from the old
+	// filename (integrations.md feeds the knowledge section).
+	Section string
 }
 
 // MemoryFiles is the canonical list of memory categories. Phase 1 ships
@@ -43,10 +46,15 @@ var MemoryFiles = []MemoryFile{
 		Dir:         "testing",
 	},
 	{
+		// How the app and the services it talks to behave. Replaces the
+		// reserved integrations section: notes written by hand in
+		// integrations.md migrate to knowledge/.
 		Name:        "integrations.md",
-		Title:       "Integrations",
-		ContextHead: "## Integrations",
+		Section:     "knowledge",
+		Title:       "Knowledge",
+		ContextHead: "## Knowledge",
 		Template:    integrationsTemplate,
+		Dir:         "knowledge",
 	},
 	{
 		Name:        "releases.md",

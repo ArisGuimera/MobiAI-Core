@@ -160,17 +160,35 @@ func ParseAllMemories(p BrainPaths) (map[string][]MemoryEntry, error) {
 }
 
 // canonicalSection maps a memory filename to the lowercase section name
-// used by filters and CLI flags (e.g. "decisions.md" → "decisions").
+// used by filters and CLI flags (e.g. "decisions.md" → "decisions",
+// "integrations.md" → "knowledge").
 func canonicalSection(filename string) string {
+	for _, mf := range MemoryFiles {
+		if mf.Name == filename && mf.Section != "" {
+			return mf.Section
+		}
+	}
 	return strings.TrimSuffix(filename, ".md")
 }
 
-// sectionForFile is the reverse of canonicalSection. Returns "" if the
+// sectionAliases maps old section names to their 0.3 name.
+var sectionAliases = map[string]string{"integrations": "knowledge"}
+
+// normalizeSection lowercases a section name and resolves aliases.
+func normalizeSection(section string) string {
+	s := strings.ToLower(strings.TrimSpace(section))
+	if alias, ok := sectionAliases[s]; ok {
+		return alias
+	}
+	return s
+}
+
+// fileForSection is the reverse of canonicalSection. Returns "" if the
 // section name doesn't correspond to any known memory file.
 func fileForSection(section string) string {
-	want := strings.ToLower(strings.TrimSpace(section)) + ".md"
+	want := normalizeSection(section)
 	for _, mf := range MemoryFiles {
-		if mf.Name == want {
+		if canonicalSection(mf.Name) == want {
 			return mf.Name
 		}
 	}

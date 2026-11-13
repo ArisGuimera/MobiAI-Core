@@ -173,6 +173,7 @@ func TestFileForSection(t *testing.T) {
 		"  Bugfixes ":  "bugfixes.md",
 		"testing":      "testing.md",
 		"integrations": "integrations.md",
+		"knowledge":    "integrations.md",
 		"releases":     "releases.md",
 		"nope":         "",
 		"":             "",

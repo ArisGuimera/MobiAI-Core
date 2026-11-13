@@ -334,7 +334,7 @@ func renderMetaLines(metas []metaLine) []string {
 // need this to re-derive the `type:` label on status changes. Returns
 // empty SaveType for non-save sections (integrations, releases).
 func saveTypeForSection(section string) SaveType {
-	for _, t := range []SaveType{SaveTypeDecision, SaveTypeBugfix, SaveTypeTesting} {
+	for _, t := range []SaveType{SaveTypeDecision, SaveTypeBugfix, SaveTypeTesting, SaveTypeKnowledge} {
 		if t.section() == section {
 			return t
 		}

@@ -5,7 +5,7 @@ func init() {
 		// ── internal/cmd/brain.go ────────────────────────────────────────────
 		// root + brainCommonFlags
 		"Per-project memory for mobile agents": "Memoria por proyecto para agentes mobile",
-		"MobiAI Brain stores living per-project context: detected stack, decisions, bugfixes, testing patterns and integrations. Lives at <repo>/.mobiai/brain/ — separate from the CLI's global state.": "MobiAI Brain guarda contexto vivo por proyecto: stack detectado, decisiones, bugfixes, patrones de testing e integraciones. Vive en <repo>/.mobiai/brain/ — separado del estado global de la CLI.",
+		"MobiAI Brain stores living per-project context: detected stack, decisions, bugfixes, testing patterns and knowledge about how the app and its services behave. Lives at <repo>/.mobiai/brain/ — separate from the CLI's global state.": "MobiAI Brain guarda contexto vivo por proyecto: stack detectado, decisiones, bugfixes, patrones de testing y conocimiento sobre cómo se comportan la app y sus servicios. Vive en <repo>/.mobiai/brain/ — separado del estado global de la CLI.",
 		"project path (default: detected from cwd)": "ruta del proyecto (default: detectado desde el cwd)",
 
 		// show
@@ -34,7 +34,7 @@ func init() {
 		// context
 		"Print the Brain's Markdown context (config + scan + memories)": "Imprime el contexto Markdown del Brain (config + scan + memorias)",
 		"Prints the Brain context as Markdown. Without flags, dumps everything. With --section, --platform, --status or --area, filters memory entries so only what's relevant appears (useful as the brain grows).": "Imprime el contexto del Brain como Markdown. Sin flags, vuelca todo. Con --section, --platform, --status o --area filtra entradas de las memorias para que solo aparezca lo relevante (útil cuando el brain crece).",
-		"limit sections to render (stack,rules,decisions,bugfixes,testing,integrations,releases,warnings). Repeatable or comma-separated.":                                                                           "limita las secciones a renderizar (stack,rules,decisions,bugfixes,testing,integrations,releases,warnings). Repetible o coma-separado.",
+		"limit sections to render (stack,rules,decisions,bugfixes,testing,knowledge,releases,warnings; integrations = knowledge). Repeatable or comma-separated.":                                                    "limita las secciones a renderizar (stack,rules,decisions,bugfixes,testing,knowledge,releases,warnings; integrations = knowledge). Repetible o coma-separado.",
 		"filter entries by platform (android|ios|shared|kmp|flutter|react-native)":                                                                                                                                   "filtra entradas por platform (android|ios|shared|kmp|flutter|react-native)",
 		"filter entries by status (active|temporary|deprecated)":                                                                                                                                                     "filtra entradas por status (active|temporary|deprecated)",
 		"filter entries whose area contains this string (substring)":                                                                                                                                                 "filtra entradas cuyo area contenga este string (substring)",
@@ -76,10 +76,12 @@ func init() {
 
 		// save
 		"Save an entry into the Brain's memories": "Guardar una entrada en las memorias del Brain",
-		"Appends a structured entry to the matching memory file. Requires the Brain to be initialized in the project (run `mobiai brain init` first).": "Añade una entrada estructurada al archivo de memoria correspondiente. Requiere que el Brain esté inicializado en el proyecto (corré `mobiai brain init` primero).",
-		"Save an architecture decision":                          "Guardar una decisión de arquitectura",
-		"Save a bugfix or workaround":                            "Guardar un bugfix o workaround",
-		"Save a reusable testing pattern":                        "Guardar un patrón de testing reusable",
+		"Writes a structured entry as its own note file under .mobiai/brain/memories/<section>/. Requires the Brain to be initialized in the project (run `mobiai brain init` first).": "Escribe una entrada estructurada como su propio archivo de nota en .mobiai/brain/memories/<sección>/. Requiere que el Brain esté inicializado en el proyecto (corré `mobiai brain init` primero).",
+		"Save an architecture decision":                   "Guardar una decisión de arquitectura",
+		"Save a bugfix or workaround":                     "Guardar un bugfix o workaround",
+		"Save a reusable testing pattern":                 "Guardar un patrón de testing reusable",
+		"Save how the app or an external service behaves": "Guardar cómo se comporta la app o un servicio externo",
+		"Saves knowledge about how the app and the services it talks to behave: happy paths of the flows, server answers and error codes, SDK and third-party behavior. Save only what you can't learn by reading the code: \"the server returns 409 when the order is closed\" belongs here; \"function X does Y\" does not.": "Guarda conocimiento sobre cómo se comportan la app y los servicios con los que habla: happy paths de los flujos, respuestas y códigos de error del servidor, comportamiento de SDKs y de terceros. Guardá solo lo que no se ve leyendo el código: \"el servidor devuelve 409 si el pedido está cerrado\" va; \"la función X hace Y\" no va.",
 		"short entry title (required)":                           "título corto de la entrada (requerido)",
 		"android|ios|shared|kmp|flutter|react-native (optional)": "android|ios|shared|kmp|flutter|react-native (opcional)",
 		"project area (free-form, optional)":                     "área del proyecto (libre, opcional)",

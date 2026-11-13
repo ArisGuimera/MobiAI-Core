@@ -144,7 +144,7 @@ func includeMap(sections []string) map[string]struct{} {
 	}
 	m := map[string]struct{}{}
 	for _, s := range sections {
-		key := strings.ToLower(strings.TrimSpace(s))
+		key := normalizeSection(s)
 		if key == "" {
 			continue
 		}

@@ -18,6 +18,10 @@ const (
 	SaveTypeDecision SaveType = "decision"
 	SaveTypeBugfix   SaveType = "bugfix"
 	SaveTypeTesting  SaveType = "testing"
+	// SaveTypeKnowledge is how the app and the services it talks to behave
+	// (flows, server error answers, SDK behavior): only what reading the
+	// code doesn't tell.
+	SaveTypeKnowledge SaveType = "knowledge"
 )
 
 // section returns the canonical section a SaveType writes to.
@@ -29,6 +33,8 @@ func (t SaveType) section() string {
 		return "bugfixes"
 	case SaveTypeTesting:
 		return "testing"
+	case SaveTypeKnowledge:
+		return "knowledge"
 	}
 	return ""
 }
@@ -53,8 +59,10 @@ func (t SaveType) memoryFileFor() (string, error) {
 		return "bugfixes.md", nil
 	case SaveTypeTesting:
 		return "testing.md", nil
+	case SaveTypeKnowledge:
+		return "integrations.md", nil
 	default:
-		return "", fmt.Errorf("unknown save type: %q (expected: decision|bugfix|testing)", t)
+		return "", fmt.Errorf("unknown save type: %q (expected: decision|bugfix|testing|knowledge)", t)
 	}
 }
 
@@ -73,6 +81,8 @@ func (t SaveType) fullTypeLabel(status string) string {
 		return "bug_fix"
 	case SaveTypeTesting:
 		return "testing_pattern"
+	case SaveTypeKnowledge:
+		return "knowledge"
 	}
 	return string(t)
 }
