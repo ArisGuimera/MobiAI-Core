@@ -332,6 +332,13 @@ What was done about it (or 'documented only, no fix applied yet')."
 
 The body fields are suggestions, not a rigid template. Use the structure that fits what you found.
 
+A few more fields and cases (details in the `mobiai-brain` skill):
+
+- **Workaround tied to a library version** — add `until: ["<dependency>@<version>"]` (CLI `--until`).
+- **The cause is a crash with an id** — add its signatures to `crash` (CLI `--crash`): Crashlytics issue id, Sentry fingerprint or `ExceptionType at File.kt:42`.
+- **The root cause is how the server or an SDK behaves**, not a bug in the code (an error code, a timing guarantee, an undocumented response) — save it as `knowledge` instead (`mobile_save_knowledge` / `mobiai brain save knowledge`). Only what you can't learn by reading the code.
+- **Save refuses because a similar note exists** — ask the user whether to edit that note's file, replace it (`supersedes` / `--supersedes <id>`), or save a separate note (`new: true` / `--new`).
+
 ## Red Flags — STOP and Follow Process
 
 If you catch yourself thinking:

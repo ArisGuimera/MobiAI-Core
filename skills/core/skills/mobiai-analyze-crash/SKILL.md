@@ -39,6 +39,13 @@ From whatever the user gave you, identify the key information:
 
 If the information is incomplete, ask the user for more context. But don't block on it — work with what you have.
 
+**Known crash?** If `<repo>/.mobiai/brain/config.json` exists, search the Brain with the crash signature before investigating — it may have been fixed (or worked around) before. Use the exception and location (e.g. `NullPointerException at LoginViewModel.kt:42`) and any Crashlytics issue id or Sentry fingerprint the user gave you:
+
+- MCP: `mobile_search` with `crash: "<signature>"`.
+- CLI: `mobiai brain search --crash "<signature>"`.
+
+If a bugfix comes up, read it and tell the user: a crash that is back usually means the fix regressed or the workaround stopped working.
+
 ### Step 2: Classify the Crash Type
 
 Identify the category to guide your investigation:
@@ -95,6 +102,7 @@ Apply a minimal fix:
 - Verify it compiles
 - Run existing tests to check for regressions
 - If applicable, load the `mobiai-write-tests` skill to add a regression test
+- If the project has a Brain, propose saving the fix as a bugfix (with the user's approval) and include the crash signature so the next occurrence finds it: `crash` on `mobile_save_bugfix`, or `mobiai brain save bugfix ... --crash "<signature>"`
 
 ## Platform-Specific Patterns
 

@@ -279,6 +279,13 @@ mobiai brain save bugfix \
 
 The save is the same content the agent already produced for the PR description (Phase 7) — just structured for future retrieval. If the project tracks `.mobiai/brain/memories/` in git, the new entry will be staged with the rest of the fix in Phase 7.
 
+A few more fields and cases (details in the `mobiai-brain` skill):
+
+- **Workaround tied to a library version** — add `until: ["<dependency>@<version>"]` (CLI `--until`), e.g. `com.google.firebase:firebase-bom@34.0.0`. The note is flagged once the project reaches that version.
+- **The fix solves a crash** — add the signatures to `crash` (CLI `--crash`): Crashlytics issue id, Sentry fingerprint or `ExceptionType at File.kt:42`.
+- **You learned how the server or an SDK behaves** (an error code, an undocumented response) — propose a separate `knowledge` note (`mobile_save_knowledge` / `mobiai brain save knowledge`). Only what you can't learn by reading the code.
+- **Save refuses because a similar note exists** — ask the user whether to edit that note's file, replace it (`supersedes` / `--supersedes <id>`), or save a separate note (`new: true` / `--new`).
+
 ## Phase 7: Open the PR — FINAL GATE (always)
 
 **Invoke skill `mobiai-create-pr`**. This is the non-negotiable gate for every ticket regardless of path — before pushing, the user will see the full diff plus the context below and must explicitly approve.

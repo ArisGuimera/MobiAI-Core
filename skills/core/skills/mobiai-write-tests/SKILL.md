@@ -162,6 +162,11 @@ The pattern itself, in one paragraph.
 
 Skip the body's `### Example` block on languages that don't fit. The fewer placeholders, the better — concrete pattern in the user's own words beats a generic template.
 
+Two more cases (details in the `mobiai-brain` skill):
+
+- **Writing the test taught you how the server or an SDK behaves** (a response shape, an error code, a timing guarantee) that the code doesn't show — propose a separate `knowledge` note (`mobile_save_knowledge` / `mobiai brain save knowledge`).
+- **Save refuses because a similar note exists** — ask the user whether to edit that note's file, replace it (`supersedes` / `--supersedes <id>`), or save a separate note (`new: true` / `--new`).
+
 ## Platform Conventions
 
 ### Android (Kotlin)

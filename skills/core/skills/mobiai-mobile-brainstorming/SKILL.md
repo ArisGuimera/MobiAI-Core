@@ -177,6 +177,12 @@ Why this over the alternatives. What constraints made the alternatives worse.
 
 The body's `### Alternatives considered` block is the high-leverage part — it's why future agents won't re-litigate the same decision. Include it when the decision had real tradeoffs.
 
+A few more cases (details in the `mobiai-brain` skill):
+
+- **The decision replaces an earlier one** in the brain — save it with `supersedes: ["<old id>"]` (CLI `--supersedes <old id>`) instead of editing the old note; the old one stops counting as a rule.
+- **The spec relies on how a server or SDK behaves** (flows, error codes, limits) that the code won't show — propose a `knowledge` note for it (`mobile_save_knowledge` / `mobiai brain save knowledge`).
+- **Save refuses because a similar note exists** — ask the user whether to edit that note's file, replace it (`supersedes`), or save a separate note (`new: true` / `--new`).
+
 **Implementation:**
 
 - Invoke the `mobiai-mobile-planning` skill to create a detailed implementation plan

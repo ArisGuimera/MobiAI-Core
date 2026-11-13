@@ -43,6 +43,13 @@ Get the full crash information from Crashlytics:
 - **First seen / last seen** — when did it start and is it still happening?
 - **Device breakdown** — which devices and OS versions are most affected
 
+**Known crash?** If `<repo>/.mobiai/brain/config.json` exists, search the Brain for this crash before investigating — it may have been fixed (or worked around) before:
+
+- MCP: `mobile_search` with `crash: "<Crashlytics issue id>"`, then again with the exception signature (e.g. `NullPointerException at LoginViewModel.kt:42`).
+- CLI: `mobiai brain search --crash <issue-id>` and `mobiai brain search --crash "<exception signature>"`.
+
+If a bugfix comes up, read it and tell the user before going further: a crash that is back usually means the fix regressed or the workaround stopped working.
+
 ### Step 2: Analyze the User Journey
 
 Crashlytics provides breadcrumbs — the sequence of events before the crash:
@@ -91,3 +98,5 @@ In all cases, include:
 - **Trigger conditions** — what combination of state/actions causes the crash
 - **Affected scope** — which versions, devices, user flows
 - **Suggested fix** — what to change, with risk assessment
+
+**Remember the fix.** If you applied a fix and the project has a Brain, propose saving it as a bugfix (with the user's approval) and include the crash signatures so the next occurrence finds it: `crash: ["<issue id>", "<exception signature>"]` on `mobile_save_bugfix`, or `mobiai brain save bugfix ... --crash "<issue id>,<exception signature>"`. See the `mobiai-brain` skill for the other fields.
