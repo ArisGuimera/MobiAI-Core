@@ -25,8 +25,9 @@ func TestBrainInit_CreatesStructure(t *testing.T) {
 		filepath.Join(".mobiai", "brain", "memories", "decisions.md"),
 		filepath.Join(".mobiai", "brain", "memories", "bugfixes.md"),
 		filepath.Join(".mobiai", "brain", "memories", "testing.md"),
-		filepath.Join(".mobiai", "brain", "memories", "integrations.md"),
-		filepath.Join(".mobiai", "brain", "memories", "releases.md"),
+		filepath.Join(".mobiai", "brain", "memories", "decisions"),
+		filepath.Join(".mobiai", "brain", "memories", "bugfixes"),
+		filepath.Join(".mobiai", "brain", "memories", "testing"),
 	} {
 		if _, err := os.Stat(filepath.Join(root, rel)); err != nil {
 			t.Errorf("expected %s to exist: %v", rel, err)

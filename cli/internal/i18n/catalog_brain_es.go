@@ -8,6 +8,10 @@ func init() {
 		"MobiAI Brain stores living per-project context: detected stack, decisions, bugfixes, testing patterns and integrations. Lives at <repo>/.mobiai/brain/ — separate from the CLI's global state.": "MobiAI Brain guarda contexto vivo por proyecto: stack detectado, decisiones, bugfixes, patrones de testing e integraciones. Vive en <repo>/.mobiai/brain/ — separado del estado global de la CLI.",
 		"project path (default: detected from cwd)": "ruta del proyecto (default: detectado desde el cwd)",
 
+		// migrateBrain
+		"⚠ Could not write the Brain's new format (%v); reading both formats.\n":                    "⚠ No se pudo escribir el formato nuevo del Brain (%v); se leen los dos formatos.\n",
+		"Brain migrated to the new format: %d notes. Include .mobiai/brain/ in your next commit.\n": "Brain migrado al formato nuevo: %d notas. Incluí .mobiai/brain/ en tu próximo commit.\n",
+
 		// init
 		"Initialize .mobiai/brain in the current project":     "Inicializa .mobiai/brain en el proyecto actual",
 		"⚠ %s (using %s)\n":                                   "⚠ %s (usando %s)\n",

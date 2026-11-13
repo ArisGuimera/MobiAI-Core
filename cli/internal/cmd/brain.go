@@ -71,6 +71,25 @@ func resolveBrainRoot(c *cobra.Command) (brain.RootInfo, error) {
 	return brain.FindProjectRoot(cwd)
 }
 
+// migrateBrain brings an old brain to the card format before a command
+// reads or writes it (see brain.Migrate). When files changed, the first
+// line of output says so — for the user and for the agent reading it. A
+// brain that can't be written keeps working: notes are read from both
+// formats, with a warning on stderr.
+func migrateBrain(c *cobra.Command, paths brain.BrainPaths) {
+	rep, err := brain.Migrate(paths)
+	if err == nil && rep.ReadOnly {
+		err = rep.Err
+	}
+	if err != nil {
+		fmt.Fprintf(c.ErrOrStderr(), i18n.T("⚠ Could not write the Brain's new format (%v); reading both formats.\n"), err)
+		return
+	}
+	if rep.Changed() {
+		fmt.Fprintf(c.OutOrStdout(), i18n.T("Brain migrated to the new format: %d notes. Include .mobiai/brain/ in your next commit.\n"), rep.Created)
+	}
+}
+
 func newBrainInitCmd() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "init",
@@ -132,6 +151,7 @@ func runBrainInit(c *cobra.Command, _ []string) error {
 	} else {
 		fmt.Fprintln(out, i18n.T("= memories already exist (not overwritten)"))
 	}
+	migrateBrain(c, paths)
 	fmt.Fprintln(out, "")
 	fmt.Fprintln(out, i18n.T("Next step: `mobiai brain scan` to detect the stack."))
 	return nil
@@ -157,6 +177,7 @@ func runBrainScan(c *cobra.Command, _ []string) error {
 	if !paths.Exists() {
 		return fmt.Errorf("could not find .mobiai/brain/config.json in %s. Run `mobiai brain init` first", info.Path)
 	}
+	migrateBrain(c, paths)
 
 	fmt.Fprintf(out, i18n.T("Scanning %s ...\n"), info.Path)
 	scan, err := brain.ScanProject(info.Path)
@@ -249,6 +270,7 @@ func runBrainContext(c *cobra.Command, _ []string) error {
 	if !paths.Exists() {
 		return fmt.Errorf("could not find .mobiai/brain/config.json in %s. Run `mobiai brain init` first", info.Path)
 	}
+	migrateBrain(c, paths)
 	cfg, err := brain.LoadConfig(paths)
 	if err != nil {
 		return err
@@ -298,6 +320,7 @@ func runBrainSearch(c *cobra.Command, args []string) error {
 	if !paths.Exists() {
 		return fmt.Errorf("brain not initialized in %s — run `mobiai brain init` first", info.Path)
 	}
+	migrateBrain(c, paths)
 	query := strings.Join(args, " ")
 	platform, _ := c.Flags().GetString("platform")
 	status, _ := c.Flags().GetString("status")
@@ -378,6 +401,7 @@ func runBrainReview(c *cobra.Command, _ []string) error {
 	if !paths.Exists() {
 		return fmt.Errorf("brain not initialized in %s — run `mobiai brain init` first", info.Path)
 	}
+	migrateBrain(c, paths)
 
 	includeNoDate, _ := c.Flags().GetBool("include-no-date")
 	noFail, _ := c.Flags().GetBool("no-fail")
@@ -535,6 +559,7 @@ func doBrainUpdate(c *cobra.Command, id string, opts brain.UpdateOptions) error 
 	if !paths.Exists() {
 		return fmt.Errorf("brain not initialized in %s — run `mobiai brain init` first", info.Path)
 	}
+	migrateBrain(c, paths)
 	res, err := brain.UpdateEntry(paths, id, opts)
 	if err != nil {
 		return err
@@ -617,6 +642,7 @@ func runBrainSave(c *cobra.Command, saveType brain.SaveType) error {
 	if !paths.Exists() {
 		return fmt.Errorf("brain not initialized in %s — run `mobiai brain init` first", info.Path)
 	}
+	migrateBrain(c, paths)
 
 	title, _ := c.Flags().GetString("title")
 	platform, _ := c.Flags().GetString("platform")

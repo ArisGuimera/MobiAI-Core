@@ -38,20 +38,12 @@ func LoadNotes(p BrainPaths) ([]MemoryEntry, error) {
 		notes = append(notes, cards...)
 	}
 
-	for _, mf := range MemoryFiles {
-		entries, err := ParseMemoryFile(filepath.Join(p.MemoriesDir, mf.Name))
-		if err != nil {
-			return nil, err
-		}
-		for _, e := range entries {
-			id := e.Get("id")
-			if id == formatNoticeID || (id != "" && cardIDs[id]) {
-				continue
-			}
-			e.Section = canonicalSection(mf.Name)
-			e.Path = ".mobiai/brain/memories/" + mf.Name
-			e.Legacy = true
-			e.Files = parseFilesSection(e.Body)
+	legacy, err := loadLegacyNotes(p)
+	if err != nil {
+		return nil, err
+	}
+	for _, e := range legacy {
+		if !cardIDs[e.Get("id")] {
 			notes = append(notes, e)
 		}
 	}

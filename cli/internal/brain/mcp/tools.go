@@ -32,6 +32,7 @@ func handleContext(paths brain.BrainPaths) func(context.Context, *mcp.CallToolRe
 		if !paths.Exists() {
 			return nil, ContextResult{}, brainNotInitialized(paths)
 		}
+		prefix := migrate(paths)
 		cfg, err := brain.LoadConfig(paths)
 		if err != nil {
 			return nil, ContextResult{}, err
@@ -49,7 +50,7 @@ func handleContext(paths brain.BrainPaths) func(context.Context, *mcp.CallToolRe
 			},
 		})
 		return &mcp.CallToolResult{
-			Content: []mcp.Content{&mcp.TextContent{Text: md}},
+			Content: []mcp.Content{&mcp.TextContent{Text: prefix + md}},
 		}, ContextResult{Markdown: md}, nil
 	}
 }
@@ -88,6 +89,7 @@ func handleSearch(paths brain.BrainPaths) func(context.Context, *mcp.CallToolReq
 		if !paths.Exists() {
 			return nil, SearchResult{}, brainNotInitialized(paths)
 		}
+		prefix := migrate(paths)
 		if strings.TrimSpace(args.Query) == "" {
 			return nil, SearchResult{}, fmt.Errorf("query is required")
 		}
@@ -115,7 +117,7 @@ func handleSearch(paths brain.BrainPaths) func(context.Context, *mcp.CallToolReq
 		// that show tool output verbatim render something useful.
 		summary := formatSearchSummary(args.Query, out.Hits)
 		return &mcp.CallToolResult{
-			Content: []mcp.Content{&mcp.TextContent{Text: summary}},
+			Content: []mcp.Content{&mcp.TextContent{Text: prefix + summary}},
 		}, out, nil
 	}
 }
@@ -170,6 +172,7 @@ func handleScan(paths brain.BrainPaths) func(context.Context, *mcp.CallToolReque
 		if !paths.Exists() {
 			return nil, ScanResult{}, brainNotInitialized(paths)
 		}
+		prefix := migrate(paths)
 		scan, err := brain.ScanProject(paths.Root)
 		if err != nil {
 			return nil, ScanResult{}, err
@@ -195,7 +198,7 @@ func handleScan(paths brain.BrainPaths) func(context.Context, *mcp.CallToolReque
 			Warnings:      scan.Warnings,
 		}
 		return &mcp.CallToolResult{
-			Content: []mcp.Content{&mcp.TextContent{Text: formatScanSummary(scan)}},
+			Content: []mcp.Content{&mcp.TextContent{Text: prefix + formatScanSummary(scan)}},
 		}, out, nil
 	}
 }
@@ -257,6 +260,7 @@ func handleReview(paths brain.BrainPaths) func(context.Context, *mcp.CallToolReq
 		if !paths.Exists() {
 			return nil, ReviewResult{}, brainNotInitialized(paths)
 		}
+		prefix := migrate(paths)
 		raw, err := brain.Review(paths, brain.ReviewOptions{
 			IncludeNoDate: args.IncludeNoDate,
 		})
@@ -285,7 +289,7 @@ func handleReview(paths brain.BrainPaths) func(context.Context, *mcp.CallToolReq
 		// Short text summary for MCP clients that show tool output
 		// verbatim. Structured data lives on the second return value.
 		return &mcp.CallToolResult{
-			Content: []mcp.Content{&mcp.TextContent{Text: formatReviewSummary(out)}},
+			Content: []mcp.Content{&mcp.TextContent{Text: prefix + formatReviewSummary(out)}},
 		}, out, nil
 	}
 }
@@ -345,6 +349,7 @@ type UpdateResult struct {
 
 func handlePromote(paths brain.BrainPaths) func(context.Context, *mcp.CallToolRequest, PromoteArgs) (*mcp.CallToolResult, UpdateResult, error) {
 	return func(_ context.Context, _ *mcp.CallToolRequest, args PromoteArgs) (*mcp.CallToolResult, UpdateResult, error) {
+		prefix := migrate(paths)
 		res, err := brain.UpdateEntry(paths, args.ID, brain.UpdateOptions{
 			Status:           args.Status,
 			ReviewAfter:      args.ReviewAfter,
@@ -355,13 +360,14 @@ func handlePromote(paths brain.BrainPaths) func(context.Context, *mcp.CallToolRe
 		}
 		out := updateResultToJSON(res)
 		return &mcp.CallToolResult{
-			Content: []mcp.Content{&mcp.TextContent{Text: formatUpdateSummary(res)}},
+			Content: []mcp.Content{&mcp.TextContent{Text: prefix + formatUpdateSummary(res)}},
 		}, out, nil
 	}
 }
 
 func handleBump(paths brain.BrainPaths) func(context.Context, *mcp.CallToolRequest, BumpArgs) (*mcp.CallToolResult, UpdateResult, error) {
 	return func(_ context.Context, _ *mcp.CallToolRequest, args BumpArgs) (*mcp.CallToolResult, UpdateResult, error) {
+		prefix := migrate(paths)
 		res, err := brain.UpdateEntry(paths, args.ID, brain.UpdateOptions{
 			ReviewAfter: args.ReviewAfter,
 		})
@@ -370,7 +376,7 @@ func handleBump(paths brain.BrainPaths) func(context.Context, *mcp.CallToolReque
 		}
 		out := updateResultToJSON(res)
 		return &mcp.CallToolResult{
-			Content: []mcp.Content{&mcp.TextContent{Text: formatUpdateSummary(res)}},
+			Content: []mcp.Content{&mcp.TextContent{Text: prefix + formatUpdateSummary(res)}},
 		}, out, nil
 	}
 }
@@ -445,6 +451,7 @@ func handleSaveTesting(paths brain.BrainPaths) func(context.Context, *mcp.CallTo
 // guard, validates the entry, and writes atomically.
 func makeSaveHandler(paths brain.BrainPaths, saveType brain.SaveType, section string) func(context.Context, *mcp.CallToolRequest, SaveArgs) (*mcp.CallToolResult, SaveResult, error) {
 	return func(_ context.Context, _ *mcp.CallToolRequest, args SaveArgs) (*mcp.CallToolResult, SaveResult, error) {
+		prefix := migrate(paths)
 		entry := &brain.SaveEntry{
 			Type:        saveType,
 			Title:       args.Title,
@@ -462,9 +469,22 @@ func makeSaveHandler(paths brain.BrainPaths, saveType brain.SaveType, section st
 		path := ".mobiai/brain/memories/" + saveType.CardDir() + "/" + id + ".md"
 		text := fmt.Sprintf("✓ saved to %s (id: %s)", path, id)
 		return &mcp.CallToolResult{
-			Content: []mcp.Content{&mcp.TextContent{Text: text}},
+			Content: []mcp.Content{&mcp.TextContent{Text: prefix + text}},
 		}, SaveResult{ID: id, Section: section, Path: path}, nil
 	}
+}
+
+// migrate brings an old brain to the card format before a tool reads or
+// writes it (see brain.Migrate) and returns the line to put in front of the
+// tool's text output when files changed, so the agent can tell the user to
+// commit them. A brain that can't be written keeps working silently: notes
+// are read from both formats.
+func migrate(paths brain.BrainPaths) string {
+	rep, err := brain.Migrate(paths)
+	if err != nil || rep.ReadOnly || !rep.Changed() {
+		return ""
+	}
+	return fmt.Sprintf(brain.MigratedMessage, rep.Created) + "\n\n"
 }
 
 // brainNotInitialized returns the standard "init me first" error in

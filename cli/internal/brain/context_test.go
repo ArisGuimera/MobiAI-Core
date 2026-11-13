@@ -105,8 +105,8 @@ func TestEnsureMemoryFiles_Idempotent(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(created) != len(MemoryFiles) {
-		t.Errorf("first run created %d files, want %d", len(created), len(MemoryFiles))
+	if len(created) != 3 {
+		t.Errorf("first run created %d files, want 3 (decisions, bugfixes, testing)", len(created))
 	}
 
 	// Mutate one file: re-running must not overwrite it.

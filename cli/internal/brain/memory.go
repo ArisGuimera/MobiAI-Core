@@ -56,25 +56,34 @@ var MemoryFiles = []MemoryFile{
 	},
 }
 
-// EnsureMemoryFiles writes any missing memory file with its template.
-// Existing files are left untouched (idempotent — `brain init` may run
-// many times). Returns the list of files actually created.
+// EnsureMemoryFiles creates the card directories and any missing old
+// single-file memory that carries the format notice (decisions.md,
+// bugfixes.md, testing.md), holding only its heading and the notice. Those
+// files exist so a teammate on 0.2.x sees the notice instead of an empty
+// brain. Existing files are left untouched (idempotent — `brain init` may
+// run many times). Returns the list of files actually created.
 func EnsureMemoryFiles(p BrainPaths) ([]string, error) {
-	if err := os.MkdirAll(p.MemoriesDir, 0o755); err != nil {
-		return nil, fmt.Errorf("create %s: %w", p.MemoriesDir, err)
+	for _, mf := range MemoryFiles {
+		if mf.Dir == "" {
+			continue
+		}
+		dir := filepath.Join(p.MemoriesDir, mf.Dir)
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			return nil, fmt.Errorf("create %s: %w", dir, err)
+		}
 	}
 	var created []string
-	for _, mf := range MemoryFiles {
-		path := filepath.Join(p.MemoriesDir, mf.Name)
+	for _, name := range noticeFiles {
+		path := filepath.Join(p.MemoriesDir, name)
 		if _, err := os.Stat(path); err == nil {
 			continue
 		} else if !os.IsNotExist(err) {
 			return created, fmt.Errorf("stat %s: %w", path, err)
 		}
-		if err := os.WriteFile(path, []byte(mf.Template), 0o644); err != nil {
+		if err := os.WriteFile(path, []byte(noticeFileContent(memoryFile(name))), 0o644); err != nil {
 			return created, fmt.Errorf("write %s: %w", path, err)
 		}
-		created = append(created, mf.Name)
+		created = append(created, name)
 	}
 	return created, nil
 }
