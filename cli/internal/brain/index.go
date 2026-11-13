@@ -18,10 +18,10 @@ const indexFooter = "Open the note files you need; use `mobiai brain show <id>` 
 // full text of active decisions, newest first, while they fit; and one
 // index line for every other note. The index itself is never cut — hiding
 // notes would be worse than going over the limit.
-func renderIndexed(cfg Config, scan *Scan, groups map[string][]MemoryEntry, include map[string]struct{}, limit int, now time.Time) string {
+func (d contextDoc) renderIndexed() string {
 	var candidates []MemoryEntry
-	if included(include, "decisions") {
-		for _, e := range groups["decisions"] {
+	if included(d.include, "decisions") {
+		for _, e := range d.groups["decisions"] {
 			if isActiveDecision(e) {
 				candidates = append(candidates, e)
 			}
@@ -36,12 +36,12 @@ func renderIndexed(cfg Config, scan *Scan, groups map[string][]MemoryEntry, incl
 	})
 
 	inFull := map[string]bool{}
-	budget := limit - len(composeIndexed(cfg, scan, groups, include, nil, inFull, limit, now))
+	budget := d.limit - len(d.composeIndexed(nil, inFull))
 	var full []MemoryEntry
 	for _, e := range candidates {
 		var entry strings.Builder
 		writeEntry(&entry, e)
-		cost := len(entry.String()) + 1 - len(indexLine(e, now)) - 1
+		cost := len(entry.String()) + 1 - len(indexLine(e, d.now)) - 1
 		if cost > budget {
 			break
 		}
@@ -49,24 +49,24 @@ func renderIndexed(cfg Config, scan *Scan, groups map[string][]MemoryEntry, incl
 		full = append(full, e)
 		inFull[e.Get("id")] = true
 	}
-	return composeIndexed(cfg, scan, groups, include, full, inFull, limit, now)
+	return d.composeIndexed(full, inFull)
 }
 
 // composeIndexed lays out an index-mode document with the given notes in
 // full and every other included note as an index line.
-func composeIndexed(cfg Config, scan *Scan, groups map[string][]MemoryEntry, include map[string]struct{}, full []MemoryEntry, inFull map[string]bool, limit int, now time.Time) string {
+func (d contextDoc) composeIndexed(full []MemoryEntry, inFull map[string]bool) string {
 	var b strings.Builder
-	writeHeader(&b, cfg, scan)
-	if included(include, stackSection) {
-		writeStackSection(&b, scan)
+	d.writeTop(&b)
+	if included(d.include, stackSection) {
+		writeStackSection(&b, d.scan)
 	}
-	if included(include, rulesSection) {
-		writeRulesSection(&b, cfg)
+	if included(d.include, rulesSection) {
+		writeRulesSection(&b, d.cfg)
 	}
 
-	if included(include, "decisions") {
+	if included(d.include, "decisions") {
 		b.WriteString("## Active Decisions\n\n")
-		fmt.Fprintf(&b, "_The Brain context is over %d KB, so only active decisions are shown in full; every other note is listed in the index below._\n\n", limit/1024)
+		fmt.Fprintf(&b, "_The Brain context is over %d KB, so only active decisions are shown in full; every other note is listed in the index below._\n\n", d.limit/1024)
 		for i, e := range full {
 			if i > 0 {
 				b.WriteString("\n")
@@ -81,29 +81,30 @@ func composeIndexed(cfg Config, scan *Scan, groups map[string][]MemoryEntry, inc
 	b.WriteString("## Index\n\n")
 	b.WriteString("_One line per note. Paths are relative to `.mobiai/brain/`._\n\n")
 	for _, section := range renderOrder() {
-		if !included(include, section) {
+		if !included(d.include, section) {
 			continue
 		}
-		for _, e := range groups[section] {
+		for _, e := range d.groups[section] {
 			if inFull[e.Get("id")] {
 				continue
 			}
-			b.WriteString(indexLine(e, now))
+			b.WriteString(indexLine(e, d.now))
 			b.WriteString("\n")
 		}
 	}
 	b.WriteString("\n" + indexFooter + "\n\n")
 
-	if included(include, warningsSection) {
-		writeWarningsSection(&b, scan)
+	if included(d.include, warningsSection) {
+		writeWarningsSection(&b, d.scan)
 	}
 	return b.String()
 }
 
 // isActiveDecision reports whether a decision counts as a project rule and
-// gets its full text in index mode.
+// gets its full text in index mode. An unconfirmed decision doesn't: no one
+// else has reviewed it yet.
 func isActiveDecision(e MemoryEntry) bool {
-	return strings.EqualFold(strings.TrimSpace(e.Get("status")), StatusActive)
+	return strings.EqualFold(strings.TrimSpace(e.Get("status")), StatusActive) && !e.Flags.Unconfirmed
 }
 
 // indexLine renders one note as a single index line, e.g. "- [bug_fix]
@@ -117,6 +118,9 @@ func indexLine(e MemoryEntry, now time.Time) string {
 	parts := []string{fmt.Sprintf("[%s] %s", label, e.Title)}
 	if st := strings.TrimSpace(e.Get("status")); st != "" && !strings.EqualFold(st, StatusActive) {
 		parts = append(parts, st)
+	}
+	if e.Flags.Unconfirmed {
+		parts = append(parts, "unconfirmed")
 	}
 	for _, k := range []string{"platform", "area"} {
 		if v := e.Get(k); v != "" {

@@ -26,6 +26,8 @@ type MemoryEntry struct {
 	Path    string   // path relative to the project root, with "/" separators
 	Legacy  bool     // true when the note comes from an old single-file memory
 	Files   []string // paths listed under "### Files" in the body
+
+	Flags NoteFlags // computed on read (see annotateNotes)
 }
 
 // Get returns the metadata value for key, or "" if missing.
@@ -149,14 +151,7 @@ func ParseAllMemories(p BrainPaths) (map[string][]MemoryEntry, error) {
 	if err != nil {
 		return nil, err
 	}
-	out := make(map[string][]MemoryEntry, len(MemoryFiles))
-	for _, mf := range MemoryFiles {
-		out[canonicalSection(mf.Name)] = nil
-	}
-	for _, n := range notes {
-		out[n.Section] = append(out[n.Section], n)
-	}
-	return out, nil
+	return groupBySection(notes), nil
 }
 
 // canonicalSection maps a memory filename to the lowercase section name

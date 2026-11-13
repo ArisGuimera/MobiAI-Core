@@ -35,6 +35,9 @@ type Config struct {
 	// ContextMaxBytes is the size above which `context` switches to index
 	// mode. Zero means DefaultContextMaxBytes.
 	ContextMaxBytes int `json:"context_max_bytes,omitempty"`
+	// ConfirmedBranch forces the branch notes must reach to count as
+	// confirmed. Empty = detect it (origin/HEAD, origin/main, ...).
+	ConfirmedBranch string `json:"confirmed_branch,omitempty"`
 }
 
 // DefaultContextMaxBytes is the `context` size limit (25 KB) when

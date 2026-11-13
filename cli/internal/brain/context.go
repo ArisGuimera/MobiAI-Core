@@ -65,53 +65,90 @@ func BuildContext(cfg Config, scan *Scan, p BrainPaths) string {
 // it, the document switches to index mode (see renderIndexed). Filters are
 // applied before measuring, so a narrow query still gets full texts.
 func BuildContextWith(cfg Config, scan *Scan, p BrainPaths, opts ContextOptions) string {
-	groups, err := ParseAllMemories(p)
+	now := opts.Now
+	if now.IsZero() {
+		now = time.Now().UTC()
+	}
+	notes, err := LoadNotes(p)
 	if err != nil {
 		// Parser errors are unexpected (files are normal Markdown);
-		// fall back to an empty groups map so the document still renders.
-		groups = map[string][]MemoryEntry{}
+		// fall back to no notes so the document still renders.
+		notes = nil
 	}
+	ann := annotateNotes(p, cfg, notes, now)
+	groups := groupBySection(notes)
 	filtered := !opts.Filter.Empty()
 	if filtered {
 		for section, entries := range groups {
 			groups[section] = FilterEntries(entries, opts.Filter)
 		}
 	}
-	include := includeMap(opts.Sections)
-
-	full := renderFull(cfg, scan, groups, include, filtered)
-	limit := cfg.contextLimit()
-	if len(full) <= limit {
+	d := contextDoc{
+		cfg:      cfg,
+		scan:     scan,
+		groups:   groups,
+		include:  includeMap(opts.Sections),
+		filtered: filtered,
+		limit:    cfg.contextLimit(),
+		now:      now,
+		branch:   ann.Branch,
+	}
+	if full := d.renderFull(); len(full) <= d.limit {
 		return full
 	}
-	now := opts.Now
-	if now.IsZero() {
-		now = time.Now().UTC()
-	}
-	return renderIndexed(cfg, scan, groups, include, limit, now)
+	return d.renderIndexed()
+}
+
+// contextDoc holds what both context layouts (full and index) need.
+type contextDoc struct {
+	cfg      Config
+	scan     *Scan
+	groups   map[string][]MemoryEntry // already filtered
+	include  map[string]struct{}      // nil = every section
+	filtered bool
+	limit    int
+	now      time.Time
+	branch   string // main branch, for the unconfirmed legend
 }
 
 // renderFull renders every included section with the full text of every
 // note — the original `context` document.
-func renderFull(cfg Config, scan *Scan, groups map[string][]MemoryEntry, include map[string]struct{}, filtered bool) string {
+func (d contextDoc) renderFull() string {
 	var b strings.Builder
-	writeHeader(&b, cfg, scan)
+	d.writeTop(&b)
 	for _, section := range renderOrder() {
-		if !included(include, section) {
+		if !included(d.include, section) {
 			continue
 		}
 		switch section {
 		case stackSection:
-			writeStackSection(&b, scan)
+			writeStackSection(&b, d.scan)
 		case rulesSection:
-			writeRulesSection(&b, cfg)
+			writeRulesSection(&b, d.cfg)
 		case warningsSection:
-			writeWarningsSection(&b, scan)
+			writeWarningsSection(&b, d.scan)
 		default: // memory section
-			writeMemorySection(&b, section, groups[section], filtered)
+			writeMemorySection(&b, section, d.groups[section], d.filtered)
 		}
 	}
 	return b.String()
+}
+
+// writeTop writes the document header and, when any included note is
+// unconfirmed, the line that tells the agent what that means.
+func (d contextDoc) writeTop(b *strings.Builder) {
+	writeHeader(b, d.cfg, d.scan)
+	for _, section := range renderOrder() {
+		if !included(d.include, section) {
+			continue
+		}
+		for _, e := range d.groups[section] {
+			if e.Flags.Unconfirmed {
+				fmt.Fprintf(b, "_Notes marked `unconfirmed` were written by someone else and haven't reached %s yet: use them with caution, not as project rules._\n\n", d.branch)
+				return
+			}
+		}
+	}
 }
 
 // included reports whether section is requested (nil include = all).
@@ -248,6 +285,9 @@ func writeEntry(b *strings.Builder, e MemoryEntry) {
 	fmt.Fprintf(b, "## %s\n\n", e.Title)
 	for _, k := range metaOrder(e.Meta) {
 		fmt.Fprintf(b, "- %s: %s\n", k, e.Meta[k])
+	}
+	if e.Flags.Unconfirmed {
+		b.WriteString("- state: unconfirmed\n")
 	}
 	body := strings.TrimSpace(e.Body)
 	if body != "" {
