@@ -46,6 +46,28 @@ func TestBrainSave_SimilarTitleBrakeAndFlags(t *testing.T) {
 	}
 }
 
+// The brake is an expected answer, not a usage mistake: the command must not
+// bury it under the flag list nor print it a second time (main prints the
+// returned error once).
+func TestBrainSave_SimilarTitleBrakePrintsOnlyTheMessage(t *testing.T) {
+	root := setupKMPProject(t)
+	_ = runBrain(t, []string{"init", "--root", root})
+	_ = runBrain(t, []string{"save", "bugfix", "--root", root, "--title", "Login crash on screen rotation", "--body", "b"})
+
+	cmd := NewBrainCmd()
+	var buf bytes.Buffer
+	cmd.SetOut(&buf)
+	cmd.SetErr(&buf)
+	cmd.SetArgs([]string{"save", "bugfix", "--root", root, "--title", "Login crash on rotation of the screen", "--body", "b"})
+	err := cmd.Execute()
+	if err == nil || !strings.Contains(err.Error(), "A similar note already exists") {
+		t.Fatalf("expected the brake error, got %v\n%s", err, buf.String())
+	}
+	if out := buf.String(); strings.Contains(out, "A similar note") || strings.Contains(out, "--title") {
+		t.Errorf("the brake must print nothing besides the error main prints:\n%s", out)
+	}
+}
+
 func TestBrainSave_CrashOnlyOnBugfix(t *testing.T) {
 	root := setupKMPProject(t)
 	_ = runBrain(t, []string{"init", "--root", root})

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -840,6 +841,14 @@ func runBrainSave(c *cobra.Command, saveType brain.SaveType) error {
 	}
 	id, err := brain.AppendEntry(paths, entry)
 	if err != nil {
+		var similar *brain.SimilarNoteError
+		if errors.As(err, &similar) {
+			// The brake is an expected answer, not a usage mistake: let
+			// main print its message once, without cobra's "Error:" copy
+			// and flag list burying it.
+			c.SilenceUsage = true
+			c.SilenceErrors = true
+		}
 		return err
 	}
 
