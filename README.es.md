@@ -36,7 +36,7 @@ MobiAI es un ecosistema Open Source diseñado para llevar la Inteligencia Artifi
 | 🛠️ **[CLI `mobiai`](cli/README.md)** | Una sola herramienta para gestionar todo el stack: instalar skills, indexar código, gestionar la memoria del proyecto y mantenerlo todo actualizado. | [Ver detalle →](cli/README.md) |
 | 🧩 **[Skills](skills/README.md)** | Contexto experto por plataforma: corregir bugs, reproducir incidencias, escribir tests, analizar crashes, crear PRs… siguiendo las prácticas de cada stack. | [Ver detalle →](skills/README.md) |
 | 🔍 **[Graph](docs/graph/README.md)** | Exploración semántica del código mobile. Resuelve "qué archivos tocar para esta tarea" o "quién llama a este símbolo" sin recorrer el repo a ciegas. | [Ver detalle →](docs/graph/README.md) |
-| 🧠 **[Brain](brain/README.md)** | Memoria viva por proyecto: decisiones, bugfixes, workarounds e integraciones específicas, separadas del estado global de MobiAI. | [Ver detalle →](brain/README.md) |
+| 🧠 **[Brain](brain/README.md)** | Memoria viva por proyecto: decisiones, bugfixes, workarounds y cómo se comportan la app y sus servicios, separadas del estado global de MobiAI. | [Ver detalle →](brain/README.md) |
 
 Y dos piezas más en el horizonte:
 
@@ -119,7 +119,7 @@ mobiai graph context <tarea...>    # archivos relevantes para una tarea
 
 ### 🧠 [Brain](brain/README.md) — memoria por proyecto
 
-Memoria viva por repo: decisiones, bugfixes, workarounds e integraciones específicas, separadas del estado global de MobiAI. Se guarda en `<repo>/.mobiai/brain/`.
+Memoria viva por repo: decisiones, bugfixes, workarounds y cómo se comportan la app y sus servicios, separadas del estado global de MobiAI. Se guarda en `<repo>/.mobiai/brain/`.
 
 ```bash
 mobiai brain init                  # crea .mobiai/brain/ (idempotente)

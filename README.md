@@ -36,7 +36,7 @@ MobiAI is an Open Source ecosystem designed to bring Artificial Intelligence to 
 | 🛠️ **[CLI `mobiai`](cli/README.md)** | A single tool to manage the whole stack: install skills, index your code, manage project memory, and keep everything up to date. | [See detail →](cli/README.md) |
 | 🧩 **[Skills](skills/README.md)** | Expert per-platform context: fix bugs, reproduce incidents, write tests, analyze crashes, create PRs… all following each stack's best practices. | [See detail →](skills/README.md) |
 | 🔍 **[Graph](docs/graph/README.md)** | Semantic exploration of mobile code. Answers "which files to touch for this task" or "who calls this symbol" without walking the repo blindly. | [See detail →](docs/graph/README.md) |
-| 🧠 **[Brain](brain/README.md)** | Living per-project memory: decisions, bugfixes, workarounds, and project-specific integrations, kept separate from MobiAI's global state. | [See detail →](brain/README.md) |
+| 🧠 **[Brain](brain/README.md)** | Living per-project memory: decisions, bugfixes, workarounds, and how the app and its services behave, kept separate from MobiAI's global state. | [See detail →](brain/README.md) |
 
 And two more pieces on the horizon:
 
@@ -119,7 +119,7 @@ mobiai graph context <task...>     # relevant files for a task
 
 ### 🧠 [Brain](brain/README.md) — per-project memory
 
-Living per-repo memory: decisions, bugfixes, workarounds, and project-specific integrations, separate from MobiAI's global state. Stored under `<repo>/.mobiai/brain/`.
+Living per-repo memory: decisions, bugfixes, workarounds, and how the app and its services behave, separate from MobiAI's global state. Stored under `<repo>/.mobiai/brain/`.
 
 ```bash
 mobiai brain init                  # creates .mobiai/brain/ (idempotent)
