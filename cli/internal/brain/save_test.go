@@ -186,6 +186,17 @@ func TestSlugify(t *testing.T) {
 		"  Trim Spaces  ":                    "trim-spaces",
 		"FirebaseAuth iOS — module renaming": "firebaseauth-ios-module-renaming",
 		"!!!":                                "",
+		// Accented letters become their plain letter instead of a hyphen,
+		// so Spanish (or French, German...) titles keep readable ids.
+		"Crash al rotar la conexión":           "crash-al-rotar-la-conexion",
+		"Año nuevo: ñandú, pingüino y façade":  "ano-nuevo-nandu-pinguino-y-facade",
+		"ÉXITO EN LA ÚLTIMA VERSIÓN":           "exito-en-la-ultima-version",
+		"Straße über Ærø":                      "strasse-uber-aero",
+		"Caché de imágenes en iOS — ¿por qué?": "cache-de-imagenes-en-ios-por-que",
+		// Decomposed form (NFD), as some macOS tools produce it.
+		"conexión": "conexion",
+		// Scripts without a Latin equivalent still drop out, as before.
+		"日本語 test": "test",
 	}
 	for in, want := range cases {
 		if got := slugify(in); got != want {

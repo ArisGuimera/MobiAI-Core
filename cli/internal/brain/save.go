@@ -233,10 +233,35 @@ func makeID(title string, now time.Time) string {
 
 var nonSlugRe = regexp.MustCompile(`[^a-z0-9]+`)
 
-// slugify lowercases, replaces non-alphanumerics with `-`, trims dashes,
-// and caps length so an oversized title doesn't bloat the id.
+// combiningMarkRe matches the accents of decomposed text (NFD), where "ó"
+// is written as "o" followed by U+0301, as some macOS tools produce it.
+var combiningMarkRe = regexp.MustCompile(`[\x{0300}-\x{036f}]`)
+
+// latinFold turns the accented Latin letters people type in titles into
+// plain letters, so "conexión" gives "conexion" instead of "conexi-n". It
+// runs after ToLower, so only lowercase forms are listed. Letters it doesn't
+// know still become a hyphen, as before.
+//
+// Migration derives the ids of hand-written notes from this function, so
+// changing it changes those ids: two mobiai versions that disagree here
+// would migrate the same note into two cards.
+var latinFold = strings.NewReplacer(
+	"á", "a", "à", "a", "â", "a", "ä", "a", "ã", "a", "å", "a", "ā", "a",
+	"é", "e", "è", "e", "ê", "e", "ë", "e", "ē", "e",
+	"í", "i", "ì", "i", "î", "i", "ï", "i", "ī", "i",
+	"ó", "o", "ò", "o", "ô", "o", "ö", "o", "õ", "o", "ø", "o", "ō", "o",
+	"ú", "u", "ù", "u", "û", "u", "ü", "u", "ū", "u",
+	"ñ", "n", "ç", "c", "ý", "y", "ÿ", "y",
+	"ß", "ss", "æ", "ae", "œ", "oe",
+)
+
+// slugify lowercases, turns accented letters into plain ones, replaces the
+// remaining non-alphanumerics with `-`, trims dashes, and caps length so an
+// oversized title doesn't bloat the id.
 func slugify(s string) string {
 	s = strings.ToLower(s)
+	s = combiningMarkRe.ReplaceAllString(s, "")
+	s = latinFold.Replace(s)
 	s = nonSlugRe.ReplaceAllString(s, "-")
 	s = strings.Trim(s, "-")
 	const maxLen = 60

@@ -257,6 +257,23 @@ func TestMigrate_NoteWithoutIDGetsContentID(t *testing.T) {
 	}
 }
 
+func TestMigrate_NoteWithoutIDKeepsAccentedWordsInID(t *testing.T) {
+	note := "\n## Reintentar si se corta la conexión\n\n- status: active\n- date: 2026-03-01\n\nNo id here.\n"
+	p := oldBrain(t, t.TempDir(), map[string]string{"decisions.md": note})
+	if _, err := Migrate(p); err != nil {
+		t.Fatal(err)
+	}
+	cards, _ := filepath.Glob(filepath.Join(p.MemoriesDir, "decisions", "*.md"))
+	if len(cards) != 1 {
+		t.Fatalf("expected 1 card, got %d", len(cards))
+	}
+	id := strings.TrimSuffix(filepath.Base(cards[0]), ".md")
+	re := regexp.MustCompile(`^reintentar-si-se-corta-la-conexion-20260301-[0-9a-f]{8}$`)
+	if !re.MatchString(id) {
+		t.Errorf("id %q: accented letters must become plain letters, not hyphens", id)
+	}
+}
+
 func TestMigrate_DuplicateIDsKeepBoth(t *testing.T) {
 	dup := strings.Replace(oldDecision, "Use Koin.", "Use Koin, ported version.", 1)
 	p := oldBrain(t, t.TempDir(), map[string]string{
